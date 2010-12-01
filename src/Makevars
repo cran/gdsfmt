@@ -1,0 +1,53 @@
+# additional preprocessor options
+PKG_CPPFLAGS = -I. -I./CoreArray.src
+
+# to set flags for the linker
+PKG_LIBS = -lCoreArray -L./CoreArray.src -lpthread -lz
+
+
+# flags for CoreArray library
+COREFLAG = -O3 -I./CoreArray.src -I$(R_HOME)/include $(CXXPICFLAGS)
+
+
+.PHONY: all .CoreArrayBuild
+
+all: $(SHLIB)
+
+$(SHLIB): .CoreArrayBuild
+
+
+# clean
+clean:
+	$(RM) gdsfmt.o gdsfmt.so gdsfmt.dll
+	$(RM) ./CoreArray.src/*.o
+	$(RM) ./CoreArray.src/*.a
+
+
+
+##################################################################
+###                     CoreArray library                      ###
+###                                                            ###
+
+# CoreArray source codes
+SRC_PLATFORM = ./CoreArray.src/dPlatform
+SRC_BASE = ./CoreArray.src/dBase
+SRC_FILE = ./CoreArray.src/dFile
+SRC_STREAM = ./CoreArray.src/dStream
+SRC_STRUCT = ./CoreArray.src/dStruct
+SRC_SEQ = ./CoreArray.src/dSeq
+SRC_PARALLEL = ./CoreArray.src/dParallel
+
+
+.CoreArrayBuild:
+	$(CXX) $(COREFLAG) -c -o $(SRC_PLATFORM).o $(SRC_PLATFORM).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_BASE).o $(SRC_BASE).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_FILE).o $(SRC_FILE).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_STREAM).o $(SRC_STREAM).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_STRUCT).o $(SRC_STRUCT).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_SEQ).o $(SRC_SEQ).cpp
+	$(CXX) $(COREFLAG) -c -o $(SRC_PARALLEL).o $(SRC_PARALLEL).cpp
+	$(RM) ./CoreArray.src/libCoreArray.a
+	$(AR) -r ./CoreArray.src/libCoreArray.a $(SRC_PLATFORM).o \
+		$(SRC_BASE).o $(SRC_FILE).o $(SRC_STREAM).o $(SRC_STRUCT).o \
+		$(SRC_SEQ).o $(SRC_PARALLEL).o
+
