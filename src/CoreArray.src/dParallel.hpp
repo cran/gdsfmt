@@ -29,7 +29,7 @@
  *	\file     dParallel.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2009 - 2011
+ *	\date     2009 - 2011
  *	\brief    Functions for parallel computing
  *	\details
 */

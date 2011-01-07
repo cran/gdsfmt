@@ -29,7 +29,7 @@
  *	\file     dType.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    Basic template classes for elementary types
  *	\details
 */
@@ -86,6 +86,7 @@ namespace CoreArray
 		svFloat64,      ///< Float number of double precision (64 bits)
 		svStrUTF8,      ///< UTF-8 string
 		svStrUTF16,     ///< UTF-16 string
+		svStrUTF32	///< UTF-32 string
 	};
 
 
@@ -330,7 +331,11 @@ namespace CoreArray
 		};
 	};
 
-	#pragma pack(push,1)
+	#ifndef COREARRAY_SUNPROCC
+	#  pragma pack(push, 1)
+	#else
+	#  pragma pack(1)
+	#endif
 	template<int bits> struct BITS
 	{
 	public:
@@ -378,7 +383,11 @@ namespace CoreArray
 	protected:
 		IntType fVal;
 	};
-	#pragma pack(pop)
+	#ifndef COREARRAY_SUNPROCC
+	#  pragma pack(pop)
+	#else
+	#  pragma pack(8)
+	#endif
 
 	template<> struct BITS<0>	{};
 	template<> struct BITS<-1>	{};
@@ -408,7 +417,7 @@ namespace CoreArray
 	{
 		typedef typename BITS<bits>::IntType TType;
 		static const int trVal = COREARRAY_TR_INTEGER;
-    	static const unsigned BitOf = (bits > 0) ? bits : (-bits);
+		static const unsigned BitOf = (bits > 0) ? bits : (-bits);
 		static const bool isClass = false;
 		static const TSVType SVType = svCustomInt;
 

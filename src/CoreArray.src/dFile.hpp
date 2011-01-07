@@ -29,7 +29,7 @@
  *	\file     dFile.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    Functions and classes for CoreArray Generic Data Structure (GDS)
  *	\details
 */

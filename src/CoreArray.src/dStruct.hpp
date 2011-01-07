@@ -29,7 +29,7 @@
  *	\file     dStruct.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    Data container - array, matrix, etc
  *	\details
 */

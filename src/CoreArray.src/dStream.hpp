@@ -29,7 +29,7 @@
  *	\file     dStream.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    Stream classes and functions
  *	\details
 */

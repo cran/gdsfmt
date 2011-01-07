@@ -34,6 +34,7 @@
 #include <string>
 #include <memory>
 
+
 using namespace std;
 using namespace CoreArray;
 
@@ -55,7 +56,7 @@ using namespace CoreArray;
 class TInit
 {
 public:
-	const static int MaxFiles		= 256;
+	const static int MaxFiles = 256;
 	CdGDSFile *Files[MaxFiles];
 	string LastError;
 
@@ -67,8 +68,9 @@ public:
 
 	TInit()
 	{
-		RegisterClass();
-		memset((void*)Files, 0, sizeof(Files));
+		// initialize the local variables
+		InitClassFlag = false;
+		for (int i=0; i < MaxFiles; i++) Files[i] = NULL;
 
 		// used in gdsAddNode
 		ClassMap["NULL"] = "";
@@ -178,25 +180,42 @@ public:
 
 	~TInit()
 	{
-		for (int i=0; i < MaxFiles; i++) {
-			if (Files[i] == NULL) {
-				try { delete Files[i]; } catch (...) { }
+		for (int i=0; i < MaxFiles; i++)
+		{
+			if (Files[i] == NULL)
+			{
+				try {
+					delete Files[i];
+				}
+				catch (...) { }
 			}
 		}
 	}
 
-	CdGDSFile *GetEmptyFile(int *Index) {
+	CdGDSFile *GetEmptyFile(int *Index)
+	{
+		// register classess
+		if (!InitClassFlag)
+		{
+			RegisterClass();
+			InitClassFlag = true;
+		}
+
 		for (int i=0; i < MaxFiles; i++)
-			if (Files[i] == NULL) {
+		{
+			if (Files[i] == NULL)
+			{
 				CdGDSFile *rv = new CdGDSFile;
 				*Index = i; Files[i] = rv;
 				return rv;
 			}
+		}
 		*Index = -1;
 		throw ErrSequence("You have opened 256 gds files, not allow one more!");
 	}
 
-	CdGDSFile *GetFile(int Index) {
+	CdGDSFile *GetFile(int Index)
+	{
 		if ((Index<0) || (Index>=MaxFiles))
 			throw ErrSequence("Invalid gds file!");
 		CdGDSFile *rv = Files[Index];
@@ -206,6 +225,7 @@ public:
 	}
 
 private:
+	bool InitClassFlag;
 };
 
 static TInit Init;
@@ -584,7 +604,7 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 			*Node = &Dir.AddFolder(RStr(*NodeName));
 		} else {
 
-			CdObjClassMgr::TdOnObjCreate OnCreate = dObjMgr.NameToClass(nName);
+			CdObjClassMgr::TdOnObjCreate OnCreate = dObjManager().NameToClass(nName);
 			if (OnCreate)
 			{
 				CdObject *obj = OnCreate();

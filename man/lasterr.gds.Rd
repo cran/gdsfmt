@@ -9,7 +9,7 @@
   lasterr.gds()
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 
 \keyword{utilities}

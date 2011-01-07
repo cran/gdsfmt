@@ -15,7 +15,7 @@
   Returns a list of attributes.
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{ \code{\link[gdsfmt]{put.attr.gdsn}},
   \code{\link[gdsfmt]{delete.attr.gdsn}} }

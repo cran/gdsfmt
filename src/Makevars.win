@@ -1,8 +1,13 @@
+##################################################################
+###                     CoreArray Codes                        ###
+###                                                            ###
+
+
 # additional preprocessor options
 PKG_CPPFLAGS = -I. -I./CoreArray.src
 
 # to set flags for the linker
-PKG_LIBS = -lCoreArray -L./CoreArray.src $(ZLIB_LIBS)
+PKG_LIBS = -lCoreArray -L. $(ZLIB_LIBS)
 
 
 # flags for CoreArray library
@@ -18,9 +23,9 @@ $(SHLIB): .CoreArrayBuild
 
 # clean
 clean:
-	$(RM) gdsfmt.o gdsfmt.so gdsfmt.dll
-	$(RM) ./CoreArray.src/*.o
-	$(RM) ./CoreArray.src/*.a
+	$(RM) *.o
+	$(RM) *.a
+	$(RM) gdsfmt.so gdsfmt.dll
 
 
 
@@ -28,26 +33,15 @@ clean:
 ###                     CoreArray library                      ###
 ###                                                            ###
 
-# CoreArray source codes
-SRC_PLATFORM = ./CoreArray.src/dPlatform
-SRC_BASE = ./CoreArray.src/dBase
-SRC_FILE = ./CoreArray.src/dFile
-SRC_STREAM = ./CoreArray.src/dStream
-SRC_STRUCT = ./CoreArray.src/dStruct
-SRC_SEQ = ./CoreArray.src/dSeq
-SRC_PARALLEL = ./CoreArray.src/dParallel
-
-
 .CoreArrayBuild:
-	$(CXX) $(COREFLAG) -c -o $(SRC_PLATFORM).o $(SRC_PLATFORM).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_BASE).o $(SRC_BASE).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_FILE).o $(SRC_FILE).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_STREAM).o $(SRC_STREAM).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_STRUCT).o $(SRC_STRUCT).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_SEQ).o $(SRC_SEQ).cpp
-	$(CXX) $(COREFLAG) -c -o $(SRC_PARALLEL).o $(SRC_PARALLEL).cpp
-	$(RM) ./CoreArray.src/libCoreArray.a
-	$(AR) -r ./CoreArray.src/libCoreArray.a $(SRC_PLATFORM).o \
-		$(SRC_BASE).o $(SRC_FILE).o $(SRC_STREAM).o $(SRC_STRUCT).o \
-		$(SRC_SEQ).o $(SRC_PARALLEL).o
+	$(CXX) $(COREFLAG) -c -o dPlatform.o CoreArray.src/dPlatform.cpp
+	$(CXX) $(COREFLAG) -c -o dBase.o CoreArray.src/dBase.cpp
+	$(CXX) $(COREFLAG) -c -o dFile.o CoreArray.src/dFile.cpp
+	$(CXX) $(COREFLAG) -c -o dStream.o CoreArray.src/dStream.cpp
+	$(CXX) $(COREFLAG) -c -o dStruct.o CoreArray.src/dStruct.cpp
+	$(CXX) $(COREFLAG) -c -o dSeq.o CoreArray.src/dSeq.cpp
+	$(CXX) $(COREFLAG) -c -o dParallel.o CoreArray.src/dParallel.cpp
+	$(RM) libCoreArray.a
+	$(AR) -r libCoreArray.a dPlatform.o dBase.o dFile.o dStream.o \
+		dStruct.o dSeq.o dParallel.o
 

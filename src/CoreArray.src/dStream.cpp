@@ -1678,7 +1678,7 @@ CdBlockCollection::CdBlockCollection(const TdPtr64 vCodeStart)
 	fUnuse = NULL;
 	vNextID = 1; // start from 1
 	fCodeStart = vCodeStart;
-	fClassMgr = &dObjMgr;
+	fClassMgr = &dObjManager();
 	fReadOnly = false;
 }
 

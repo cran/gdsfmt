@@ -175,7 +175,13 @@ using namespace CoreArray;
 #endif
 
 
-CdObjClassMgr CoreArray::dObjMgr;
+static CdObjClassMgr dObjMgr;
+
+CdObjClassMgr &CoreArray::dObjManager()
+{
+	return dObjMgr;
+}
+
 
 // resourcestring
 
@@ -2117,18 +2123,30 @@ CdObjClassMgr::CdObjClassMgr() {}
 
 CdObjClassMgr::~CdObjClassMgr() {}
 
+
+bool CdObjClassMgr::_strCmp::operator()(const char* s1, const char* s2) const
+{
+	if ((s1 == NULL) && (s2 != NULL))
+		return true;
+	else if ((s1 != NULL) && (s2 != NULL))
+		return strcmp(s1, s2) < 0;
+	else
+		return false;
+}
+
 void CdObjClassMgr::AddClass(const char *ClassName,
 	TdOnObjCreate OnCreate, ClassType vCType, const char *Desp)
 {
-	map<const char *, _ClassStruct, _strCmp>::iterator it;
+	map<const char *, _ClassStruct, _strCmp>::const_iterator it;
+
 	it = fClassMap.find(ClassName);
 	if (it == fClassMap.end())
 	{
 		_ClassStruct p;
 		p.OnCreate = OnCreate; p.Desp = Desp; p.CType = vCType;
-		fClassMap[ClassName] = p;
-	}
-	else throw Err_dObj(esDupClass, ClassName);
+		fClassMap.insert(pair<const char *, _ClassStruct>(ClassName, p));
+	} else
+		throw Err_dObj(esDupClass, ClassName);
 }
 
 void CdObjClassMgr::RemoveClass(const char * const ClassName)
@@ -2144,7 +2162,7 @@ void CdObjClassMgr::Clear()
 CdObjClassMgr::TdOnObjCreate CdObjClassMgr::NameToClass(
 	const char * ClassName)
 {
-	map<const char *, _ClassStruct, _strCmp>::iterator it;
+	map<const char *, _ClassStruct, _strCmp>::const_iterator it;
 	it = fClassMap.find(ClassName);
 	if (it != fClassMap.end())
 		return it->second.OnCreate;

@@ -24,7 +24,7 @@
   Returns an array, list, or data.frame.
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{ \code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
   \code{\link[gdsfmt]{add.gdsn}} }

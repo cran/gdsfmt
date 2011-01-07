@@ -29,10 +29,53 @@
  *	\file     dBase.hpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    Basic classes for CoreArray library
  *	\details
-*/
+**/
+
+/**
+ *  \mainpage CoreArray Library Framework (v1.0)
+ *
+ *      CoreArray project is to develop portable and scalable storage
+ *  technologies for bioinformatics data, allowing parallel computing at
+ *  the multicore and cluster levels.
+ *
+ *  \section sf SourceForge
+ *  \ref [Webpage] http://sourceforge.net/projects/corearray
+ *
+ *  \section Rface R interface
+ *  \ref [R package] http://cran.r-project.org/web/packages/gdsfmt/index.html
+ *
+ *  \section author Author
+ *  \ref * Send to Xiuwen Zheng (zhengx@u.washington.edu)
+ *
+ *  \section copyright Copyright
+ *      CoreArray is free software: you can redistribute it and/or modify it
+ *  under the terms of the GNU Lesser General Public License Version 3 as
+ *  published by the Free Software Foundation. CoreArray is distributed in the
+ *  hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+ *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU Lesser General Public License for more details.
+ *      You should have received a copy of the GNU Lesser General Public
+ *  License along with CoreArray.
+ *  If not, see <http://www.gnu.org/licenses/>.
+**/
+
+/**
+ *  \page compissue Compiling Issues
+ *
+ *  \section win Windows
+ *  Support MinGW, C++ Builder.
+ *
+ *  \section linux Linux
+ *  \subsection ubuntu ubuntu
+ *  Please install g++ and zlib.
+ *
+ *  \section mac MacOSX
+ *
+**/
+
 
 #ifndef _dBase_H_
 #define _dBase_H_
@@ -166,7 +209,7 @@ namespace CoreArray
 
 	protected:
 		// Load functions
-    	/// Call ::LoadBefore, ::Loading, ::LoadAfter
+		/// Call ::LoadBefore, ::Loading, ::LoadAfter
 		void LoadStruct(CdFilter &Reader, TdVersion Version);
 		virtual void LoadBefore(CdFilter &Reader, TdVersion Version);
 		virtual void Loading(CdFilter &Reader, TdVersion Version);
@@ -479,7 +522,7 @@ namespace CoreArray
 		/// Copy from a CdStream object
 		TdPtr64 CopyFrom(CdStream &Source, TdPtr64 Count=-1);
 
-    	/// Return the current position
+		/// Return the current position
 		inline TdPtr64 Position()
 			{ return Seek(0, soCurrent); };
 		/// Reset the current position
@@ -1248,8 +1291,7 @@ namespace CoreArray
 
 		struct _strCmp
 		{
-			bool operator()( const char* s1, const char* s2 ) const
-				{ return strcmp( s1, s2 ) < 0; }
+			bool operator()(const char* s1, const char* s2) const;
 		};
 
 		/// The registered class type
@@ -1268,7 +1310,7 @@ namespace CoreArray
 			ClassType CType;
 		};
 
-        /// Constructor
+		/// Constructor
 		CdObjClassMgr();
 		/// Destructor
 		virtual ~CdObjClassMgr();
@@ -1296,14 +1338,16 @@ namespace CoreArray
 		virtual CdObjRef* toObj(CdFilter &Reader, TdInit OnInit=NULL,
 			void *Data=NULL);
 
-        const _ClassStruct &ClassStruct(const char *ClassName) const;
-		inline const std::map<const char *, _ClassStruct, _strCmp> &
-        	ClassMap() const { return fClassMap; };
+		const _ClassStruct &ClassStruct(const char *ClassName) const;
+			inline const std::map<const char *, _ClassStruct, _strCmp> &
+			ClassMap() const { return fClassMap; };
 	protected:
 		std::map<const char *, _ClassStruct, _strCmp> fClassMap;
 	};
 
-	extern CdObjClassMgr dObjMgr;
+
+	/// The global manager of CoreArray classes
+	CdObjClassMgr &dObjManager();
 
 
 	// CoreArray Exception

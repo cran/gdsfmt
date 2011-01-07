@@ -21,7 +21,7 @@
   Returns \code{node}.
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{compression.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
 

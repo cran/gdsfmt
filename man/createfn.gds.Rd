@@ -22,7 +22,7 @@
   \item{root}{An object of class "gdsn", the root of hierachical structures.}
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{openfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}}
 \examples{

@@ -16,12 +16,9 @@
   If there is not an attribute with \code{name}, a warning will be given.
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{ \code{\link[gdsfmt]{put.attr.gdsn}},
   \code{\link[gdsfmt]{get.attr.gdsn}} }
-
-\examples{
-}
 
 \keyword{utilities}

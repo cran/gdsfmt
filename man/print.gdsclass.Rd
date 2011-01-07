@@ -13,7 +13,7 @@
 	\item{...}{Arguments passed to or from other methods.}
 }
 
-\references{}
+\references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{print.gdsn}}}
 

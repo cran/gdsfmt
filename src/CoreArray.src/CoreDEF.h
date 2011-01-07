@@ -29,7 +29,7 @@
  *	\file     CoreDEF.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *  \date     2007 - 2011
+ *	\date     2007 - 2011
  *	\brief    CoreArray global macro
  *	\details
 */
@@ -218,14 +218,37 @@
 #ifdef COREARRAY_LITTLE_ENDIAN
 #  undef COREARRAY_LITTLE_ENDIAN
 #endif
+#ifdef COREARRAY_BIG_ENDIAN
+#  undef COREARRAY_BIG_ENDIAN
+#endif
 
-#if defined(COREARRAY_UNIX) && !defined(COREARRAY_MACOS)
-#  include <endian.h>
-#  if __BYTE_ORDER == __LITTLE_ENDIAN
-#    define COREARRAY_LITTLE_ENDIAN
+#if defined(COREARRAY_UNIX)
+#  if defined(COREARRAY_MACOS)
+#    if defined(__i386__) || defined(__x86_64__)
+#      define COREARRAY_LITTLE_ENDIAN
+#    elif defined(__ppc__) || defined(__ppc64__) || defined(__arm__)
+#      define COREARRAY_BIG_ENDIAN
+#    else
+#       error "Unsupported Apply Mac architecture!"
+#    endif
+#  elif defined(COREARRAY_SUN)
+#    if defined(__x86)
+#      define COREARRAY_LITTLE_ENDIAN
+#    else
+#      define COREARRAY_BIG_ENDIAN
+#    endif
+#  else
+#    include <endian.h>
+#    if __BYTE_ORDER == __LITTLE_ENDIAN
+#      define COREARRAY_LITTLE_ENDIAN
+#    elif __BYTE_ORDER == __BIG_ENDIAN
+#      define COREARRAY_BIG_ENDIAN
+#    endif
 #  endif
-#else
+#elif defined(COREARRAY_WINDOWS)
 #  define COREARRAY_LITTLE_ENDIAN
+#else
+#  error "Unsupported architecture!"
 #endif
 
 

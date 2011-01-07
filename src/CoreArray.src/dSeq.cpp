@@ -87,10 +87,10 @@ void CoreArray::RegisterClass()
 	if (ifRegClass) return;
 
 	#define REG_CLASS(T, CLASS, CType, Desp)	\
-		dObjMgr.AddClass(TdTraits< T >::StreamName(), \
+		dObjManager().AddClass(TdTraits< T >::StreamName(), \
 		OnObjCreate< CLASS >, CdObjClassMgr::CType, Desp)
 	#define REG_CLASS_EX(Name, CLASS, CType, Desp)	\
-		dObjMgr.AddClass(Name, OnObjCreate< CLASS >, \
+		dObjManager().AddClass(Name, OnObjCreate< CLASS >, \
 		CdObjClassMgr::CType, Desp)
 
 	// signed integer
@@ -206,9 +206,9 @@ void CoreArray::RegisterClass()
 	REG_CLASS(UTF16*, CdFStr16, ctArray, "UTF-16 string");
 	REG_CLASS(UTF32*, CdFStr32, ctArray, "UTF-32 string");
 
-    // stream container
+	// stream container
 
-	dObjMgr.AddClass("dStream", OnObjCreate<CdGDSStreamContainer>,
+	dObjManager().AddClass("dStream", OnObjCreate<CdGDSStreamContainer>,
 		CdObjClassMgr::ctStream, "Stream Container");
 
 	ifRegClass = true;

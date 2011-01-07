@@ -27,10 +27,13 @@
 
 #include <CoreDEF.h>
 #include <dPlatform.hpp>
-#include <cstdio>
 #include <cmath>
-#include <cfloat>
 #include <ctime>
+
+#include <cfloat>
+#ifdef COREARRAY_SUNPROCC
+#  include <ieeefp.h>
+#endif
 
 #include <sys/stat.h>
 
@@ -147,7 +150,11 @@ uint128_t::operator UInt64() const
 
 #ifndef COREARRAY_HAVE_FLOAT128
 
-#pragma pack(push,1)
+#ifndef COREARRAY_SUNPROCC
+#  pragma pack(push, 1)
+#else
+#  pragma pack(1)
+#endif
 typedef union
 {
   double value;
@@ -163,9 +170,7 @@ typedef union
   #endif
   } num;
 } structDouble;
-#pragma pack(pop)
 
-#pragma pack(push,1)
 typedef union
 {
   long double value;
@@ -181,9 +186,7 @@ typedef union
   #endif
   } num;
 } structLongDouble;
-#pragma pack(pop)
 
-#pragma pack(push,1)
 typedef union
 {
   struct
@@ -206,9 +209,9 @@ typedef union
   #ifdef COREARRAY_LITTLE_ENDIAN
 	UInt16 fraction4;
 	UInt32 fraction3;
-    unsigned int fraction2:12;
-    unsigned int fraction1:32;
-    unsigned int fraction0:20;
+	unsigned int fraction2:12;
+	unsigned int fraction1:32;
+	unsigned int fraction0:20;
 	unsigned int exponent :15;
 	unsigned int sign     : 1;
   #else
@@ -228,7 +231,12 @@ typedef union
   #endif
   } numout;
 } structFloat128;
-#pragma pack(pop)
+#ifndef COREARRAY_SUNPROCC
+#  pragma pack(pop)
+#else
+#  pragma pack(8)
+#endif
+
 
 #ifndef COREARRAY_HAVE_INT128
 Float128::Float128(const Int128 &val)
@@ -360,11 +368,20 @@ TFPClass CoreArray::FloatClassify(const float val)
 			case _FPCLASS_UNSUP:
 		#endif
 			case _FPCLASS_SNAN: case _FPCLASS_QNAN:
-            	return fpNaN;
+				return fpNaN;
+			default: return fpFinite;
+		}
+	#elif defined(COREARRAY_SUNPROCC)
+		switch (_fpclass(val))
+		{
+			case FP_SNAN:
+			case FP_QNAN: return fpNaN;
+			case FP_NINF: return fpNegInf;
+			case FP_PINF: return fpPosInf;
 			default: return fpFinite;
 		}
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -406,7 +423,7 @@ TFPClass CoreArray::FloatClassify(const double val)
 			default: return fpFinite;
 		}
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -448,7 +465,7 @@ TFPClass CoreArray::FloatClassify(const long double val)
 			default: return fpFinite;
 		}
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -459,7 +476,7 @@ bool CoreArray::IsFinite(const float V)
 	#elif defined(COREARRAY_BORLANDC) || defined(COREARRAY_MSC)
 		return _finite(V);
 	#else
-    	"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -470,7 +487,7 @@ bool CoreArray::IsFinite(const double V)
 	#elif defined(COREARRAY_BORLANDC) || defined(COREARRAY_MSC)
 		return _finite(V);
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -483,7 +500,7 @@ bool CoreArray::IsFinite(const long double V)
 	#elif defined(COREARRAY_MSC)
 		return _finite(V);
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -496,7 +513,7 @@ bool CoreArray::IsNaN(const float V)
 	#elif defined(COREARRAY_MSC)
 		return _isnan(V);
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -509,7 +526,7 @@ bool CoreArray::IsNaN(const double V)
 	#elif defined(COREARRAY_MSC)
 		return _isnan(V);
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -522,7 +539,7 @@ bool CoreArray::IsNaN(const long double V)
 	#elif defined(COREARRAY_MSC)
 		return _isnanl(V);
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -537,7 +554,7 @@ bool CoreArray::IsInf(const float V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_PINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -552,7 +569,7 @@ bool CoreArray::IsInf(const double V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_PINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -567,7 +584,7 @@ bool CoreArray::IsInf(const long double V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_PINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -582,7 +599,7 @@ bool CoreArray::IsNegInf(const float V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_NINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -597,7 +614,7 @@ bool CoreArray::IsNegInf(const double V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_NINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -612,7 +629,7 @@ bool CoreArray::IsNegInf(const long double V)
 	#elif defined(COREARRAY_MSC)
 		return _fpclass(V) == _FPCLASS_NINF;
 	#else
-		"..."
+		#error "Not support!"
 	#endif
 }
 
@@ -817,7 +834,8 @@ string CoreArray::IntToStr(const UInt128 val)
 const size_t ICONVBUFFER = 512;
 
 template<typename OutUTF> struct IConvName {};
-template<> struct IConvName<UTF8> {
+template<> struct IConvName<UTF8>
+{
 	static const char *Name() { return nl_langinfo(CODESET); }
 	static size_t Ign(const UTF8* In, size_t InLen)
 	{
