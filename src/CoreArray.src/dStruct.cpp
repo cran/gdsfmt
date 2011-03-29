@@ -52,7 +52,7 @@ namespace CoreArray
 				Rec.pBuf = (void*)p;
 			}
 
-			static void rArrayEx(TIterDataExt &Rec, bool *Sel)
+			static void rArrayEx(TIterDataExt &Rec, CBOOL *Sel)
 			{
 				T *p = (T*)Rec.pBuf;
 				TdIterator it = Rec.Seq->Iterator(Rec.Index);
@@ -883,7 +883,7 @@ void CdSequenceX::rData(Int32 const* Start, Int32 const* Length,
 }
 
 void CdSequenceX::rDataEx(Int32 const* Start, Int32 const* Length,
-	bool *Selection[], void *OutBuffer, TSVType OutSV)
+	CBOOL *Selection[], void *OutBuffer, TSVType OutSV)
 {
 	#ifdef COREARRAY_DEBUG_CODE
 	xCheckRect(Start, Length);
@@ -1231,7 +1231,7 @@ CdVectorX::CdVectorX(ssize_t vElmSize, size_t vDimCnt, bool vDirectMem)
 
 	fElmSize = vElmSize;
 	if (vElmSize <= 0)
-    	throw ErrSequence(errElmSize, vElmSize); 
+    	throw ErrSequence(errElmSize, vElmSize);
 	if (!vDirectMem)
 		InitAllocator(fAllocator, true, true);
 	else
@@ -1303,7 +1303,7 @@ void CdVectorX::SaveStruct(CdFilter &Writer, bool IncludeName)
 		#ifdef COREARRAY_DEBUG_CODE
 		_CheckGDSStream();
 		if (vAlloc_Ptr == 0)
-        	throw ErrSequence("vAlloc_Ptr should not be ZERO."); 
+        	throw ErrSequence("vAlloc_Ptr should not be ZERO.");
 		#endif
 
 		vAlloc_Stream = fGDSStream->Collection().NewBlockStream();
@@ -2093,7 +2093,7 @@ void CdVectorX::NeedMemory(const TdPtr64 NewMem)
 		} else Delta = 16;
 
 		if (Delta < DeltaMem) Delta= DeltaMem;
-		
+
 		xSetCapacity(fCapacityMem + Delta);
 	}
 }

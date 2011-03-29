@@ -35,8 +35,9 @@ namespace CoreArray
 		{
 			struct _pThreadStruct
 			{
-				void (*proc)(CoreArray::CdThread *, int);
+				void (*proc)(CoreArray::CdThread *, int, void*);
 				int ThreadIndex;
+				void *Param;
 				CoreArray::Parallel::CparallelBase *cpBase;
 			};
 
@@ -45,7 +46,7 @@ namespace CoreArray
 				Data.cpBase->InitThread();
 
 				COREARRAY_PARALLEL_TRY
-					Data.proc(Thread, Data.ThreadIndex);
+					Data.proc(Thread, Data.ThreadIndex, Data.Param);
 				COREARRAY_PARALLEL_CATCH
 
 				Data.cpBase->DoneThread();
@@ -180,6 +181,7 @@ void CparallelBase::CloseThreads()
 
 void CparallelBase::SetnThread(int _nThread)
 {
+	CloseThreads();
 	if (_nThread < 1)
     	throw ErrParallel(errNThread, _nThread);
 	fnThread = _nThread;
@@ -191,7 +193,7 @@ void CparallelBase::AutoSetnThread()
 	if (fnThread < 1) fnThread = 1;
 }
 
-void CparallelBase::DoThreads(void (*Proc)(CdThread *, int), void *param)
+void CparallelBase::DoThreads(void (*Proc)(CdThread *, int, void*), void *param)
 {
 	if (!Proc) return;
 	CloseThreads();
@@ -205,6 +207,7 @@ void CparallelBase::DoThreads(void (*Proc)(CdThread *, int), void *param)
 			pd.proc = Proc;
 			pd.ThreadIndex = i+1;
 			pd.cpBase = this;
+			pd.Param = param;
 			fThreads[i] = new CdThread;
 			fThreads[i]->BeginThread(Internal::_pDoThread, pd);
 		}
@@ -213,7 +216,7 @@ void CparallelBase::DoThreads(void (*Proc)(CdThread *, int), void *param)
 	InitThread();
 
 	COREARRAY_PARALLEL_TRY
-		Proc(NULL, 0);
+		Proc(NULL, 0, param);
 	COREARRAY_PARALLEL_CATCH
 
 	DoneThread();

@@ -168,7 +168,7 @@ namespace CoreArray
 			inline CdThreadMutex &Mutex() { return fMutex; }
 
 			/// Create nThread threads (including the main thread), and Proc is called by each thread
-			void DoThreads(void (*Proc)(CdThread *, int), void *param);
+			void DoThreads(void (*Proc)(CdThread *, int, void*), void *param);
 
 			/// Create nThread threads (including the main thread), and Proc is called by each thread
 			// closure or delegate for C++

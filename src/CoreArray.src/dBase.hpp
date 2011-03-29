@@ -34,48 +34,6 @@
  *	\details
 **/
 
-/**
- *  \mainpage CoreArray Library Framework (v1.0)
- *
- *      CoreArray project is to develop portable and scalable storage
- *  technologies for bioinformatics data, allowing parallel computing at
- *  the multicore and cluster levels.
- *
- *  \section sf SourceForge
- *  \ref [Webpage] http://sourceforge.net/projects/corearray
- *
- *  \section Rface R interface
- *  \ref [R package] http://cran.r-project.org/web/packages/gdsfmt/index.html
- *
- *  \section author Author
- *  \ref * Send to Xiuwen Zheng (zhengx@u.washington.edu)
- *
- *  \section copyright Copyright
- *      CoreArray is free software: you can redistribute it and/or modify it
- *  under the terms of the GNU Lesser General Public License Version 3 as
- *  published by the Free Software Foundation. CoreArray is distributed in the
- *  hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *  See the GNU Lesser General Public License for more details.
- *      You should have received a copy of the GNU Lesser General Public
- *  License along with CoreArray.
- *  If not, see <http://www.gnu.org/licenses/>.
-**/
-
-/**
- *  \page compissue Compiling Issues
- *
- *  \section win Windows
- *  Support MinGW, C++ Builder.
- *
- *  \section linux Linux
- *  \subsection ubuntu ubuntu
- *  Please install g++ and zlib.
- *
- *  \section mac MacOSX
- *
-**/
-
 
 #ifndef _dBase_H_
 #define _dBase_H_
@@ -610,13 +568,15 @@ namespace CoreArray
 	/// an operator, to read TdPosType from a stream (6 bytes)
 	inline CdStream& operator>> (CdStream &s, TdPosType& out)
 	{
-		#if defined(COREARRAY_LITTLE_ENDIAN)
-    	Int64 L = 0;
+		UInt64 L = 0;
 		s.ReadBuffer((void*)&L, TdPosType::size);
+	#if defined(COREARRAY_LITTLE_ENDIAN)
 		out = L;
-		#else
-		#  error "To do"
-		#endif
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		out = COREARRAY_ENDIAN_CVT64(L) >> 16;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
 		return s;
 	}
 
@@ -662,12 +622,14 @@ namespace CoreArray
 	/// an operator, to write TdPosType to a stream (6 bytes)
 	inline CdStream& operator<< (CdStream &s, const TdPosType &in)
 	{
-		#if defined(COREARRAY_LITTLE_ENDIAN)
-		Int64 L = in;
+	#if defined(COREARRAY_LITTLE_ENDIAN)
+		UInt64 L = in;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		UInt64 L = COREARRAY_ENDIAN_CVT64(in) << 16;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
 		s.WriteBuffer((void*)&L, TdPosType::size);
-		#else
-		#  error "To do"
-		#endif
 		return s;
 	}
 
@@ -882,13 +844,15 @@ namespace CoreArray
 	/// an operator, to read TdPosType from a buffer (6 bytes)
 	inline CBufdStream& operator>> (CBufdStream &s, TdPosType& out)
 	{
-		#if defined(COREARRAY_LITTLE_ENDIAN)
-		Int64 L = 0;
+		UInt64 L = 0;
 		s.Read((void*)&L, TdPosType::size);
+	#if defined(COREARRAY_LITTLE_ENDIAN)
 		out = L;
-		#else
-		#  error "To do"
-		#endif
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		out = COREARRAY_ENDIAN_CVT64(L) >> 16;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
 		return s;
 	}
 	/// an operator, to read a UTF-8 string from a buffer
@@ -943,12 +907,14 @@ namespace CoreArray
 	/// an operator, to write TdPosType to a buffer (6 bytes)
 	inline CBufdStream& operator<< (CBufdStream &s, const TdPosType &in)
 	{
-		#if defined(COREARRAY_LITTLE_ENDIAN)
-		Int64 L = in;
+	#if defined(COREARRAY_LITTLE_ENDIAN)
+		UInt64 L = in;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		UInt64 L = COREARRAY_ENDIAN_CVT64(in) << 16;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
 		s.Write((void*)&L, TdPosType::size);
-		#else
-		#  error "To do"
-		#endif
 		return s;
 	}
 	/// an operator, to write a UTF-8 string to a buffer

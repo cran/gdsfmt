@@ -70,8 +70,10 @@ namespace CoreArray
 	{
 		#if defined(COREARRAY_LITTLE_ENDIAN)
 		UInt64 Low; Int64 High;
+		#elif defined(COREARRAY_BIG_ENDIAN)
+		Int64 High; UInt64 Low;
 		#else
-		#  error "to do"
+		#  error "Unsupported Endianness!"
 		#endif
 		int128_t() {}
 		int128_t(const Int64 val) { *this = val; }
@@ -81,16 +83,18 @@ namespace CoreArray
 		int128_t & operator= (const uint128_t &val);
 		operator Int64() const;
 
-        void toStr(char Out[]) const {}
+		void toStr(char Out[]) const {}
 	};
 
 	/// Unsigned integer of 128 bits
 	struct uint128_t
 	{
 		#if defined(COREARRAY_LITTLE_ENDIAN)
-		UInt64 Low, High;
+		UInt64 Low; UInt64 High;
+		#elif defined(COREARRAY_BIG_ENDIAN)
+		UInt64 High; UInt64 Low;
 		#else
-		#  error "to do"
+		#  error "Unsupported Endianness!"
 		#endif
 		uint128_t() {}
 		uint128_t(const UInt64 val) { *this = val; }
@@ -100,7 +104,7 @@ namespace CoreArray
 		uint128_t & operator= (const int128_t &val);
 		operator UInt64() const;
 
-        void toStr(char Out[]) const {}
+		void toStr(char Out[]) const {}
 	};
 
 	#endif
@@ -241,13 +245,13 @@ namespace CoreArray
 	void EnableFPUException();
 	/// Make FPU exception disable
 	void DisableFPUException();
-    /// Reset default FPU exception
+	/// Reset default FPU exception
 	void DefaultFPUControl();
 
 	// get a string from floating point number
 	std::string FloatToStr(const float val);
 	std::string FloatToStr(const double val);
-    std::string FloatToStr(const long double val);
+	std::string FloatToStr(const long double val);
 	std::string FloatToStr(const Float128 val);
 
 
@@ -912,10 +916,15 @@ namespace CoreArray
 
 	#elif defined(COREARRAY_BIG_ENDIAN)
 
+		void COREARRAY_ENDIAN_CVT(void *x, size_t size);
+		UInt16 COREARRAY_ENDIAN_CVT16(UInt16 x);
+		UInt32 COREARRAY_ENDIAN_CVT32(UInt32 x);
+		UInt64 COREARRAY_ENDIAN_CVT64(UInt64 x);
+		UInt128 COREARRAY_ENDIAN_CVT128(UInt128 x);
+
 	#else
 	#  error "Unknown endianness"
     #endif
 }
 
 #endif /* _dPlatform_H_ */
-

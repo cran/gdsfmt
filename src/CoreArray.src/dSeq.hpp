@@ -146,7 +146,7 @@ namespace CoreArray
 		}
 
 	protected:
-	
+
 	#ifdef COREARRAY_MSC
 		static const int ExtAllocNeed = TdVectorData<UInt8, BITS<bits>, false, COREARRAY_TR_INTEGER, COREARRAY_TR_INTEGER>::ExtAllocNeed;
 	#else
@@ -300,7 +300,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 
@@ -531,7 +531,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -758,7 +758,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -968,7 +968,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -1093,7 +1093,7 @@ namespace CoreArray
 		}
 	};
 
-	
+
 	// Specify BITS<24>
 
 	template<typename TOutside, int O>
@@ -1122,8 +1122,8 @@ namespace CoreArray
 			}
 			Rec.pBuf = (char*)p;
 		}
-		
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN];
 			Int32 Len = Rec.LastDim;
@@ -1154,7 +1154,7 @@ namespace CoreArray
 			Seq.fAllocator.Read(p, (void*)&i, 3);
 			*((TOutside*)OutBuffer) = ValCvt<TOutside, UInt32>(i);
 		}
-		
+
 		// Write
 		static void wArray(TIterVDataExt &Rec)
 		{
@@ -1214,8 +1214,8 @@ namespace CoreArray
 			}
 			Rec.pBuf = (char*)p;
 		}
-		
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN], *pc;
 			Int32 Len = Rec.LastDim;
@@ -1247,7 +1247,7 @@ namespace CoreArray
 			i = BITS_ifsign<Int32, 24>(i);
 			*((TOutside*)OutBuffer) = ValCvt<TOutside, Int32>(i);
 		}
-		
+
 		// Write
 		static void wArray(TIterVDataExt &Rec)
 		{
@@ -1279,7 +1279,7 @@ namespace CoreArray
 	};
 
 	// unsign integer
-		
+
 	typedef CdBaseBit<1>		CdBit1; // *
 	typedef CdBaseBit<2>		CdBit2; // *
 	typedef CdBaseBit<3>		CdBit3;
@@ -1476,7 +1476,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)pt;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			TOutside *pt = (TOutside*)Rec.pBuf;
 			ssize_t Lx = Rec.Seq->ElmSize();

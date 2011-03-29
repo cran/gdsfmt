@@ -157,80 +157,112 @@ uint128_t::operator UInt64() const
 #endif
 typedef union
 {
-  double value;
-  struct
-  {
-  #ifdef COREARRAY_LITTLE_ENDIAN
-    unsigned int fraction1:32;
-    unsigned int fraction0:20;
-    unsigned int exponent :11;
-	unsigned int sign     : 1;
-  #else
-  #  error "to do"
-  #endif
-  } num;
+	double value;
+	struct
+	{
+	#ifdef COREARRAY_LITTLE_ENDIAN
+		unsigned int fraction1:32;
+		unsigned int fraction0:20;
+		unsigned int exponent :11;
+		unsigned int sign     : 1;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		unsigned int sign     : 1;
+		unsigned int exponent :11;
+		unsigned int fraction0:20;
+		unsigned int fraction1:32;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
+	} num;
 } structDouble;
 
 typedef union
 {
-  long double value;
-  struct
-  {
-  #ifdef COREARRAY_LITTLE_ENDIAN
-    unsigned int fraction1:32;
-	unsigned int fraction0:31;
-	unsigned int exponent :16;
-	unsigned int sign     : 1;
-  #else
-  #  error "to do"
-  #endif
-  } num;
+	long double value;
+	struct
+	{
+	#ifdef COREARRAY_LITTLE_ENDIAN
+		unsigned int fraction1:32;
+		unsigned int fraction0:31;
+		unsigned int exponent :16;
+		unsigned int sign     : 1;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		unsigned int sign     : 1;
+		unsigned int exponent :16;
+		unsigned int fraction0:31;
+		unsigned int fraction1:32;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
+	} num;
 } structLongDouble;
 
 typedef union
 {
-  struct
-  {
-  #ifdef COREARRAY_LITTLE_ENDIAN
-	UInt16 fraction4;
-	UInt32 fraction3;
-    unsigned int fraction2:1;
-    unsigned int fraction1:32;
-	unsigned int fraction0:31;
-	unsigned int exponent :15;
-	unsigned int sign     : 1;
-  #else
-  #  error "to do"
-  #endif
-  } numlong;
+	struct
+	{
+	#ifdef COREARRAY_LITTLE_ENDIAN
+		UInt16 fraction4;
+		UInt32 fraction3;
+		unsigned int fraction2:1;
+		unsigned int fraction1:32;
+		unsigned int fraction0:31;
+		unsigned int exponent :15;
+		unsigned int sign     : 1;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		unsigned int sign     : 1;
+		unsigned int exponent :15;
+		unsigned int fraction0:31;
+		unsigned int fraction1:32;
+		unsigned int fraction2:1;
+		UInt32 fraction3;
+		UInt16 fraction4;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
+	} numlong;
 
-  struct
-  {
-  #ifdef COREARRAY_LITTLE_ENDIAN
-	UInt16 fraction4;
-	UInt32 fraction3;
-	unsigned int fraction2:12;
-	unsigned int fraction1:32;
-	unsigned int fraction0:20;
-	unsigned int exponent :15;
-	unsigned int sign     : 1;
-  #else
-  #  error "to do"
-  #endif
-  } numdouble;
+	struct
+	{
+	#ifdef COREARRAY_LITTLE_ENDIAN
+		UInt16 fraction4;
+		UInt32 fraction3;
+		unsigned int fraction2:12;
+		unsigned int fraction1:32;
+		unsigned int fraction0:20;
+		unsigned int exponent :15;
+		unsigned int sign     : 1;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		unsigned int sign     : 1;
+		unsigned int exponent :15;
+		unsigned int fraction0:20;
+		unsigned int fraction1:32;
+		unsigned int fraction2:12;
+		UInt32 fraction3;
+		UInt16 fraction4;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
+	} numdouble;
 
-  struct
-  {
-  #ifdef COREARRAY_LITTLE_ENDIAN
-	UInt16 fraction2;
-	UInt32 fraction1;
-	UInt64 fraction0;
-	UInt16 flag;
-  #else
-  #  error "to do"
-  #endif
-  } numout;
+	struct
+	{
+	#ifdef COREARRAY_LITTLE_ENDIAN
+		UInt16 fraction2;
+		UInt32 fraction1;
+		UInt64 fraction0;
+		UInt16 flag;
+	#elif defined(COREARRAY_BIG_ENDIAN)
+		UInt16 flag;
+		UInt64 fraction0;
+		UInt32 fraction1;
+		UInt16 fraction2;
+	#else
+	#  error "Unsupported Endianness!"
+	#endif
+	} numout;
 } structFloat128;
+
 #ifndef COREARRAY_SUNPROCC
 #  pragma pack(pop)
 #else
@@ -2116,4 +2148,45 @@ double CoreArray::StrToFloatDef(char const* str, const double Default)
 			return r;
     }
 }
+
+
+#if defined(COREARRAY_BIG_ENDIAN)
+
+void CoreArray::COREARRAY_ENDIAN_CVT(void *x, size_t size)
+{
+	UInt8 tmp;
+	UInt8 *p1 = (UInt8*)x, *p2 = ((UInt8*)x) + size - 1;
+	for (size_t sz = size/2; sz > 0; sz--)
+	{
+		tmp = *p1; *p1 = *p2; *p2 = tmp;
+		p1++; p2++;
+	}
+}
+
+UInt16 CoreArray::COREARRAY_ENDIAN_CVT16(UInt16 x)
+{
+	UInt16 I0 = x & 0xFF, I1 = x >> 8;
+	return (I0 << 8) | I1;
+}
+
+UInt32 CoreArray::COREARRAY_ENDIAN_CVT32(UInt32 x)
+{
+	UInt32 I0 = x & 0xFF, I1 = (x >> 8) & 0xFF;
+	UInt32 I2 = (x >> 16) & 0xFF, I3 = x >> 24;
+	return (I0 << 24) | (I1 << 16) | (I2 << 8) | I3;
+}
+
+UInt64 CoreArray::COREARRAY_ENDIAN_CVT64(UInt64 x)
+{
+	UInt64 I0 = x & 0xFFFFFFFF, I1 = x >> 32;
+	return COREARRAY_ENDIAN_CVT32(I0 << 32) | COREARRAY_ENDIAN_CVT32(I1);
+}
+
+UInt128 CoreArray::COREARRAY_ENDIAN_CVT128(UInt128 x)
+{
+	COREARRAY_ENDIAN_CVT((void*)&x, 16);
+	return x;
+}
+
+#endif
 

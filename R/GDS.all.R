@@ -161,7 +161,7 @@ add.gdsn <- function( node, name, val=NULL,
 	if (class(node)=="gdsclass")
 		node <- node$root
 	stopifnot(class(node)=="gdsn")
-	
+
 	if (missing(name))
 		name <- paste("Item", cnt.gdsn(node)+1, sep="")
 
@@ -176,7 +176,7 @@ add.gdsn <- function( node, name, val=NULL,
 	{
 		val[is.na(val)] <- ""
 	}
-	
+
 	if (storage == "") storage <- "NULL"
 
 	if (is.null(valdim))
@@ -189,7 +189,7 @@ add.gdsn <- function( node, name, val=NULL,
 	} else {
 		if (storage == "NULL") storage <- "integer"
 	}
-	
+
 	if (is.character(val))
 		MaxLen <- max(nchar(val))
 	else MaxLen <- 1
@@ -217,7 +217,7 @@ add.gdsn <- function( node, name, val=NULL,
 				}
 			}
 		}
-		
+
 		if (storage == "list")
 		{
 			if (class(val) == "data.frame")
@@ -226,7 +226,7 @@ add.gdsn <- function( node, name, val=NULL,
 			} else {
 				put.attr.gdsn(rv, "data.list")
 			}
-			
+
 			iNames <- names(val); iN <- 1
 			for (v in val)
 			{
@@ -238,7 +238,7 @@ add.gdsn <- function( node, name, val=NULL,
 		} else if (storage == "factor") {
 			put.attr.gdsn(rv, "R.factor")
 		}
-		
+
 		return(rv)
 	} else {
 		stop(lasterr.gds())
@@ -374,7 +374,7 @@ append.gdsn <- function(node, val, check=TRUE)
 		"character" =
 			.C( "gdsObjAppend", as.integer(node), as.integer(3), as.character(val),
 					length(val), CntWarn=integer(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt"),
-		"logical" = 
+		"logical" =
 			.C( "gdsObjAppend", as.integer(node), as.integer(1), as.integer(val),
 					length(val), CntWarn=integer(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt"),
 		stop("only support integer, double and character.") )
@@ -391,7 +391,7 @@ append.gdsn <- function(node, val, check=TRUE)
 read.gdsn <- function(node, start, count)
 {
 	stopifnot(class(node)=="gdsn")
-	
+
 	if (missing(start))
 	{
 		if (missing(count))
@@ -399,7 +399,7 @@ read.gdsn <- function(node, start, count)
 			rdn <- names(get.attr.gdsn(node))
 			rdframe <- "data.frame" %in% rdn
 			rdlist <- "data.list" %in% rdn
-			
+
 			if (rdframe || rdlist)
 			{
 				cnt <- cnt.gdsn(node)
@@ -417,7 +417,7 @@ read.gdsn <- function(node, start, count)
 				if (rdframe) r <- as.data.frame(r, stringsAsFactors=FALSE)
 				return(r)
 			}
-						
+
 			r <- .C("gdsxObjDesp", as.integer(node), cnt=as.integer(-1),
 				rstart=as.integer(rep(1, 256)), rcount=as.integer(rep(-1, 256)),
 				total=integer(1), rtype=integer(1), err=integer(1),
@@ -435,12 +435,12 @@ read.gdsn <- function(node, start, count)
 			stopifnot(length(start)==length(count))
 
 			rfactor <- FALSE
-			
+
 			r <- .C("gdsxObjDesp", as.integer(node), cnt=as.integer(length(start)),
 				rstart=rev(as.integer(start)), rcount=rev(as.integer(count)),
 				total=integer(1), rtype=integer(1), err=integer(1),
 				NAOK=TRUE, PACKAGE="gdsfmt")
-		}	
+		}
 
 	if (r$err == 0)
 	{
@@ -449,14 +449,14 @@ read.gdsn <- function(node, start, count)
 			data=switch(r$rtype, integer(r$total), double(r$total),
 			character(r$total), logical(r$total)),
 			err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-		
+
 		if (rfactor)
 		{
 			s <- r$data
 			r$data <- factor(s)
 			r$data[s==""] <- NA
 		}
-		
+
 		if (r$err == 0)
 		{
 			if (r$cnt == 2)
@@ -464,11 +464,11 @@ read.gdsn <- function(node, start, count)
 				if ((r$count[1] == 1) || (r$count[2] == 1))
 					return(r$data)
 				else return(array(r$data, dim=rev(r$count[1:r$cnt])))
-			} else if (r$cnt <= 1) 
+			} else if (r$cnt <= 1)
 				return(r$data)
-			else				
+			else
 				return(array(r$data, dim=r$count[1:r$cnt]))
-		}	 
+		}
 	}
 	stop(lasterr.gds())
 	return(invisible(NULL))
@@ -478,7 +478,7 @@ write.gdsn <- function(node, val, start, count)
 {
 	stopifnot(class(node)=="gdsn")
 	stopifnot(!missing(val))
-	
+
 	if (missing(start))
 	{
 		if (missing(count))
@@ -504,9 +504,9 @@ write.gdsn <- function(node, val, start, count)
 	} else if (missing(count)) {
 		stop("count is missing")
 	} else {
-		
+
 		stopifnot(length(start)==length(count))
-		
+
 		r <- .C("gdsxObjDesp", as.integer(node), cnt=as.integer(length(start)),
 			rstart=as.integer(rev(start)), rcount=as.integer(rev(count)),
 			total=integer(1), rtype=integer(1), err=integer(1), NAOK=TRUE,
@@ -531,7 +531,7 @@ write.gdsn <- function(node, val, start, count)
 
 		} else
 			stop(lasterr.gds())
-	}	
+	}
 	return(invisible(NULL))
 }
 
@@ -616,7 +616,7 @@ print.gdsn <- function(x, expand=TRUE, ...)
 			cat(" ] *\n")
 		else
 			cat(" ]\n")
-		
+
 		if (expand)
 		{
 			r <- .C("gdsNodeEnumPtr", as.integer(node), id=integer(cnt*2),

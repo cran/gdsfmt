@@ -445,7 +445,7 @@ namespace CoreArray
 		virtual void rData(Int32 const* Start, Int32 const* Length,
 			void *OutBuffer, TSVType OutSV);
 		virtual void rDataEx(Int32 const* Start, Int32 const* Length,
-			bool *Selection[], void *OutBuffer, TSVType OutSV);
+			CBOOL *Selection[], void *OutBuffer, TSVType OutSV);
 		virtual void wData(Int32 const* Start, Int32 const* Length,
 			void const* InBuffer, TSVType InSV);
 		virtual void Append(void const* Buffer, ssize_t Cnt, TSVType InSV) = 0;
@@ -695,7 +695,7 @@ namespace CoreArray
 		};
 
 		template<typename Function>
-		void SeqIterRectEx(Int32 const* Start, Int32 const* Length, bool *Sel[],
+		void SeqIterRectEx(Int32 const* Start, Int32 const* Length, CBOOL *Sel[],
 			int DimCnt, TIterDataExt &Rec, Function Proc)
 		{
 			if (Start && Length)
@@ -703,7 +703,7 @@ namespace CoreArray
 				CdSequenceX::TSeqDimBuf DFor, DForLen;
 				Int32 *ForP = &DFor[0], *ForLenP = &DForLen[0];
 				Int32 ForI = 0, ForEnd = DimCnt-1;
-                bool *Selection = Sel[ForEnd];
+                CBOOL *Selection = Sel[ForEnd];
 
 				Rec.Index = &DFor[0];
 				DFor[0] = Start[0]; DForLen[0] = Length[0];
@@ -767,7 +767,7 @@ namespace CoreArray
 		};
 
 		template<typename Function>
-		void VecIterRectEx(Int32 const* Start, Int32 const* Length, bool *Sel[],
+		void VecIterRectEx(Int32 const* Start, Int32 const* Length, CBOOL *Sel[],
 			int DimCnt, TIterVDataExt &Rec, Function Functor)
 		{
 			if (Start && Length)
@@ -775,7 +775,7 @@ namespace CoreArray
 				CdSequenceX::TSeqDimBuf DFor, DForLen;
 				Int32 *ForP = &DFor[0], *ForLenP = &DForLen[0];
 				Int32 ForI = 0, ForEnd = DimCnt-1;
-                bool *Selection = Sel[ForEnd];
+                CBOOL *Selection = Sel[ForEnd];
 
 				DFor[0] = Start[0]; DForLen[0] = Length[0];
 				while (ForI >= 0)
@@ -872,7 +872,7 @@ namespace CoreArray
 			Rec.Seq->Allocator().Read(Rec.p64, (void*)Rec.pBuf, Lx);
 			Rec.pBuf += Lx;
 		}
-		inline static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		inline static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			for (size_t L = Rec.LastDim; L > 0; L--)
 			{
@@ -927,7 +927,7 @@ namespace CoreArray
 			}
 			Rec.pBuf = (char*)p;
 		}
-		static void rArrayEx(TIterVDataExt &Rec, bool *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
             char buf[ARRAY_BUF_LEN];
 			Int32 Len = Rec.LastDim;
@@ -1099,7 +1099,7 @@ namespace CoreArray
 		};
 
 		virtual void rDataEx(Int32 const* Start, Int32 const* Length,
-			bool *Selection[], void *OutBuffer, TSVType OutSV)
+			CBOOL *Selection[], void *OutBuffer, TSVType OutSV)
 		{
 			#ifdef COREARRAY_DEBUG_CODE
 			xCheckRect(Start, Length);

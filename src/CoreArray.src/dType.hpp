@@ -114,22 +114,25 @@ namespace CoreArray
 	// Integers
 
 	/// Signed integer of 8 bits
-	typedef int8_t		Int8;
+	typedef int8_t      Int8;
 	/// Unsigned integer of 8 bits
-	typedef uint8_t		UInt8;
+	typedef uint8_t     UInt8;
 	/// Signed integer of 16 bits
-	typedef int16_t		Int16;
+	typedef int16_t     Int16;
 	/// Unsigned integer of 16 bits
-	typedef uint16_t	UInt16;
+	typedef uint16_t    UInt16;
 	/// Signed integer of 32 bits
-	typedef int32_t		Int32;
+	typedef int32_t     Int32;
 	/// Unsigned integer of 32 bits
-	typedef uint32_t	UInt32;
+	typedef uint32_t    UInt32;
 	/// Signed integer of 64 bits
-	typedef int64_t		Int64;
+	typedef int64_t     Int64;
 	/// Unsigned integer of 64 bits
-	typedef uint64_t	UInt64;
+	typedef uint64_t    UInt64;
 
+
+	/// CoreArray Boolean
+	typedef int8_t      CBOOL;
 
 
 	#if defined(COREARRAY_MSC) && !defined(ssize_t)
@@ -436,7 +439,7 @@ namespace CoreArray
 			{ return (bits > 0) ? BITS<bits>::Mask : (BITS<bits>::Mask ^ BITS<bits>::Flag); };
 	};
 
-	
+
 
 
 	// Float

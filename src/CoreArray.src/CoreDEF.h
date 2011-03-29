@@ -232,7 +232,7 @@
 #       error "Unsupported Apply Mac architecture!"
 #    endif
 #  elif defined(COREARRAY_SUN)
-#    if defined(__x86)
+#    if defined(__i386) || defined(__x86_64) || defined(__amd64)
 #      define COREARRAY_LITTLE_ENDIAN
 #    else
 #      define COREARRAY_BIG_ENDIAN

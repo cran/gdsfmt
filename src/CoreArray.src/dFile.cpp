@@ -717,7 +717,7 @@ CdGDSFolder &CdGDSFolder::AddFolder(const UTF16String &Name)
 	rv->fGDSStream->AddRef();
 	rv->fChanged = true;
 	rv->AddRef();
-	
+
 	TItem I;
 	I.Name = Name; I.Obj = rv;
 	I.StreamID = rv->fGDSStream->ID();
@@ -812,7 +812,7 @@ CdGDSFolder & CdGDSFolder::DirItem(int Index)
 	if (dynamic_cast<CdGDSFolder*>(I.Obj))
 		return *static_cast<CdGDSFolder*>(I.Obj);
 	else
-    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str()); 
+    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str());
 }
 
 CdGDSFolder & CdGDSFolder::DirItem(const UTF16String &Name)
@@ -822,7 +822,7 @@ CdGDSFolder & CdGDSFolder::DirItem(const UTF16String &Name)
 	if (dynamic_cast<CdGDSFolder*>(I.Obj))
 		return *static_cast<CdGDSFolder*>(I.Obj);
 	else
-    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str()); 
+    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str());
 }
 
 CdGDSObj * CdGDSFolder::ObjItem(int Index)
@@ -1041,7 +1041,7 @@ void CdGDSFolder::_LoadItem(TItem &I)
 		#endif
 		TdAutoRef<CdFilter> Reader(new CdFilter(
 			fGDSStream->Collection()[I.StreamID]));
-		   
+
 		if (I.IsFolder())
 		{
 			I.Obj = new CdGDSFolder(this);
@@ -1617,7 +1617,7 @@ bool CdGDSFile::_HaveModify(CdGDSFolder *folder)
 
 bool CdGDSFile::Modified()
 {
-	return _HaveModify(&fRoot);	
+	return _HaveModify(&fRoot);
 }
 
 TdPtr64 CdGDSFile::GetFileSize()
