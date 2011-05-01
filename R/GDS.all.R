@@ -108,7 +108,7 @@ ls.gdsn <- function(node)
 		return(r$names)
 }
 
-index.gdsn <- function(node, index)
+index.gdsn <- function(node, index, silent=FALSE)
 {
 	if (class(node)=="gdsclass")
 		node <- node$root
@@ -123,13 +123,13 @@ index.gdsn <- function(node, index)
 		as.integer(length(index)), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 	{
-		stop(lasterr.gds())
-		return(invisible(NULL))
+		if (!silent) stop(lasterr.gds())
+		rv <- NULL
 	} else {
 		rv <- r$node
 		class(rv) <- "gdsn"
-		return(rv)
 	}
+	return(rv)
 }
 
 objdesp.gdsn <- function(node)

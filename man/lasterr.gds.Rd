@@ -1,8 +1,8 @@
 \name{lasterr.gds}
 \alias{lasterr.gds}
-\title{Return a last error}
+\title{Return the last error}
 \description{
-  Returns a last error of a CoreArray GDS file.
+	Returns the last error of a CoreArray GDS file.
 }
 
 \usage{

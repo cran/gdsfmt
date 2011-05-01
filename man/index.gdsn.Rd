@@ -7,7 +7,7 @@
 }
 
 \usage{
-  index.gdsn(node, index)
+  index.gdsn(node, index, silent=FALSE)
 }
 \arguments{
   \item{node}{An object of class "gdsn" or "gdsclass": "gdsn" -- the node of
@@ -15,13 +15,14 @@
     structures.}
   \item{index}{A vector of integers or characters, specifying the node
     subscripts.}
+  \item{silent}{If TRUE, return NULL if the specified path does not exist.}
 }
 \details{
     If \code{index} is a vector of integers, for example, c(1, 2), the result
   is the second child node of the first child of \code{node}. If \code{index}
   is a vector of characters, for example, c("list", "x"), the result is the
   child node with name "x" of the "list" child node of \code{node}.
-  
+
     A warning will be given if the specified node is not available.
 }
 \value{

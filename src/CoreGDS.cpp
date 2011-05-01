@@ -1072,10 +1072,10 @@ extern "C"
 	// CdSequenceX -- write
 
 	DLLEXPORT bool gds_wData(CdSequenceX *obj, Int32 const* Start,
-		Int32 const* Length, const void *InBuf, TSVType OutSV)
+		Int32 const* Length, const void *InBuf, TSVType InSV)
 	{
 		CORETRY
-			obj->wData(Start, Length, InBuf, OutSV);
+			obj->wData(Start, Length, InBuf, InSV);
 			return true;
 		CORECATCH(false);
 	}
