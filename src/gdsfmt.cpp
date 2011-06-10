@@ -45,7 +45,7 @@ using namespace CoreArray;
 #  ifdef COREARRAY_WINDOWS
 #    define DLLEXPORT __attribute__((dllexport))
 #  else
-#    define DLLEXPORT 
+#    define DLLEXPORT
 #  endif
 #else
 #  define DLLEXPORT __declspec(dllexport)
@@ -171,6 +171,7 @@ public:
 
 		// R storage mode
 		ClassMap["integer"] = TdTraits<CoreArray::Int32>::StreamName();
+		ClassMap["numeric"] = TdTraits<CoreArray::Float64>::StreamName();
 		ClassMap["double"] = TdTraits<CoreArray::Float64>::StreamName();
 		ClassMap["character"] = TdTraits<CoreArray::UTF8*>::StreamName();
 		ClassMap["logical"] = TdTraits<CoreArray::Int32>::StreamName();
@@ -582,7 +583,8 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name,
 }
 
 DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
-	char **Compress, int *DimCnt, int *Dim, int *MaxLen, LongBool *err)
+	char **Compress, int *DimCnt, int *Dim, int *MaxLen, LongBool *CompleteData,
+	LongBool *err)
 {
 	CdSequenceX *vObj = NULL;
 	try {
@@ -640,7 +642,7 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 
 		if (vObj != NULL)
 		{
-			if ((vObj->DimCnt()>0) && (!vObj->PipeInfo()))
+			if ((vObj->DimCnt()>0) && (!vObj->PipeInfo()) && *CompleteData)
 				vObj->SetDLen(0, *Dim);
         }
 

@@ -185,18 +185,20 @@ add.gdsn <- function( node, name, val=NULL,
 		{
 			val <- as.array(val)
 			valdim <- dim(val)
-		} else valdim <- c()
+		} else
+			valdim <- c()
 	} else {
 		if (storage == "NULL") storage <- "integer"
 	}
 
 	if (is.character(val))
 		MaxLen <- max(nchar(val))
-	else MaxLen <- 1
+	else
+		MaxLen <- 1
 
 	r <- .C("gdsAddNode", node=as.integer(node), as.character(name),
 		as.character(storage), as.character(compress[1]),
-		length(valdim), as.integer(rev(valdim)), as.integer(MaxLen),
+		length(valdim), as.integer(rev(valdim)), as.integer(MaxLen), is.null(val),
 		err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 
 	if (r$err == 0)
@@ -206,27 +208,17 @@ add.gdsn <- function( node, name, val=NULL,
 		{
 			if (!(storage %in% c("NULL", "list")))
 			{
+				append.gdsn(rv, val)
 				if (compress[1] != "")
 				{
-					append.gdsn(rv, val)
-					if (closezip)
-						readmode.gdsn(rv)
-				} else {
-					valdim <- dim(as.array(val))
-					write.gdsn(rv, val, rep(1, length(valdim)), valdim)
+					if (closezip) readmode.gdsn(rv)
 				}
 			}
 		}
 
 		if (storage == "list")
 		{
-			if (class(val) == "data.frame")
-			{
-				put.attr.gdsn(rv, "data.frame")
-			} else {
-				put.attr.gdsn(rv, "data.list")
-			}
-
+			put.attr.gdsn(rv, "R.class", class(val))
 			iNames <- names(val); iN <- 1
 			for (v in val)
 			{
@@ -286,9 +278,9 @@ get.attr.gdsn <- function(node)
 	stopifnot(class(node)=="gdsn")
 	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), NAOK=TRUE,
 		PACKAGE="gdsfmt")
-	rv <- vector("list", r$Cnt)
 	if (r$Cnt > 0)
 	{
+		rv <- vector("list", r$Cnt)
 		r1 <- .C("gdsAttrType", as.integer(node), rtype=integer(r$Cnt),
 			NAOK=TRUE, PACKAGE="gdsfmt")
 		rn <- character(r$Cnt)
@@ -306,7 +298,8 @@ get.attr.gdsn <- function(node)
 				stop(lasterr.gds())
 		}
 		names(rv) <- rn
-	}
+	} else
+		rv <- NULL
 	return(rv)
 }
 
@@ -371,6 +364,9 @@ append.gdsn <- function(node, val, check=TRUE)
 		"double" =
 			.C( "gdsObjAppend", as.integer(node), as.integer(2), as.double(val),
 					length(val), CntWarn=integer(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt"),
+		"numeric" =
+			.C( "gdsObjAppend", as.integer(node), as.integer(2), as.double(val),
+					length(val), CntWarn=integer(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt"),
 		"character" =
 			.C( "gdsObjAppend", as.integer(node), as.integer(3), as.character(val),
 					length(val), CntWarn=integer(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt"),
@@ -396,11 +392,9 @@ read.gdsn <- function(node, start, count)
 	{
 		if (missing(count))
 		{
-			rdn <- names(get.attr.gdsn(node))
-			rdframe <- "data.frame" %in% rdn
-			rdlist <- "data.list" %in% rdn
-
-			if (rdframe || rdlist)
+			rvattr <- get.attr.gdsn(node)
+			rvclass <- rvattr$R.class
+			if (!is.null(rvclass))
 			{
 				cnt <- cnt.gdsn(node)
 				r <- vector("list", cnt)
@@ -414,7 +408,10 @@ read.gdsn <- function(node, start, count)
 						names(r)[i] <- name.gdsn(n)
 					}
 				}
-				if (rdframe) r <- as.data.frame(r, stringsAsFactors=FALSE)
+				if (rvclass == "data.frame")
+					r <- as.data.frame(r, stringsAsFactors=FALSE)
+				if (!(rvclass %in% c("list", "data.frame")))
+					class(r) <- rvclass
 				return(r)
 			}
 
@@ -423,7 +420,7 @@ read.gdsn <- function(node, start, count)
 				total=integer(1), rtype=integer(1), err=integer(1),
 				NAOK=TRUE, PACKAGE="gdsfmt")
 
-			rfactor <- ("R.factor" %in% rdn)
+			rfactor <- ("R.factor" %in% names(rvattr))
 
 		} else {
 			stop("start is missing!")
@@ -506,7 +503,6 @@ write.gdsn <- function(node, val, start, count)
 	} else {
 
 		stopifnot(length(start)==length(count))
-
 		r <- .C("gdsxObjDesp", as.integer(node), cnt=as.integer(length(start)),
 			rstart=as.integer(rev(start)), rcount=as.integer(rev(count)),
 			total=integer(1), rtype=integer(1), err=integer(1), NAOK=TRUE,
@@ -517,7 +513,6 @@ write.gdsn <- function(node, val, start, count)
 			if (r$total != length(val))
 				stop(paste("the length of val ", length(val),
 					" is not equal to count(", r$total, ").", sep=""))
-
 			if (is.character(val))
 				val[is.na(val)] <- ""
 

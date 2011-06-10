@@ -415,7 +415,8 @@ namespace CoreArray
 	public:
 	#ifdef COREARRAY_WINDOWS
 		#ifdef COREARRAY_MINGW32
-			typedef _CRITICAL_SECTION TdMutex;
+			// typedef _CRITICAL_SECTION TdMutex;
+			typedef HANDLE TdMutex;
 		#else
 			typedef RTL_CRITICAL_SECTION TdMutex;
 		#endif

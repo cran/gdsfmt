@@ -1080,6 +1080,17 @@ extern "C"
 		CORECATCH(false);
 	}
 
+	// CdSequenceX -- append
+
+	DLLEXPORT bool gds_AppendData(CdSequenceX *obj, int Cnt, const void *InBuf, TSVType InSV)
+	{
+		CORETRY
+			obj->Append(InBuf, Cnt, InSV);
+			return true;
+		CORECATCH(false);
+	}
+
+
 
 	// Functions for CdGDSStreamContainer
 

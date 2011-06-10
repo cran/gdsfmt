@@ -1623,9 +1623,14 @@ int CoreArray::Mach::GetL2CacheMemory()
 CdThreadMutex::CdThreadMutex()
 {
 	#if defined(COREARRAY_WINDOWS)
-		InitializeCriticalSection(&mutex);
+		// InitializeCriticalSection(&mutex);
+		mutex = CreateMutex(NULL, FALSE, NULL);
+		if (mutex == NULL)
+			RaiseLastOSError<ErrOSError>();
 	#elif defined(COREARRAY_POSIX_THREAD)
-    	pthread_mutex_init(&mutex, NULL);
+    	int rv = pthread_mutex_init(&mutex, NULL);
+    	if (rv != 0)
+    		throw ErrOSError("pthread_mutex_init returns an error code %d.", rv);
 	#else
     	"..."
 	#endif
@@ -1634,9 +1639,13 @@ CdThreadMutex::CdThreadMutex()
 CdThreadMutex::~CdThreadMutex()
 {
 	#if defined(COREARRAY_WINDOWS)
-		DeleteCriticalSection(&mutex);
+		// DeleteCriticalSection(&mutex);
+		if (CloseHandle(mutex) == 0)
+			RaiseLastOSError<ErrOSError>();
 	#elif defined(COREARRAY_POSIX_THREAD)
-		pthread_mutex_destroy(&mutex);
+		int rv = pthread_mutex_destroy(&mutex);
+	   	if (rv != 0)
+    		throw ErrOSError("pthread_mutex_destroy returns an error code %d.", rv);
 	#else
     	"..."
 	#endif
@@ -1645,9 +1654,13 @@ CdThreadMutex::~CdThreadMutex()
 void CdThreadMutex::Lock()
 {
 	#if defined(COREARRAY_WINDOWS)
-		EnterCriticalSection(&mutex);
+		// EnterCriticalSection(&mutex);
+		if (WaitForSingleObject(mutex, INFINITE) == WAIT_FAILED)
+			RaiseLastOSError<ErrOSError>();
 	#elif defined(COREARRAY_POSIX_THREAD)
-		pthread_mutex_lock(&mutex);
+		int rv = pthread_mutex_lock(&mutex);
+	   	if (rv != 0)
+    		throw ErrOSError("pthread_mutex_lock returns an error code %d.", rv);
 	#else
     	"..."
 	#endif
@@ -1656,9 +1669,13 @@ void CdThreadMutex::Lock()
 void CdThreadMutex::Unlock()
 {
 	#if defined(COREARRAY_WINDOWS)
-		LeaveCriticalSection(&mutex);
+		// LeaveCriticalSection(&mutex);
+		if (!ReleaseMutex(mutex))
+			RaiseLastOSError<ErrOSError>();
 	#elif defined(COREARRAY_POSIX_THREAD)
-		pthread_mutex_unlock(&mutex);
+		int rv = pthread_mutex_unlock(&mutex);
+	   	if (rv != 0)
+    		throw ErrOSError("pthread_mutex_unlock returns an error code %d.", rv);
 	#else
     	"..."
 	#endif
@@ -1667,7 +1684,11 @@ void CdThreadMutex::Unlock()
 bool CdThreadMutex::TryLock()
 {
 	#if defined(COREARRAY_WINDOWS)
-		return TryEnterCriticalSection(&mutex);
+		// return TryEnterCriticalSection(&mutex);
+		DWORD rv = WaitForSingleObject(mutex, INFINITE);
+		if (rv == WAIT_FAILED)
+			RaiseLastOSError<ErrOSError>();
+		return (rv == WAIT_OBJECT_0);
 	#elif defined(COREARRAY_POSIX_THREAD)
 		return pthread_mutex_trylock(&mutex) == 0;
 	#else
