@@ -2,16 +2,16 @@
 \alias{put.attr.gdsn}
 \title{Put an attribute into a GDS file}
 \description{
-  Puts an attribute in a CoreArray Generic Data Structures (GDS) file.
+	To add an attribute to a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-  put.attr.gdsn(node, name, val = NULL)
+put.attr.gdsn(node, name, val = NULL)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{name}{Name of an attribute.}
-  \item{val}{Value of an attribute.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structures.}
+	\item{name}{the name of an attribute.}
+	\item{val}{the value of an attribute.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

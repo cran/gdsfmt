@@ -1,21 +1,19 @@
 \name{name.gdsn}
 \alias{name.gdsn}
-\title{Return the name of a node}
+\title{Return the variable name of a node}
 \description{
-    Returns the name of a node, in a CoreArray Generic Data Structures (GDS)
-  file.
+	To get the variable name of a node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-  name.gdsn(node, fullname = FALSE)
+name.gdsn(node, fullname = FALSE)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{fullname}{Returns the node name (by default), or the full name
-    including the path.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{fullname}{return the node name (by default), or the full name including the path.}
 }
 \value{
-  Returns a charactor string.
+	A vector of charactors.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

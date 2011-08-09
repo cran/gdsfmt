@@ -2,26 +2,26 @@
 \alias{read.gdsn}
 \title{Read data field of a GDS node}
 \description{
-    Reads data from a GDS node of hierarchical structures, in a CoreArray
-  Generic Data Structures (GDS) file.
+	To get data from a GDS node of hierarchical structure, in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-  read.gdsn(node, start, count)
+read.gdsn(node, start, count)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{start}{A vector of integers, starting from 1 for each dimension.}
-  \item{count}{A vector of integers, the length of each dimnension. As a
-    special case, the value "-1" indicates that all entries along that
-    dimension should be written.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{start}{a vector of integers, starting from 1 for each dimension component.}
+	\item{count}{a vector of integers, the length of each dimnension. As a
+		special case, the value "-1" indicates that all entries along that
+		dimension should be written.}
 }
 \details{
-    \code{start}, \code{count}: The values in data are taken to be those
-  in the array with the leftmost subscript moving fastest.
+    \code{start}, \code{count}: the values in data are taken to be those in the array
+with the leftmost subscript moving fastest.
 }
 \value{
-  Returns an array, list, or data.frame.
+	Return an array, list, or data.frame.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

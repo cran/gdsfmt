@@ -1,25 +1,25 @@
 \name{createfn.gds}
 \alias{createfn.gds}
-\title{Create a GDS File}
+\title{Create a GDS file}
 \description{
-  Create a new CoreArray Generic Data Structures (GDS) file.
+	To Create a new CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-  createfn.gds(fn)
+createfn.gds(fn)
 }
 \arguments{
-  \item{fn}{Name of the GDS file to be created.}
+	\item{fn}{the file name of a GDS file to be created.}
 }
 \details{
- Keep in mind that the new file may not actually be written to disk until 
- \code{\link[gdsfmt]{closefn.gds}} is called.
+	Keep in mind that the new file may not actually be written to disk until
+\code{\link[gdsfmt]{closefn.gds}} or \code{\link[gdsfmt]{sync.gds}} is called.
 }
 \value{
-  Return an object of class "gdsclass":
-  \item{filename}{Name of the GDS file to be created.}
-  \item{id}{ID of GDS file, internal use.}
-  \item{root}{An object of class "gdsn", the root of hierachical structures.}
+	Return an object of class \code{\link[gdsfmt]{gdsclass}}:
+	\item{filename}{the file name to be created.}
+	\item{id}{ID of GDS file, internal use.}
+	\item{root}{An object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

@@ -2,23 +2,22 @@
 \alias{get.attr.gdsn}
 \title{Get attributes}
 \description{
-  Gets attributes from a CoreArray GDS node.
+	To get the attributes of a CoreArray GDS node.
 }
 
 \usage{
-  get.attr.gdsn(node)
+get.attr.gdsn(node)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
 }
 \value{
-  Returns a list of attributes.
+	Return a list of attributes.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{put.attr.gdsn}},
-  \code{\link[gdsfmt]{delete.attr.gdsn}} }
+\seealso{ \code{\link[gdsfmt]{put.attr.gdsn}}, \code{\link[gdsfmt]{delete.attr.gdsn}} }
 
 \examples{
 library(gdsfmt)

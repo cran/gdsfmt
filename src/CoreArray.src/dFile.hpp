@@ -172,7 +172,7 @@ namespace CoreArray
         void xValidateName(const UTF16String &name);
 	};
 
-	
+
 	/// CoreArray object
 	class CdGDSObj: public CdObjMsg
 	{

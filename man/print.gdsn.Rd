@@ -1,18 +1,18 @@
 \name{print.gdsn}
 \alias{print.gdsn}
-\title{Print class "gdsn"}
+\title{Show the information of class "gdsn"}
 \description{
-    Print an object of class "gdsn", a node of hierarchical structures
-  in a CoreArray Generic Data Structures (GDS) file.
+	To display an object of class "gdsn", a node of hierarchical structure in a CoreArray
+Genomic Data Structure (GDS) file.
 }
 
 \usage{
-	\method{print}{gdsn}(x, expand = TRUE, ...)
+\method{print}{gdsn}(x, expand = TRUE, ...)
 }
 \arguments{
-	\item{x}{An object of class "gdsn", the node of hierarchical structures.}
-	\item{expand}{Whether print the child nodes.}
-	\item{...}{Arguments passed to or from other methods.}
+	\item{x}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structures.}
+	\item{expand}{whether print the child nodes.}
+	\item{...}{the arguments passed to or from other methods.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

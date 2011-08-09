@@ -2,54 +2,53 @@
 \alias{add.gdsn}
 \title{Add a GDS node}
 \description{
-	Adds a GDS node of hierarchical structures, in a CoreArray Generic Data
-Structures (GDS) file.
+	To add a GDS node of hierarchical structure, in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-	add.gdsn(node, name, val = NULL, storage = storage.mode(val),
-valdim = NULL, compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"),
-closezip = FALSE)
+add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
+	compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"), closezip = FALSE)
 }
 
 \arguments{
-	\item{node}{An object of class "gdsn" or "gdsclass": "gdsn" -- the node of
-		hierarchical structures; "gdsclass" -- the root of hieracrchical
-		structures.}
-	\item{name}{Name of the added node.}
-	\item{val}{R values: vector, list, data.frame}
-	\item{storage}{Specifies Data Type: integer (
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
+		"gdsn" -- the node of hierarchical structure;
+		"gdsclass" -- the root of hieracrchical structure.}
+	\item{name}{the variable name of the added node.}
+	\item{val}{R value: vector, list, data.frame}
+	\item{storage}{to specify data type: integer (
 		signed integer:
-		"int8", "int16", "int24", "int32", "int64",
-		"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8",
-		"sbit9", "sbit10", "sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16",
-		"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
-		"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
-		"sbit25", "sbit26", "sbit27", "sbit28", "sbit29", "sbit30", "sbit31", "sbit32" ;
+			"int8", "int16", "int24", "int32", "int64",
+			"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8",
+			"sbit9", "sbit10", "sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16",
+			"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
+			"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
+			"sbit25", "sbit26", "sbit27", "sbit28", "sbit29", "sbit30", "sbit31", "sbit32" ;
 		unsigned integer:
-		"uint8", "uint16", "uint24", "uint32", "uint64",
-		"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8",
-		"bit9", "bit10", "bit11", "bit12", "bit13", "bit14", "bit15", "bit16",
-		"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
-		"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
-		"bit25", "bit26", "bit27", "bit28", "bit29", "bit30", "bit31", "bit32" );
-		float ("float32", "float64"), string ("string", "wstring", "dwstring").
-		Or "integer" (="int32"), "double" (="float64"), "character" (="string"),
-		"logical", "list", "factor", "folder".}
-	\item{valdim}{The dim attribute for the array to be created, which is a
+			"uint8", "uint16", "uint24", "uint32", "uint64",
+			"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8",
+			"bit9", "bit10", "bit11", "bit12", "bit13", "bit14", "bit15", "bit16",
+			"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
+			"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
+			"bit25", "bit26", "bit27", "bit28", "bit29", "bit30", "bit31", "bit32" );
+			float ("float32", "float64"), string ("string", "wstring", "dwstring").
+			Or "integer" (="int32"), "double" (="float64"), "character" (="string"),
+			"logical", "list", "factor", "folder".}
+	\item{valdim}{the dimension attribute for the array to be created, which is a
 		vector of length one or more giving the maximal indices in each dimension.}
-	\item{compress}{The compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max".}
-	\item{closezip}{If allowed to compress data, return to read mode after compression.}
+	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max".}
+	\item{closezip}{if allowed to compress data, return to read mode after compression.}
 }
 
 \details{
-	\code{name}  If missing, ``Item n'' is assigned to \code{name}, where \code{n} is
+	\code{name}  if missing, ``Item n'' is assigned to \code{name}, where \code{n} is
 		the number of child nodes + 1.
 
-	\code{val}  If val is \code{list} or \code{data.frame}, the child node(s)
+	\code{val}  if val is \code{list} or \code{data.frame}, the child node(s)
 		will be added corresponding to objects in \code{list} or \code{data.frame}.
 
-	\code{storage}  The default value is \code{storage.mode(val)}, "int" denotes
+	\code{storage}  the default value is \code{storage.mode(val)}, "int" denotes
 		signed integer, "uint" denotes unsigned integer, 8, 16, 24, 32 and 64 denote
 		the number of bits. "bit1" to "bit32" denote the packed data types for 1
 		to 32 bits which are packed on disk, and "sbit2" to "sbit32" denote the
@@ -60,26 +59,28 @@ closezip = FALSE)
 		standard, and "dwstring" represents strings of 32-bit characters following
 		UTF32 industry standard. "folder" is to create a folder.
 
-	\code{valdim}  The values in data are taken to be those in the array with the
+	\code{valdim}  the values in data are taken to be those in the array with the
 		leftmost subscript moving fastest. Some of entries can be ZERO!
 
-	\code{compress}  In the comprssion mode, you can not change the none-first
-		dimension and read data field. Call \code{\link[gdsfmt]{readmode.gdsn}} to
-		return read mode.
+	\code{compress}  Z compression algorithm can be used to deflate the data stored in
+		the GDS file. "ZIP" option is equivalent to "ZIP.default". "ZIP.fast", "ZIP.default"
+		and "ZIP.max" correspond to different compression levels. In the comprssion mode, you
+		can not change the non-first dimension and read data field. Call
+		\code{\link[gdsfmt]{readmode.gdsn}} to return read mode.
 
-	\code{closezip}  Once return to read mode, users can not add data to the data
-		field. CoreArray 1.1 will solve this problem.
+	\code{closezip}  if compression option is specified, then enter a read mode after deflating
+		the data. see \code{\link[gdsfmt]{readmode.gdsn}}.
 }
 
 \value{
-	An object of class "gdsn" of the added node.
+	An object of class \code{\link[gdsfmt]{gdsn}} of the added node.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+\seealso{ \code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
+	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}} }
 
 \examples{
 library(gdsfmt)

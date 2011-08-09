@@ -1,23 +1,22 @@
 \name{delete.gdsn}
 \alias{delete.gdsn}
-\title{Delete a node}
+\title{Delete a GDS node}
 \description{
-    Deletes the specified node, in a CoreArray Generic Data Structures (GDS)
-  file.
+	To delete a specified node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-  delete.gdsn(node)
+delete.gdsn(node)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-  \code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-  \code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
+	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
+	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
 
 \examples{
 library(gdsfmt)

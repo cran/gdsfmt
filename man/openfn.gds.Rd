@@ -1,32 +1,30 @@
 \name{openfn.gds}
 \alias{openfn.gds}
-\title{Open a GDS File}
+\title{Open a GDS file}
 \description{
-	Opens an existing CoreArray Generic Data Structures (GDS) file for
-reading or writing.
+	To open an existing file of CoreArray Genomic Data Structure (GDS) for reading or writing.
 }
 
 \usage{
-	openfn.gds(fn, readonly = TRUE)
+openfn.gds(fn, readonly = TRUE)
 }
 \arguments{
-	\item{fn}{The file name of the GDS file to be opened.}
-	\item{readonly}{If TRUE (default), the file is opened read-only. Otherwise,
-		writing to the file is allowed.}
+	\item{fn}{the file name of a GDS file to be opened.}
+	\item{readonly}{if TRUE (default), the file is opened read-only. Otherwise, writing to
+		the file is allowed.}
 }
 \details{
 	This routine opens an existing GDS file for reading (or, if readonly=FALSE,
-for writing). To create a new GDS file, use createfn.gds() instead.
+for writing). To create a new GDS file, use \code{\link[gdsfmt]{createfn.gds}} instead.
 
-	If the file is opened read-only, all data structures in the file are not
-allowed to change, including hierachical structure, node names, data field,
-etc.
+	If the file is opened read-only, all data in the file are not allowed to change,
+including hierachical structure, variable names, data field, etc.
 }
 \value{
-	Return an object of class "gdsclass".
-	\item{filename}{Name of the GDS file to be opened.}
+	Return an object of class \code{\link[gdsfmt]{gdsclass}}.
+	\item{filename}{the file name to be created.}
 	\item{id}{ID of GDS file, internal use.}
-	\item{root}{An object of class "gdsn", the root of hierachical structures.}
+	\item{root}{An object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

@@ -136,10 +136,9 @@ objdesp.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
 	cnt <- cnt.gdsn(node)
-	r <- .C("gdsNodeObjDesp", as.integer(node), desp=character(1),
-		name=character(1), sv=integer(1), dimcnt=integer(1),
-		dimeach=integer(1024), cp=character(1), cpratio=double(1),
-		storage=character(2), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	r <- .C("gdsNodeObjDesp", as.integer(node), desp=character(1), name=character(1),
+		sv=integer(1), dimcnt=integer(1), dimeach=integer(1024), cp=character(1),
+		cpratio=double(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 	{
 		stop(lasterr.gds())
@@ -147,14 +146,14 @@ objdesp.gdsn <- function(node)
 	} else {
 		if (r$dimcnt > 0)
 			d <- rev(r$dimeach[1:r$dimcnt])
-		else d <- NULL
+		else
+			d <- NULL
 		return( list(desp=r$desp, name=r$name, svtype=r$sv, dim=d, compress=r$cp,
-			cpratio=r$cpratio, storage=r$storage) )
+			cpratio=r$cpratio) )
 	}
 }
 
-add.gdsn <- function( node, name, val=NULL,
-	storage=storage.mode(val), valdim=NULL,
+add.gdsn <- function( node, name, val=NULL, storage=storage.mode(val), valdim=NULL,
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"),
 	closezip=FALSE)
 {
@@ -530,18 +529,6 @@ write.gdsn <- function(node, val, start, count)
 	return(invisible(NULL))
 }
 
-storage.gdsn <- function(node, mode=c("InMemory", "InStream"))
-{
-	stopifnot(class(node)=="gdsn")
-	mode <- switch(mode[1], "InMemory" = 1, "InStream" = 0,
-		stop("mode should be one of InMemory and InStream.") )
-	r <- .C("gdsLoadMode", as.integer(node), as.integer(mode), err=integer(1),
-		NAOK=TRUE, PACKAGE="gdsfmt")
-	if (r$err != 0)
-		stop(lasterr.gds())
-	return(node)
-}
-
 
 
 #############################################################
@@ -592,8 +579,14 @@ print.gdsclass <- function(x, ...)
 	}
 
 	stopifnot(class(x)=="gdsclass")
-	cat("file name: ", x$filename, "\n\n", sep="");
-	enum(x$root, "", 1)
+	rv <- .C("gdsFileValid", x$id, valid=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	if (rv$valid == 0)
+	{
+		cat("The GDS file has been closed.\n")
+	} else {
+		cat("file name: ", x$filename, "\n\n", sep="");
+		enum(x$root, "", 1)
+	}
 }
 
 print.gdsn <- function(x, expand=TRUE, ...)
@@ -632,7 +625,13 @@ print.gdsn <- function(x, expand=TRUE, ...)
 	}
 
 	stopifnot(class(x)=="gdsn")
-	enum(x, "", 1, expand, TRUE)
+	rv <- .C("gdsNodeValid", as.integer(x), valid=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	if (rv$valid == 0)
+	{
+		cat("The GDS file has been closed.\n")
+	} else {
+		enum(x, "", 1, expand, TRUE)
+	}
 }
 
 

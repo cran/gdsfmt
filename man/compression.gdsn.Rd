@@ -1,26 +1,28 @@
 \name{compression.gdsn}
 \alias{compression.gdsn}
-\title{Change Compression Mode}
+\title{Modify compression mode}
 \description{
-  Changes the data compression mode of a CoreArray GDS node.
+	To modify the data compression mode of data field in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-  compression.gdsn(node, compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"))
+compression.gdsn(node, compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"))
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{compress}{Compression method.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{compress}{specify the compression method.}
 }
 \details{
-    For large dataset, please make sure you have enough disk space. Be careful,
-  if something wrong happens, you may not recover the dataset.
+	Z compression algorithm can be used to deflate the data stored in the GDS file.
+"ZIP" option is equivalent to "ZIP.default". "ZIP.fast", "ZIP.default" and "ZIP.max"
+correspond to different compression levels.
 }
 \value{
-  Returns \code{node}.
+	Return \code{node}.
 }
 
-\references{\url{http://sourceforge.net/projects/corearray/}}
+\references{ \url{http://sourceforge.net/projects/corearray/}, \url{http://zlib.net/} }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{readmode.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
 

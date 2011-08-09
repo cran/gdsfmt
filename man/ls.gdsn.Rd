@@ -2,18 +2,18 @@
 \alias{ls.gdsn}
 \title{Return the names of children nodes}
 \description{
-    Returns the names of children nodes, in a CoreArray Generic Data
-  Structures (GDS) file.
+	To get a list of names for the children nodes, in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-  ls.gdsn(node)
+ls.gdsn(node)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
 }
 \value{
-  A vector of characters.
+	A vector of characters.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

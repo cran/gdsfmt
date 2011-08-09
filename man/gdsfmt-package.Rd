@@ -2,25 +2,33 @@
 \alias{gdsfmt-package}
 \alias{gdsfmt}
 \docType{package}
-\title{ CoreArray Generic Data Structures (GDS) R Interface }
+\title{ CoreArray Genomic Data Structure (GDS) R Interface }
 \description{
-	R interface of CoreArray GDS is based on the CoreArray project initiated and developed by Xiuwen Zheng from 2007.
+	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
+by Xiuwen Zheng from 2007.
 }
 \details{
 \tabular{ll}{
 Package: \tab gdsfmt\cr
 Type: \tab Package\cr
-Version: \tab 0.9.4\cr
-Date: \tab 2011-06-10\cr
+Version: \tab 0.9.5\cr
+Date: \tab 2011-08-09\cr
 License: \tab LGPL version 3\cr
 }
-	R interface of CoreArray GDS is based on the CoreArray project initiated and developed by Xiuwen Zheng from 2007.
-	CoreArray is to develop portable, scalable, bioinformatics data visualization and storage technologies.
+	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
+by Xiuwen Zheng from 2007. The CoreArray project is to develop portable, scalable, bioinformatics
+data visualization and storage technologies.
+
+	R is the most popular statistical environment, but one not necessarily optimized for
+high performance or parallel computing which ease the burden of large-scale calculations. To
+support efficient data management in parallel for numerical genomic data, we developed the Genomic
+Data Structure (GDS) file format. \code{gdsfmt} provides fundamental functions to support accessing
+data in parallel, and allows future R packages to call these functions.
 }
 \references{\url{http://sourceforge.net/projects/corearray}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \examples{
-
+# load the package
 library(gdsfmt)
 
 # cteate the GDS file "test.gds"

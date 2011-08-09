@@ -2,22 +2,22 @@
 \alias{rename.gdsn}
 \title{Rename a GDS node}
 \description{
-    Renames a GDS node of hierarchical structures, in a CoreArray Generic Data
-  Structures (GDS) file.
+	To rename a GDS node of hierarchical structure, in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-  rename.gdsn(node, newname)
+rename.gdsn(node, newname)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{newname}{A new name of the specified node.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{newname}{the new name of a specified node.}
 }
 \details{
-  CoreArray hierarchical structure allows duplicate names in the same level.
+	CoreArray hierarchical structure does not allow duplicate names in the same path.
 }
 \value{
-  Returns \code{node}.
+	Returns \code{node}.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

@@ -388,12 +388,83 @@ DLLEXPORT void gdsSyncGDS(int *gds, LongBool *err)
 	}
 }
 
+DLLEXPORT void gdsFileValid(int *gds, int *out_valid)
+{
+	if ((0 <= *gds) && (*gds < Init.MaxFiles))
+	{
+		*out_valid = (Init.Files[*gds] ? 1 : 0);
+	} else {
+		*out_valid = 0;
+	}
+}
+
 
 // File Structure Operations
+
+DLLEXPORT void gdsNodeValid(CdGDSObj **Node, int *out_valid)
+{
+	try {
+		*out_valid = 0;
+		if (*Node != NULL)
+		{
+			CdGDSFile *file = (*Node)->GDSFile();
+			if (file != NULL)
+			{
+				for (int i=0; i < Init.MaxFiles; i++)
+				{
+					if (Init.Files[i] == file)
+					{
+						*out_valid = 1;
+						break;
+					}
+				}
+			}
+		}
+	}
+	catch (exception &E)
+	{
+		Init.LastError = E.what();
+		*out_valid = 0;
+	}
+	catch (...)
+	{
+		*out_valid = 0;
+	}
+}
+
+static void _NodeValid(CdGDSObj *Node)
+{
+	try {
+		if (Node != NULL)
+		{
+			CdGDSFile *file = Node->GDSFile();
+			if (file != NULL)
+			{
+				for (int i=0; i < Init.MaxFiles; i++)
+				{
+					if (Init.Files[i] == file)
+						return;
+				}
+			}
+			throw ErrGDSFmt("The GDS file has been closed.");
+		}
+	}
+	catch (exception &E)
+	{
+		throw ErrGDSFmt("The GDS file has been closed.");
+	}
+	catch (...)
+	{
+		throw ErrGDSFmt("The GDS file has been closed.");
+	}
+}
 
 DLLEXPORT void gdsNodeChildCnt(CdGDSObj **Node, int *Count)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdGDSFolder*>(*Node))
 			*Count = static_cast<CdGDSFolder*>(*Node)->Count();
 		else
@@ -410,6 +481,9 @@ DLLEXPORT void gdsNodeName(CdGDSObj **Node, char **Name, LongBool *Full,
 	LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (*Full)
 			RStrAgn(UTF16toUTF8((*Node)->FullName()).c_str(), Name);
 		else
@@ -426,6 +500,9 @@ DLLEXPORT void gdsNodeName(CdGDSObj **Node, char **Name, LongBool *Full,
 DLLEXPORT void gdsNodeEnumName(CdGDSObj **Node, char **Names, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdGDSFolder*>(*Node))
 		{
 			CdGDSFolder &Dir = *static_cast<CdGDSFolder*>(*Node);
@@ -448,6 +525,9 @@ DLLEXPORT void gdsNodeEnumName(CdGDSObj **Node, char **Names, LongBool *err)
 DLLEXPORT void gdsNodeEnumPtr(CdGDSObj **Node, void **Ptr, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdGDSFolder*>(*Node))
 		{
 			CdGDSFolder &Dir = *static_cast<CdGDSFolder*>(*Node);
@@ -473,6 +553,9 @@ DLLEXPORT void gdsNodeIndex(CdGDSObj **Node, int *Index, int *Cnt,
 	LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		for (int i=0; i < *Cnt; i++)
 		{
 			if (!dynamic_cast<CdGDSFolder*>(*Node))
@@ -497,6 +580,9 @@ DLLEXPORT void gdsNodeIndexEx(CdGDSObj **Node, char **Name, int *Cnt,
 	LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		for (int i=0; i < *Cnt; i++)
 		{
 			if (!dynamic_cast<CdGDSFolder*>(*Node))
@@ -514,11 +600,13 @@ DLLEXPORT void gdsNodeIndexEx(CdGDSObj **Node, char **Name, int *Cnt,
 	}
 }
 
-DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name,
-	int *SVType, int *DimCnt, int *DimEach,
-	char **PackMode, double *PackRatio, char **Storage, LongBool *err)
+DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SVType,
+	int *DimCnt, int *DimEach, char **PackMode, double *PackRatio, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		RStrAgn(UTF16toUTF8((*Node)->Name()).c_str(), Name);
 		RStrAgn((*Node)->dName(), Desp);
 
@@ -538,37 +626,6 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name,
 					*PackRatio = NaN;
 			} else
 				*PackRatio = NaN;
-
-			if (Obj->StoreMode() == lmKeepInMem)
-				RStrAgn("InMemory", Storage);
-			else
-				RStrAgn("InStream", Storage);
-
-			{
-				string s;
-				if (dynamic_cast<CdVectorX*>(Obj))
-				{
-					CdVectorX *vObj = static_cast<CdVectorX*>(Obj);
-					if (vObj->Allocator().Level == blTempFile)
-					{
-						CdTempStream *temp = dynamic_cast<CdTempStream*>(
-							vObj->Allocator().Filter->Stream());
-						if (temp)
-							s = temp->FileName();
-						else
-							s = "";
-					} else {
-						switch (vObj->Allocator().Level) {
-							case blChunkMemory:	s = "Chunk Memory"; break;
-							case blTempFile:	s = "Linked Memory"; break;
-							case blFilter:		s = "GDS File"; break;
-							case blUnknown:		s = "Unknown"; break;
-							default: s = "";
-						}
-					}
-				}
-				Storage++; RStrAgn(s.c_str(), Storage);
-			}
 		} else {
 			*DimCnt = 0; *PackRatio = NaN;
 			*SVType = svCustom;
@@ -588,6 +645,9 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 {
 	CdSequenceX *vObj = NULL;
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (!dynamic_cast<CdGDSFolder*>(*Node))
 			throw ErrGDSFmt(erNotFolder);
 		CdGDSFolder &Dir = *static_cast<CdGDSFolder*>(*Node);
@@ -658,6 +718,9 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 DLLEXPORT void gdsDeleteNode(CdGDSObj **Node, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if ((*Node)->Folder())
 		{
 			(*Node)->Folder()->DeleteObj(*Node);
@@ -677,6 +740,9 @@ DLLEXPORT void gdsDeleteNode(CdGDSObj **Node, LongBool *err)
 DLLEXPORT void gdsRenameNode(CdGDSObj **Node, char **NewName, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		(*Node)->SetName(*NewName);
 	}
 	catch (exception &E)
@@ -691,6 +757,9 @@ DLLEXPORT void gdsRenameNode(CdGDSObj **Node, char **NewName, LongBool *err)
 DLLEXPORT void gdsAttrCnt(CdGDSObj **Node, int *Cnt)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		*Cnt = (*Node)->Attribute().Count();
 	}
 	catch (exception &E)
@@ -722,6 +791,9 @@ DLLEXPORT void gdsGetAttr(CdGDSObj **Node, int *Index, int *RType, void *Ptr,
 	char **Name, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		RStrAgn(UTF16toUTF8((*Node)->Attribute().Names(*Index-1)).c_str(), Name);
 		TdsData &p = (*Node)->Attribute()[*Index-1];
 		switch (*RType) {
@@ -747,6 +819,9 @@ DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
 	void *Ptr, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		TdsData *p;
 		if ((*Node)->Attribute().HasName(*Name))
 			p = &((*Node)->Attribute()[*Name]);
@@ -774,6 +849,9 @@ DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
 DLLEXPORT void gdsDeleteAttr(CdGDSObj **Node, char **Name, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		(*Node)->Attribute().Delete(UTF8toUTF16(*Name));
 		*err = false;
 	}
@@ -810,6 +888,9 @@ DLLEXPORT void gdsObjAppend(CdGDSObj **Node, int *RType, void *Ptr,
 		{ *err = false; return; }
 
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
@@ -858,6 +939,9 @@ DLLEXPORT void gdsxObjDesp(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *TotalCnt, int *RType, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
@@ -908,7 +992,8 @@ static void rIterStr(TIterDataExt &Rec)
 {
 	char **p = (char**)Rec.pBuf;
 	TdIterator it = Rec.Seq->Iterator(Rec.Index);
-	for (int k=1; k <= Rec.LastDim; k++) {
+	for (int k=1; k <= Rec.LastDim; k++)
+	{
 		RStrAgn(UTF16toUTF8(it.toStr()).c_str(), p);
 		p++; ++it;
 	}
@@ -919,6 +1004,9 @@ DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *RType, void *Ptr, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX::TSeqDimBuf DStart;
@@ -930,8 +1018,9 @@ DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 
 			TSVType SV = RtoSV(*RType);
 			if (!COREARRAY_SVSTR(SV))
+			{
 				Obj->rData(DStart, Count, Ptr, SV);
-			else {
+			} else {
 				// Checking
 				int *pStart=DStart, *pCount=Count;
 				for (int i=0; i < *DimCnt; i++)
@@ -971,7 +1060,8 @@ static void wIterStr(TIterDataExt &Rec)
 {
 	char **p = (char**)Rec.pBuf;
 	TdIterator it = Rec.Seq->Iterator(Rec.Index);
-	for (int k=1; k <= Rec.LastDim; k++) {
+	for (int k=1; k <= Rec.LastDim; k++)
+	{
 		it.StrTo(PChartoUTF16(*p));
 		p++; ++it;
 	}
@@ -982,6 +1072,9 @@ DLLEXPORT void gdsObjWriteAll(CdGDSObj **Node, int *DimCnt, int *Dim,
 	int *RType, void *Ptr, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			if (*DimCnt > 0)
@@ -995,8 +1088,9 @@ DLLEXPORT void gdsObjWriteAll(CdGDSObj **Node, int *DimCnt, int *Dim,
 
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
 			if (*DimCnt < Obj->DimCnt())
+			{
 				throw ErrGDSFmt("New dimension should not be less than the currect.");
-			else {
+			} else {
 				Obj->Clear();
 				for (int i=Obj->DimCnt()+1; i <= *DimCnt; i++)
 					Obj->AddDim(0);
@@ -1043,6 +1137,9 @@ DLLEXPORT void gdsObjWriteData(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *RType, void *Ptr, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX::TSeqDimBuf DStart;
@@ -1052,7 +1149,8 @@ DLLEXPORT void gdsObjWriteData(CdGDSObj **Node, int *DimCnt, int *Start,
 			CopyDec(Start, *DimCnt, DStart);
 
 			TSVType SV = RtoSV(*RType);
-			if (!COREARRAY_SVSTR(SV)) {
+			if (!COREARRAY_SVSTR(SV))
+			{
 				Obj->wData(DStart, Count, Ptr, SV);
 			} else {
 				// Checking
@@ -1096,12 +1194,16 @@ DLLEXPORT void gdsObjSetDim(CdGDSObj **Node, int *DimCnt, int *DLen,
 	LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
 			if (*DimCnt < Obj->DimCnt())
+			{
 				throw ErrGDSFmt("New dimension should not be less than the currect.");
-			else {
+			} else {
 				for (int i=Obj->DimCnt()+1; i <= *DimCnt; i++)
 					Obj->AddDim(-1);
 				int *p = DLen + *DimCnt;
@@ -1126,6 +1228,9 @@ DLLEXPORT void gdsObjSetDim(CdGDSObj **Node, int *DimCnt, int *DLen,
 DLLEXPORT void gdsObjCompress(CdGDSObj **Node, char **Compress, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdContainer*>(*Node))
 		{
 			static_cast<CdContainer*>(*Node)->SetPackedMode(*Compress);
@@ -1145,6 +1250,9 @@ DLLEXPORT void gdsObjCompress(CdGDSObj **Node, char **Compress, LongBool *err)
 DLLEXPORT void gdsObjPackClose(CdGDSObj **Node, LongBool *err)
 {
 	try {
+		// check
+		_NodeValid(*Node);
+
 		if (dynamic_cast<CdContainer*>(*Node))
 		{
 			CdContainer *vObj = static_cast<CdContainer*>(*Node);
@@ -1162,24 +1270,6 @@ DLLEXPORT void gdsObjPackClose(CdGDSObj **Node, LongBool *err)
 	}
 }
 
-DLLEXPORT void gdsLoadMode(CdGDSObj **Node, LongBool *InMem, LongBool *err)
-{
-	try {
-		if (dynamic_cast<CdContainer*>(*Node))
-		{
-			CdContainer *vObj = static_cast<CdContainer*>(*Node);
-			vObj->SetLoadMode(InMem ? lmKeepInMem : lmKeepInStream);
-			*err = false;
-		} else
-			ErrNode(*Node);
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
-}
-
 // Error function
 DLLEXPORT void gdsLastErrGDS(char **Msg)
 {
@@ -1187,4 +1277,3 @@ DLLEXPORT void gdsLastErrGDS(char **Msg)
 }
 
 } // extern "C"
-

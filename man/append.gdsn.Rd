@@ -1,26 +1,26 @@
 \name{append.gdsn}
 \alias{append.gdsn}
-\title{Append New Data to Data Field}
+\title{Append data to the specified variable}
 \description{
-    Appends new data to the data field for a GDS node of hierarchical
-  structures, in a CoreArray Generic Data Structures (GDS) file.
+	To append data to the data field of a GDS node, in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
-  append.gdsn(node, val, check = TRUE)
+append.gdsn(node, val, check = TRUE)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{val}{Vector of data data appended.}
-  \item{check}{Whether a warning is given, when appended data can not match
-    the capability of data field.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{val}{data to be appended.}
+	\item{check}{whether a warning is given, when appended data can not match
+		the capability of data field.}
 }
 \details{
-    \code{storage.mode(val)} should be "integer", "double", "character", or
-  "logical".
+	\code{storage.mode(val)} should be "integer", "double", "character", or
+		"logical".
 }
 \value{
-  None.
+	None.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

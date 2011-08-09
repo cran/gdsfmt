@@ -581,7 +581,7 @@ CdGDSFile *CdGDSObj::GDSFile()
 	if (fGDSStream)
 	{
 		CdBlockCollection *collect = &fGDSStream->Collection();
-		CdGDSFile *rv = dynamic_cast<CdGDSFile*>(collect);
+		CdGDSFile *rv = (CdGDSFile*)(collect);
 		return rv;
 	} else
 		return NULL;

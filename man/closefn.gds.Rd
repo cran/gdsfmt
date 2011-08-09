@@ -1,16 +1,16 @@
 \name{closefn.gds}
 \alias{closefn.gds}
-\title{Close a GDS File}
+\title{Close a GDS file}
 \description{
-  Close an open CoreArray Generic Data Structures (GDS) file.
+	To close an open CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-	closefn.gds(gds)
+closefn.gds(gds)
 }
 \arguments{
-	\item{gds}{An object of class "gdsclass", returned by \code{createfn.gds}
-		or \code{openfn.gds}}
+	\item{gds}{an object of class \code{\link[gdsfmt]{gdsclass}}, returned by
+		\code{\link[gdsfmt]{createfn.gds}} or \code{\link[gdsfmt]{openfn.gds}}}
 }
 \details{
     For better performance, Data in a GDS file are usually cached in memory.
@@ -20,7 +20,7 @@
  be automatically closed.
 }
 \value{
-  None.
+	None.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

@@ -2,11 +2,11 @@
 \alias{lasterr.gds}
 \title{Return the last error}
 \description{
-	Returns the last error of a CoreArray GDS file.
+	To get the last error of gdsfmt.
 }
 
 \usage{
-  lasterr.gds()
+lasterr.gds()
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

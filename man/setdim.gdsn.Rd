@@ -1,21 +1,21 @@
 \name{setdim.gdsn}
 \alias{setdim.gdsn}
-\title{Setup Dimension of Data Field}
+\title{Set the dimension of data field}
 \description{
-    Setups new dimension of the data field for a GDS node of hierarchical
-  structures, in a CoreArray Generic Data Structures (GDS) file.
+	To set the new dimension of the data field for a GDS node of hierarchical
+structures, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-  setdim.gdsn(node, valdim)
+setdim.gdsn(node, valdim)
 }
 \arguments{
-  \item{node}{An object of class "gdsn", the node of hierarchical structures.}
-  \item{valdim}{The dim attribute for the array to be created, which is a
-    vector of length one or more giving the maximal indices in each dimension.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{valdim}{the new dimension for the array to be created, which is a
+		vector of length one or more giving the maximal indices in each dimension.}
 }
 \value{
-  Returns \code{node}.
+	Returns \code{node}.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

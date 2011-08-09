@@ -1,16 +1,15 @@
 \name{print.gdsclass}
 \alias{print.gdsclass}
-\title{Print class "gdsclass"}
+\title{Show the information of class "gdsclass"}
 \description{
-    Print an object of class "gdsclass", in a CoreArray Generic Data Structures
-  (GDS) file.
+	To display an object of class "gdsclass", in a CoreArray Genomic Data Structure (GDS) file.
 }
 \usage{
-	\method{print}{gdsclass}(x, ...)
+\method{print}{gdsclass}(x, ...)
 }
 \arguments{
-	\item{x}{An object of class "gdsclass", the CoreArray GDS file.}
-	\item{...}{Arguments passed to or from other methods.}
+	\item{x}{an object of class \code{\link[gdsfmt]{gdsclass}}, a CoreArray GDS file.}
+	\item{...}{the arguments passed to or from other methods.}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
