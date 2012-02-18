@@ -24,8 +24,6 @@ cnt.gdsn(node)
 	\code{\link[gdsfmt]{add.gdsn}}}
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 f <- createfn.gds(fn="test.gds")
 

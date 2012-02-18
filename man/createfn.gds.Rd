@@ -26,8 +26,6 @@ createfn.gds(fn)
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{openfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}}
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 f <- createfn.gds(fn="test.gds")
 

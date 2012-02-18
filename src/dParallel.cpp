@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dParallel.hpp: Functions for parallel computing
+// dParallel.cpp: Functions for parallel computing
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -25,7 +25,9 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dParallel.hpp>
+
+#include <dParallel.h>
+
 
 namespace CoreArray
 {
@@ -132,12 +134,16 @@ CdConsoleProgress::CdConsoleProgress(TPercentMode permode):
 
 void CdConsoleProgress::ShowProgress()
 {
+	#ifndef COREARRAY_NO_STD_IN_OUT
+
 	if (Info.empty())
 	{
 		cout << NowDateToStr() << "\t" << fPercent << "%" << endl;
 	} else {
 		cout << Info << "\t" << NowDateToStr() << "\t" << fPercent << "%" << endl;
     }
+
+	#endif
 }
 
 

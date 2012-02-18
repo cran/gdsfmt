@@ -29,8 +29,6 @@ append.gdsn(node, val, check = TRUE)
   \code{\link[gdsfmt]{add.gdsn}} }
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
 

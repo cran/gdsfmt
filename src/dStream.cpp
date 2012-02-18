@@ -25,10 +25,13 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dStream.hpp>
+#include <dStream.h>
 #include <ctype.h>
-#include <iostream>
 #include <limits>
+
+#ifndef COREARRAY_NO_STD_IN_OUT
+#	include <iostream>
+#endif
 
 
 #ifdef __BORLANDC__
@@ -407,7 +410,8 @@ static COREARRAY_FASTCALL void FilterFill(TdAllocator &obj, const TdPtr64 I,
 	obj.Filter->SetPosition(I);
 	if (L > (TdPtr64)sizeof(Buf))
 		memset((void*)Buf, Value, sizeof(Buf));
-	else memset((void*)Buf, Value, L);
+	else
+		memset((void*)Buf, Value, L);
 	while (L > 0)
 	{
 		xL = (L >= (TdPtr64)sizeof(Buf)) ? (ssize_t)sizeof(Buf) : L;
@@ -947,6 +951,40 @@ void *CdMemoryStream::BufPointer()
 }
 
 
+#ifndef COREARRAY_NO_STD_IN_OUT
+
+// CdStdInStream
+
+CdStdInStream::CdStdInStream() {};
+
+CdStdInStream::~CdStdInStream() {};
+
+ssize_t CdStdInStream::Read(void *Buffer, ssize_t Count)
+{
+	cin.read((char*)Buffer, Count);
+	return Count;
+}
+
+ssize_t CdStdInStream::Write(void *const Buffer, ssize_t Count)
+{
+	throw Err_dStream("Invalid CdStdInStream::Write.");
+}
+
+TdPtr64 CdStdInStream::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
+{
+	return 0;
+}
+
+TdPtr64 CdStdInStream::GetSize()
+{
+	return 0;
+}
+
+void CdStdInStream::SetSize(const TdPtr64 NewSize)
+{
+	throw Err_dStream("Invalid CdStdInStream::SetSize.");
+}
+
 // CdStdOutStream
 
 CdStdOutStream::CdStdOutStream()
@@ -984,37 +1022,7 @@ void CdStdOutStream::SetSize(const TdPtr64 NewSize)
 	throw Err_dStream("Invalid CdStdOutStream::SetSize.");
 }
 
-// CdStdInStream
-
-CdStdInStream::CdStdInStream() {};
-
-CdStdInStream::~CdStdInStream() {};
-
-ssize_t CdStdInStream::Read(void *Buffer, ssize_t Count)
-{
-	cin.read((char*)Buffer, Count);
-	return Count;
-}
-
-ssize_t CdStdInStream::Write(void *const Buffer, ssize_t Count)
-{
-	throw Err_dStream("Invalid CdStdInStream::Write.");
-}
-
-TdPtr64 CdStdInStream::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
-{
-	return 0;
-}
-
-TdPtr64 CdStdInStream::GetSize()
-{
-	return 0;
-}
-
-void CdStdInStream::SetSize(const TdPtr64 NewSize)
-{
-	throw Err_dStream("Invalid CdStdInStream::SetSize.");
-}
+#endif
 
 
 // CdBaseZStream
@@ -1903,7 +1911,7 @@ void CdBlockCollection::LoadStream(CdStream *vStream, bool vReadOnly)
 
 		if (p) p->Next = n; else fUnuse = n;
 		p = n;
-		
+
 		fStream->SetPosition(sPos);
 	}
 
@@ -1920,7 +1928,7 @@ void CdBlockCollection::LoadStream(CdStream *vStream, bool vReadOnly)
 		if (p != NULL)
 		{
         	// Delete p
-			if (q) q->Next = p->Next; else fUnuse = p->Next;  	
+			if (q) q->Next = p->Next; else fUnuse = p->Next;
 			//
 			CdBlockStream *bs = new CdBlockStream(*this);
 			bs->AddRef();
@@ -2008,7 +2016,7 @@ void CdBlockCollection::DeleteBlockStream(TdBlockID id)
 				{
 					p->BlockSize += CdBlockStream::TBlockInfo::HeadSize;
 					p->StreamStart -= CdBlockStream::TBlockInfo::HeadSize;
-					p->Head = false;                    
+					p->Head = false;
 				}
 				p->SetSize2(*fStream, p->BlockSize, 0);
             	q = p; p = p->Next;
@@ -2021,7 +2029,7 @@ void CdBlockCollection::DeleteBlockStream(TdBlockID id)
 
 			(*it)->Release();
 			fBlockList.erase(it);
-			return;			
+			return;
 		}
 	}
 	throw Err_dStream("Invalid block with id: %x", id.get());

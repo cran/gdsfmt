@@ -8,7 +8,7 @@
 //
 // gdsfmt.cpp: the R interface of CoreArray library
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -25,8 +25,8 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dType.hpp>
-#include <dSeq.hpp>
+#include <dType.h>
+#include <dSeq.h>
 
 #include <R.h>
 #include <cstring>
@@ -39,7 +39,6 @@ using namespace std;
 using namespace CoreArray;
 
 #define LongBool int
-
 
 #ifdef COREARRAY_GNUG
 #  ifdef COREARRAY_WINDOWS
@@ -248,6 +247,7 @@ const static int rtString		= 3;
 const static int rtLogical		= 4;
 
 static const char *erNotFolder = "It is not a folder!";
+static const char *erNotFile = "It is not a stream container!";
 
 inline static void RStrAgn(const char *Text, char **rstr)
 {
@@ -626,6 +626,26 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SV
 					*PackRatio = NaN;
 			} else
 				*PackRatio = NaN;
+		} else if (dynamic_cast<CdGDSStreamContainer*>(*Node))
+		{
+			CdGDSStreamContainer *Obj = static_cast<CdGDSStreamContainer*>(*Node);
+			*SVType = svCustom;
+			*DimCnt = 1;
+
+			if (Obj->PipeInfo())
+			{
+				DimEach[0] = Obj->PipeInfo()->StreamTotalIn();
+				RStrAgn(Obj->PipeInfo()->Coder(), PackMode);
+				if (Obj->PipeInfo()->StreamTotalIn() > 0)
+				{
+					*PackRatio = (double)Obj->PipeInfo()->StreamTotalOut() /
+						Obj->PipeInfo()->StreamTotalIn();
+				} else
+					*PackRatio = NaN;
+			} else {
+				DimEach[0] = Obj->GetSize();;
+				*PackRatio = NaN;
+			}
 		} else {
 			*DimCnt = 0; *PackRatio = NaN;
 			*SVType = svCustom;
@@ -705,6 +725,58 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 			if ((vObj->DimCnt()>0) && (!vObj->PipeInfo()) && *CompleteData)
 				vObj->SetDLen(0, *Dim);
         }
+
+		*err = false;
+	}
+	catch (exception &E)
+	{
+		Init.LastError = E.what();
+		*err = true;
+	}
+}
+
+DLLEXPORT void gdsAddFile(CdGDSObj **Node, char **NodeName, char **FileName,
+	char **Compress, LongBool *err)
+{
+	try {
+		// check
+		_NodeValid(*Node);
+
+		// the pointer to the directory
+		if (!dynamic_cast<CdGDSFolder*>(*Node))
+			throw ErrGDSFmt(erNotFolder);
+		CdGDSFolder &Dir = *static_cast<CdGDSFolder*>(*Node);
+
+		TdAutoRef<CBufdStream> file(new CBufdStream(
+			new CdFileStream(*FileName, CdFileStream::fmOpenRead)));
+		CdGDSStreamContainer *vObj = new CdGDSStreamContainer();
+		vObj->SetPackedMode(*Compress);
+		*Node = Dir.AddObj(RStr(*NodeName), vObj);
+		vObj->CopyFrom(*file.get());
+		vObj->CloseWriter();
+
+		*err = false;
+	}
+	catch (exception &E)
+	{
+		Init.LastError = E.what();
+		*err = true;
+	}
+}
+
+DLLEXPORT void gdsGetFile(CdGDSObj **Node, char **OutFileName, LongBool *err)
+{
+	try {
+		// check
+		_NodeValid(*Node);
+		// the pointer to the file
+		if (!dynamic_cast<CdGDSStreamContainer*>(*Node))
+			throw ErrGDSFmt(erNotFile);
+
+		CdGDSStreamContainer *Obj = static_cast<CdGDSStreamContainer*>(*Node);
+		TdAutoRef<CBufdStream> file(new CBufdStream(
+			new CdFileStream(*OutFileName, CdFileStream::fmCreate)));
+		Obj->CopyTo(*file.get());
 
 		*err = false;
 	}

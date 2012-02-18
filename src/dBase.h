@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dBase.hpp: Basic classes for CoreArray library
+// dBase.h: Basic classes for CoreArray library
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dBase.hpp
+ *	\file     dBase.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -38,7 +38,7 @@
 #ifndef _dBase_H_
 #define _dBase_H_
 
-#include <dPlatform.hpp>
+#include <dPlatform.h>
 #include <list>
 #include <vector>
 #include <map>

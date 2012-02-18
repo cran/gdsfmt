@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dType.hpp: Basic template classes for elementary types
+// dType.h: Basic template classes for elementary types
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dType.hpp
+ *	\file     dType.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011

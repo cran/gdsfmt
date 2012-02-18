@@ -2,46 +2,8 @@
 ###                     CoreArray Codes                        ###
 ###                                                            ###
 
-
 # additional preprocessor options
-PKG_CPPFLAGS = -I. -I./CoreArray.src
+PKG_CPPFLAGS = -I. -DCOREARRAY_NO_STD_IN_OUT
 
 # to set flags for the linker
-PKG_LIBS = -lCoreArray -lpthread -lz -L.
-
-
-# flags for CoreArray library
-COREFLAG = -O3 -I./CoreArray.src -I$(R_HOME)/include $(CXXPICFLAGS)
-
-
-.PHONY: all .CoreArrayBuild
-
-all: $(SHLIB)
-
-$(SHLIB): .CoreArrayBuild
-
-
-# clean
-clean:
-	$(RM) *.o
-	$(RM) *.a
-	$(RM) gdsfmt.so gdsfmt.dll
-
-
-
-##################################################################
-###                     CoreArray library                      ###
-###                                                            ###
-
-.CoreArrayBuild:
-	$(CXX) $(COREFLAG) -c -o dPlatform.o CoreArray.src/dPlatform.cpp
-	$(CXX) $(COREFLAG) -c -o dBase.o CoreArray.src/dBase.cpp
-	$(CXX) $(COREFLAG) -c -o dFile.o CoreArray.src/dFile.cpp
-	$(CXX) $(COREFLAG) -c -o dStream.o CoreArray.src/dStream.cpp
-	$(CXX) $(COREFLAG) -c -o dStruct.o CoreArray.src/dStruct.cpp
-	$(CXX) $(COREFLAG) -c -o dSeq.o CoreArray.src/dSeq.cpp
-	$(CXX) $(COREFLAG) -c -o dParallel.o CoreArray.src/dParallel.cpp
-	$(RM) libCoreArray.a
-	$(AR) -r libCoreArray.a dPlatform.o dBase.o dFile.o dStream.o \
-		dStruct.o dSeq.o dParallel.o
-
+PKG_LIBS = -lz -lpthread

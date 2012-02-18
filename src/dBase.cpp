@@ -25,9 +25,9 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dBase.hpp>
+#include <dBase.h>
 #include <string.h>
-#include <cstdarg>
+#include <stdarg.h>
 #include <algorithm>
 
 #ifdef __BORLANDC__
@@ -1693,8 +1693,6 @@ bool CdFilter::rValue(TdTypeID Kind, const char *const Name, void *OutBuffer,
 		return rValue(Kind, Name, OutBuffer);
 }
 
-#include <iostream>
-
 void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 	ssize_t BufLen)
 {
@@ -2221,92 +2219,6 @@ Err_dsData::Err_dsData(TdsData::TdsType fromType, TdsData::TdsType toType)
 	const char *s1 = TdsData::dvtNames(fromType);
 	const char *s2 = TdsData::dvtNames(toType);
 	fMessage = Format(erDSConvert, s1, s2);
-}
-
-
-inline static UTF8String Int32Str(Int32 v)
-{
-	char buf[64];
-	int L = sprintf(buf, "%d", v);
-	return UTF8String(buf, L);
-}
-
-inline static UTF8String Int64Str(Int64 v)
-{
-	char buf[64];
-	int L = sprintf(buf, "%lld", v);
-	return UTF8String(buf, L);
-}
-
-inline static UTF8String FloatStr(float v)
-{
-	char buf[64];
-	int L = sprintf(buf, "%.7g", v);
-	return string(buf, L);
-}
-
-inline static UTF8String FloatStr(double v)
-{
-	char buf[64];
-	int L = sprintf(buf, "%.15g", v);
-	return UTF8String(buf, L);
-}
-
-inline static UTF8String FloatStr(long double v)
-{
-	char buf[64];
-	int L = sprintf(buf, "%.17Lg", v);
-	return UTF8String(buf, L);
-}
-
-inline static UTF8String xFloatStr(float v)
-{
-	if (IsFinite(v))
-	{
-		char buf[64];
-		int L = sprintf(buf, "%.7g", v);
-		return string(buf, L);
-	} else
-		return UTF8String();
-}
-
-inline static UTF8String xFloatStr(double v)
-{
-	if (IsFinite(v))
-	{
-		char buf[64];
-		int L = sprintf(buf, "%.15g", v);
-		return UTF8String(buf, L);
-	} else
-		return UTF8String();
-}
-
-inline static UTF8String xFloatStr(long double v)
-{
-	if (IsFinite(v))
-	{
-		char buf[64];
-		int L = sprintf(buf, "%.17Lg", v);
-		return UTF8String(buf, L);
-	} else
-		return UTF8String();
-}
-
-inline static UTF16String _U8toU16_(const UTF8String &str)
-{
-	return UTF16String(str.begin(), str.end());
-}
-
-inline static UTF8String _U16toU8_(const UTF16String &str)
-{
-	return UTF8String(str.begin(), str.end());
-}
-
-inline double StrToFloat(const char *str)
-{
-	char * p;
-	double rv = strtod(str, &p);
-	return (*p) ? NaN : rv;
 }
 
 // TdsData
@@ -2888,8 +2800,8 @@ bool TdsData::isStr() const
 bool TdsData::Packed()
 {
 	#define xRANGE(L, I, H) ((L<=I) && (I<=H))
-
-	long long I;
+	Int64 I = 0;
+	UInt64 U = 0;
 	TdsType t = dsType;
 
 	switch (dsType)
@@ -2899,26 +2811,43 @@ bool TdsData::Packed()
 		case dvtInt64:
         	I = VAL<Int64>(); break;
 		case dvtUInt64:
-			I = VAL<UInt64>(); break;
+			U = VAL<UInt64>(); break;
 		default:
 			return false;
 	}
 
-	if (xRANGE(INT8_MIN, I, INT8_MAX)) {
-    	dsType = dvtInt8; VAL<Int8>() = I;
-	} else if (xRANGE(0, I, UINT8_MAX)) {
-		dsType = dvtUInt8; VAL<UInt8>() = I;
-	} else if (xRANGE(INT16_MIN, I, INT16_MAX)) {
-		dsType = dvtInt16; VAL<Int16>() = I;
-	} else if (xRANGE(0, I, UINT16_MAX)) {
-		dsType = dvtUInt16; VAL<UInt16>() = I;
-	} else if (xRANGE(INT32_MIN, I, INT32_MAX)) {
-		dsType = dvtInt32; VAL<Int32>() = I;
-	} else if (xRANGE(0, I, UINT32_MAX)) {
-		dsType = dvtUInt32; VAL<UInt32>() = I;
+	if (dsType != dvtUInt64)
+	{
+		if (xRANGE(INT8_MIN, I, INT8_MAX)) {
+    		dsType = dvtInt8; VAL<Int8>() = I;
+		} else if (xRANGE(0, I, UINT8_MAX)) {
+			dsType = dvtUInt8; VAL<UInt8>() = I;
+		} else if (xRANGE(INT16_MIN, I, INT16_MAX)) {
+			dsType = dvtInt16; VAL<Int16>() = I;
+		} else if (xRANGE(0, I, UINT16_MAX)) {
+			dsType = dvtUInt16; VAL<UInt16>() = I;
+		} else if (xRANGE(INT32_MIN, I, INT32_MAX)) {
+			dsType = dvtInt32; VAL<Int32>() = I;
+		} else if (xRANGE(0, I, UINT32_MAX)) {
+			dsType = dvtUInt32; VAL<UInt32>() = I;
+		}
+	} else {
+		if (xRANGE(INT8_MIN, U, INT8_MAX)) {
+    		dsType = dvtInt8; VAL<Int8>() = U;
+		} else if (xRANGE(0, U, UINT8_MAX)) {
+			dsType = dvtUInt8; VAL<UInt8>() = U;
+		} else if (xRANGE(INT16_MIN, U, INT16_MAX)) {
+			dsType = dvtInt16; VAL<Int16>() = U;
+		} else if (xRANGE(0, U, UINT16_MAX)) {
+			dsType = dvtUInt16; VAL<UInt16>() = U;
+		} else if (xRANGE(INT32_MIN, U, INT32_MAX)) {
+			dsType = dvtInt32; VAL<Int32>() = U;
+		} else if (xRANGE(0, U, UINT32_MAX)) {
+			dsType = dvtUInt32; VAL<UInt32>() = U;
+		}
 	}
-	return t != dsType;
 
+	return t != dsType;
 	#undef xRANGE
 }
 
@@ -2950,8 +2879,8 @@ int TdsData::Compare(const TdsData &D, bool NALast)
 	{
 		if (isInt() && D.isInt())
 		{
-			long long I1 = getInt64();
-			long long I2 = D.getInt64();
+			Int64 I1 = getInt64();
+			Int64 I2 = D.getInt64();
 			if (I1 < I2)
 				return -1;
 			else if (I1 > I2)

@@ -80,11 +80,9 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{ \code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}} }
+	\code{\link[gdsfmt]{name.gdsn}} }
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
 L <- -2500:2499

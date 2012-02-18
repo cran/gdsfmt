@@ -12,9 +12,9 @@
 // Description :
 // ===========================================================
 
-#include <dType.hpp>
-#include <dSeq.hpp>
-#include <dParallel.hpp>
+#include <dType.h>
+#include <dSeq.h>
+#include <dParallel.h>
 
 #include <memory>
 #include <string>

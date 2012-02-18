@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dPlatform.hpp: Functions for independent platforms
+// dPlatform.h: Functions for independent platforms
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dPlatform.hpp
+ *	\file     dPlatform.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -37,13 +37,13 @@
 #ifndef _dPlatform_H_
 #define _dPlatform_H_
 
-#include <dType.hpp>
-#include <cstdio>
-#include <cstdlib>
-#include <climits>
+#include <dType.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <limits.h>
 #include <limits>
-#include <cstring>
-#include <cstdarg>
 #include <vector>
 #include <queue>
 
@@ -415,8 +415,8 @@ namespace CoreArray
 	public:
 	#ifdef COREARRAY_WINDOWS
 		#ifdef COREARRAY_MINGW32
-			// typedef _CRITICAL_SECTION TdMutex;
-			typedef HANDLE TdMutex;
+			typedef CRITICAL_SECTION TdMutex;
+			// typedef HANDLE TdMutex;
 		#else
 			typedef RTL_CRITICAL_SECTION TdMutex;
 		#endif
@@ -563,12 +563,26 @@ namespace CoreArray
 
 		void Suspend();
         void WakeUp();
+
 	protected:
+
 	#if defined(COREARRAY_WINDOWS)
-    	HANDLE hEvent;
+
+		// portable "pthread_cond_t" in Win32
+		// http://www.cs.wustl.edu/~schmidt/win32-cv-1.html
+		//     3.3. The Generation Count Solution
+		int waiters_count_;  //< Count of the number of waiters.
+		CRITICAL_SECTION waiters_count_lock_;  //< Serialize access to <waiters_count_>.
+		int release_count_;  //< Number of threads to release via a <pthread_cond_broadcast>
+		int wait_generation_count_;  //< Keeps track of the current "generation" so that
+				// we don't allow one thread to steal all the "releases" from the broadcast.
+		HANDLE event_;  //< A manual-reset event that's used to block and release waiting threads.
+
 	#elif defined(COREARRAY_POSIX_THREAD)
+
 		pthread_mutex_t mutex;
 		pthread_cond_t threshold;
+
 	#endif
 	};
 

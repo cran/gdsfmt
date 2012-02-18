@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dStream.hpp: Stream classes and functions
+// dStream.h: Stream classes and functions
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dStream.hpp
+ *	\file     dStream.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -37,12 +37,16 @@
 #ifndef _dStream_H_
 #define _dStream_H_
 
-#include <dBase.hpp>
+#include <dBase.h>
+#include <string.h>
 #include <zlib.h>
+#include <vector>
 
 
 namespace CoreArray
 {
+	using namespace std;
+
 	enum {
 		MinBlock    = 65536,		// 64K
 		SmallBlock  = 1024*1024*8,	// 8MB
@@ -108,7 +112,7 @@ namespace CoreArray
 		};
 
 	public:
-		TdAllocator() { std::memset((void*)this, 0, sizeof(TdAllocator)); };
+		TdAllocator() { memset((void*)this, 0, sizeof(TdAllocator)); };
 		~TdAllocator() { if (_Done) { _Done(*this); _Done = NULL; } };
 
 		inline bool MemLevel() const { return (Level <= blChunkMemory); };
@@ -198,9 +202,9 @@ namespace CoreArray
 		CdFileStream(const char * const AFileName, TdOpenMode Mode);
 		virtual ~CdFileStream();
 
-		inline const std::string& FileName() const { return fFileName; };
+		inline const string& FileName() const { return fFileName; };
 	protected:
-		 std::string fFileName;
+		 string fFileName;
 		 CdFileStream(): CdHandleStream() {};
 	};
 
@@ -234,6 +238,8 @@ namespace CoreArray
 	};
 
 
+	#ifndef COREARRAY_NO_STD_IN_OUT
+
 	/// Stream for standard input
 	class CdStdInStream: public CdStream
 	{
@@ -248,7 +254,6 @@ namespace CoreArray
 		virtual TdPtr64 GetSize();
 		virtual void SetSize(const TdPtr64 NewSize);
 	};
-
 
 	/// Stream for standard output
 	class CdStdOutStream: public CdStream
@@ -265,6 +270,8 @@ namespace CoreArray
 		virtual void SetSize(const TdPtr64 NewSize);
 	};
 
+	#endif
+
 
 	// TdCompressRemainder
 
@@ -277,7 +284,7 @@ namespace CoreArray
 		};
 
 		TdCompressRemainder()
-			{ std::memset((void*)this, 0, sizeof(TdCompressRemainder)); }
+			{ memset((void*)this, 0, sizeof(TdCompressRemainder)); }
 	};
 
 
@@ -359,7 +366,7 @@ namespace CoreArray
 	private:
 		struct TZIPPointRec { TdPtr64 SourcePos; z_stream Rec; };
 
-		std::vector<TZIPPointRec> vPoints;
+		vector<TZIPPointRec> vPoints;
 
 		TZIPPointRec *AddPoint();
 		TZIPPointRec *PointIndex(unsigned int i);
@@ -477,7 +484,7 @@ namespace CoreArray
 		inline CdStream &Stream() const { return *fStream; };
 		inline CdObjClassMgr *ClassMgr() const { return fClassMgr; };
 		inline bool ReadOnly() const { return fReadOnly; };
-		inline const std::vector<CdBlockStream*> &BlockList() const
+		inline const vector<CdBlockStream*> &BlockList() const
 			{ return fBlockList; }
 		inline const CdBlockStream::TBlockInfo *UnusedBlock() const
         	{ return fUnuse; }
@@ -485,7 +492,7 @@ namespace CoreArray
 		CdStream *fStream;
 		TdPtr64 fStreamSize;
 		CdBlockStream::TBlockInfo *fUnuse;
-		std::vector<CdBlockStream*> fBlockList;
+		vector<CdBlockStream*> fBlockList;
 		TdPtr64 fCodeStart;
 		CdObjClassMgr *fClassMgr;
 		bool fReadOnly;
@@ -499,4 +506,3 @@ namespace CoreArray
 }
 
 #endif /* _dStream_H_ */
-

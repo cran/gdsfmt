@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dParallel.hpp: Functions for parallel computing
+// dParallel.h: Functions for parallel computing
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dParallel.hpp
+ *	\file     dParallel.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2009 - 2011
@@ -37,11 +37,13 @@
 #ifndef _dParallel_H_
 #define _dParallel_H_
 
-#include <dPlatform.hpp>
+#include <dPlatform.h>
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include <iostream>
+#ifndef COREARRAY_NO_STD_IN_OUT
+#	include <iostream>
+#endif
 
 
 namespace CoreArray
@@ -103,6 +105,7 @@ namespace CoreArray
 		};
 
 
+	#ifndef COREARRAY_NO_STD_IN_OUT
 		#define COREARRAY_PARALLEL_TRY		try {
 		#define COREARRAY_PARALLEL_CATCH	\
 			} catch(std::exception &E) {	\
@@ -114,6 +117,10 @@ namespace CoreArray
 			} catch(...) { \
 				std::exit(-1); \
 			}
+	#else
+		#define COREARRAY_PARALLEL_TRY		{
+		#define COREARRAY_PARALLEL_CATCH	}
+	#endif
 
 
         // Parallel Mechanism

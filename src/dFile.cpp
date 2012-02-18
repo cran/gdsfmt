@@ -25,7 +25,7 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dFile.hpp>
+#include <dFile.h>
 #include <algorithm>
 
 #ifdef __BORLANDC__
@@ -651,7 +651,7 @@ void CdGDSObj::_CheckGDSStream()
 		throw ErrGDSObj("GDSStream should not be NULL.");
 }
 
-void CdGDSObj::_RaiseInvalidAssign(const std::string &msg)
+void CdGDSObj::_RaiseInvalidAssign(const string &msg)
 {
 	if (msg.empty())
 		throw ErrGDSObj("Invalid Assign operation.");
@@ -1590,8 +1590,8 @@ void CdGDSFile::TidyUp()
 	fn = fFileName; f = fn + UTF8toUTF16(".tmp");
 	DuplicateFile(f);
 	CloseFile();
-	std::remove(UTF16toUTF8(fn).c_str());
-	std::rename(UTF16toUTF8(f).c_str(), UTF16toUTF8(fn).c_str());
+	remove(UTF16toUTF8(fn).c_str());
+	rename(UTF16toUTF8(f).c_str(), UTF16toUTF8(fn).c_str());
 	LoadFile(fn, fReadOnly);
 }
 

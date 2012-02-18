@@ -16,7 +16,7 @@ delete.gdsn(node)
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
+	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}} }
 
 \examples{
 library(gdsfmt)

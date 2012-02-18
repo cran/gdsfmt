@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dStruct.hpp: Data container - array, matrix, etc
+// dStruct.h: Data container - array, matrix, etc
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dStruct.hpp
+ *	\file     dStruct.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -37,9 +37,9 @@
 #ifndef _dStruct_H_
 #define _dStruct_H_
 
-#include <dBase.hpp>
-#include <dStream.hpp>
-#include <dFile.hpp>
+#include <dBase.h>
+#include <dStream.h>
+#include <dFile.h>
 #include <bitset>
 #include <ctime>
 

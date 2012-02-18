@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dSeq.hpp: CoreArray Containers for extended types
+// dSeq.h: CoreArray Containers for extended types
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dSeq.hpp
+ *	\file     dSeq.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -37,10 +37,12 @@
 #ifndef _dSeq_H_
 #define _dSeq_H_
 
-#include <dStruct.hpp>
+#include <dStruct.h>
 
 namespace CoreArray
 {
+	using namespace std;
+
 	// ***********************************************************
 	//
 	// bit classes and functions
@@ -222,7 +224,7 @@ namespace CoreArray
 					if (this->fPipeInfo)
 					{
 						this->fPipeInfo->Remainder().Size = sizeof(I);
-						std::memcpy(&this->fPipeInfo->Remainder().Buf[0], &I, sizeof(I));
+						memcpy(&this->fPipeInfo->Remainder().Buf[0], &I, sizeof(I));
 					} else
 						Writer.Write(&I, sizeof(I));
 				} else {
@@ -400,7 +402,7 @@ namespace CoreArray
 				{
 					if (vCompressed)
 					{
-						std::memcpy((void*)Stack, (void*)ar->Buf, ar->Size);
+						memcpy((void*)Stack, (void*)ar->Buf, ar->Size);
 						ar->Size = 0;
 					} else
 						Stack[0] = alloc.r8(pPtr >> 3) & ~(0xFF << ((UInt8)(pPtr) & 0x07));
@@ -1453,7 +1455,7 @@ namespace CoreArray
 			Seq.fAllocator.Read(p64, (void*)buf.c_str(), Seq.fElmSize);
 			const typename TdTraits<TInside>::ElmType Ch = 0;
 			size_t pos = buf.find(Ch);
-			if (pos != std::string::npos) buf.resize(pos);
+			if (pos != string::npos) buf.resize(pos);
 			*static_cast<TOutside*>(OutBuffer) =
 				ValCvt<TOutside, typename TdTraits<TInside>::TType>(buf);
 		}
@@ -1469,7 +1471,7 @@ namespace CoreArray
 				buf.resize(Lx);
 				Rec.Seq->Allocator().Read(Rec.p64, (void*)buf.c_str(), Lx);
 				size_t pos = buf.find(Ch);
-				if (pos != std::string::npos) buf.resize(pos);
+				if (pos != string::npos) buf.resize(pos);
 				*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(buf);
 				Rec.p64 += Lx;
 			}
@@ -1489,7 +1491,7 @@ namespace CoreArray
 					buf.resize(Lx);
 					Rec.Seq->Allocator().Read(Rec.p64, (void*)buf.c_str(), Lx);
 					size_t pos = buf.find(Ch);
-					if (pos != std::string::npos) buf.resize(pos);
+					if (pos != string::npos) buf.resize(pos);
 					*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(buf);
 				}
 				Rec.p64 += Lx;

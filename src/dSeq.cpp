@@ -25,7 +25,7 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
-#include <dSeq.hpp>
+#include <dSeq.h>
 
 #ifdef __BORLANDC__
 #pragma hdrstop

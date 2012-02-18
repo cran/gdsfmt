@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dFile.hpp: Functions and classes for CoreArray Generic Data Structure (GDS)
+// dFile.h: Functions and classes for CoreArray Generic Data Structure (GDS)
 //
 // Copyright (C) 2011	Xiuwen Zheng
 //
@@ -26,7 +26,7 @@
 // If not, see <http://www.gnu.org/licenses/>.
 
 /**
- *	\file     dFile.hpp
+ *	\file     dFile.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2011
@@ -37,8 +37,8 @@
 #ifndef _dFile_H_
 #define _dFile_H_
 
-#include <dBase.hpp>
-#include <dStream.hpp>
+#include <dBase.h>
+#include <dStream.h>
 
 
 namespace CoreArray
@@ -172,7 +172,7 @@ namespace CoreArray
         void xValidateName(const UTF16String &name);
 	};
 
-
+	
 	/// CoreArray object
 	class CdGDSObj: public CdObjMsg
 	{

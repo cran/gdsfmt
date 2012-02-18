@@ -153,7 +153,7 @@ objdesp.gdsn <- function(node)
 	}
 }
 
-add.gdsn <- function( node, name, val=NULL, storage=storage.mode(val), valdim=NULL,
+add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NULL,
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"),
 	closezip=FALSE)
 {
@@ -235,6 +235,25 @@ add.gdsn <- function( node, name, val=NULL, storage=storage.mode(val), valdim=NU
 		stop(lasterr.gds())
 		return()
 	}
+}
+
+addfile.gdsn <- function(node, name, filename,
+	compress=c("ZIP", "ZIP.fast", "ZIP.default", "ZIP.max", ""))
+{
+	if (class(node)=="gdsclass")
+		node <- node$root
+	stopifnot(class(node)=="gdsn")
+	stopifnot(is.character(filename))
+
+	if (missing(name))
+		name <- paste("Item", cnt.gdsn(node)+1, sep="")
+
+	r <- .C("gdsAddFile", node=as.integer(node), as.character(name), as.character(filename[1]),
+		as.character(compress[1]), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+
+	if (r$err != 0) stop(lasterr.gds())
+	rv <- r$node; class(rv) <- "gdsn"
+	return(rv)
 }
 
 delete.gdsn <- function(node)
@@ -529,6 +548,20 @@ write.gdsn <- function(node, val, start, count)
 	return(invisible(NULL))
 }
 
+getfile.gdsn <- function(node, out.filename)
+{
+	stopifnot(class(node)=="gdsn")
+	stopifnot(is.character(out.filename))
+
+	r <- .C("gdsGetFile", as.integer(node), out.filename, err=integer(1),
+		NAOK=TRUE, PACKAGE="gdsfmt")
+	if (r$err != 0) stop(lasterr.gds())
+
+	return(invisible(NULL))
+}
+
+
+
 
 
 #############################################################
@@ -556,7 +589,7 @@ print.gdsclass <- function(x, ...)
 		cat(space, "+ ", name.gdsn(node), "	[ ", n$desp, " ", sep="")
 		cat(n$dim, sep="x")
 		if (n$compress!="") cat("", n$compress)
-		if (!is.nan(n$cpratio))
+		if (is.finite(n$cpratio))
 			cat(sprintf("(%0.2f%%)", 100*n$cpratio))
 		if (length(get.attr.gdsn(node)) > 0)
 			cat(" ] *\n")
@@ -636,16 +669,13 @@ print.gdsn <- function(x, expand=TRUE, ...)
 
 
 
+
 #############################################################
 # R library functions
 #############################################################
 
-.First.lib <- function(lib, pkg)
+.onAttach <- function(lib, pkg)
 {
 	library.dynam("gdsfmt", pkg, lib)
-}
-
-.Last.lib <- function(libpath)
-{
-	library.dynam.unload("gdsfmt", libpath)
+	TRUE
 }
