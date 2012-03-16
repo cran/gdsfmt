@@ -8,7 +8,7 @@
 //
 // dParallel.h: Functions for parallel computing
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,10 +29,10 @@
  *	\file     dParallel.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2009 - 2011
+ *	\date     2009 - 2012
  *	\brief    Functions for parallel computing
  *	\details
-*/
+**/
 
 #ifndef _dParallel_H_
 #define _dParallel_H_
@@ -71,13 +71,13 @@ namespace CoreArray
 		virtual void ShowProgress();
 
 		/// Return the current mode of increasement
-		inline TPercentMode Mode() const { return fMode; }
+		COREARRAY_FORCE_INLINE TPercentMode Mode() const { return fMode; }
 		/// Set the current mode of increasement
 		void SetMode(TPercentMode mode);
         /// Return the current percentile
-		inline int Percent() const { return fPercent; }
+		COREARRAY_FORCE_INLINE int Percent() const { return fPercent; }
 		/// Return the total number
-		inline Int64 Total() const { return fTotal; }
+		COREARRAY_FORCE_INLINE Int64 Total() const { return fTotal; }
 	protected:
 		TPercentMode fMode;
 		Int64 fTotal, vProg[101], vCurrent, *vptrProg;
@@ -125,7 +125,7 @@ namespace CoreArray
 
         // Parallel Mechanism
 
-		class CparallelBase;
+		class CParallelBase;
 
 		namespace Internal
 		{
@@ -134,7 +134,7 @@ namespace CoreArray
 				TCLASS * obj;
 				void (TCLASS::*proc)(CdThread *, int);
 				int ThreadIndex;
-				CparallelBase *cpBase;
+				CParallelBase *cpBase;
 			};
 
 			template<class TCLASS>
@@ -148,16 +148,16 @@ namespace CoreArray
 
 				Data.cpBase->DoneThread();
 				return 0;
-			};
+			}
 		}
 
 
         /// The base class of parallel computing library, multi-thread
-		class CparallelBase
+		class CParallelBase
 		{
 		public:
-			CparallelBase(int _nThread=1);
-			virtual ~CparallelBase();
+			CParallelBase(int _nThread=1);
+			virtual ~CParallelBase();
 
         	/// Initialize each thread
 			void InitThread();
@@ -166,19 +166,19 @@ namespace CoreArray
 			/// Close all threads
 			void CloseThreads();
 			/// Return the total number of thread used
-			inline int nThread() const { return fnThread; }
+			COREARRAY_FORCE_INLINE int nThread() const { return fnThread; }
 			/// Reset the number of thread used
 			void SetnThread(int _nThread);
 			/// Automatically determine the number of threads used
 			void AutoSetnThread();
 
-			inline CdThreadMutex &Mutex() { return fMutex; }
+			COREARRAY_FORCE_INLINE CdThreadMutex &Mutex() { return fMutex; }
 
 			/// Create nThread threads (including the main thread), and Proc is called by each thread
 			void DoThreads(void (*Proc)(CdThread *, int, void*), void *param);
 
-			/// Create nThread threads (including the main thread), and Proc is called by each thread
-			// closure or delegate for C++
+			/// Create nThread threads (including the main thread), and Proc is called by each
+			//  thread closure or delegate for C++
 			template<class TCLASS>
 				void DoThreads(void (TCLASS::*Proc)(CdThread *, int), TCLASS *obj)
 			{
@@ -212,7 +212,7 @@ namespace CoreArray
 				CloseThreads();
 			}
 
-			inline CdBaseProgression *Progress() const { return fProgress; }
+			COREARRAY_FORCE_INLINE CdBaseProgression *Progress() const { return fProgress; }
 			void SetProgress(CdBaseProgression *Val);
 			void SetConsoleProgress(CdBaseProgression::TPercentMode mode = CdBaseProgression::tp01);
 
@@ -222,7 +222,7 @@ namespace CoreArray
 			CdThreadMutex fMutex;
 			CdBaseProgression *fProgress;
 
-			inline void ForwardProgress()
+			COREARRAY_INLINE void ForwardProgress()
 			{
 				if (fProgress)
 				{
@@ -235,13 +235,13 @@ namespace CoreArray
 
 		///
 
-		class CparallelSection: public CparallelBase
+		class CParallelSection: public CParallelBase
 		{
 		public:
         	/// Constructor
-			CparallelSection(int _nThread=1);
+			CParallelSection(int _nThread=1);
 			/// Destructor
-			virtual ~CparallelSection();
+			virtual ~CParallelSection();
 
 			template<class TCLASS, typename TINDEX, typename OUTTYPE>
 				void DoThreads(
@@ -250,7 +250,7 @@ namespace CoreArray
 					OUTTYPE *InBuf, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelSection is working.");
+					throw ErrParallel("CParallelSection is working.");
 				// Initialize
 				if (TotalSize <= 0) return;
 				if (fProgress) fProgress->Init(TotalSize);
@@ -260,8 +260,8 @@ namespace CoreArray
 				Rec.Index = StartIndex; Rec.TotalSize = TotalSize;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelSection>(
-					&CparallelSection::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
+				CParallelBase::DoThreads<CParallelSection>(
+					&CParallelSection::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
 				// finally
 				_ptr = NULL;
 			}
@@ -275,7 +275,7 @@ namespace CoreArray
 					OUTTYPE *InBuf, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelSection is working.");
+					throw ErrParallel("CParallelSection is working.");
 				// Initialize
 				if (TotalSize <= 0) return;
 				if (fProgress) fProgress->Init(TotalSize);
@@ -287,8 +287,8 @@ namespace CoreArray
 				Rec.Index = StartIndex; Rec.TotalSize = TotalSize;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelSection>(
-					&CparallelSection::_pThreadEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
+				CParallelBase::DoThreads<CParallelSection>(
+					&CParallelSection::_pThreadEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
 				// finally
 				_ptr = NULL;
 			}
@@ -366,11 +366,11 @@ namespace CoreArray
 
 
 
-		class CparallelSectionEx: public CparallelSection
+		class CParallelSectionEx: public CParallelSection
 		{
 		public:
         	/// Constructor
-			CparallelSectionEx(int _nThread=1): CparallelSection(_nThread) {}
+			CParallelSectionEx(int _nThread=1): CParallelSection(_nThread) {}
 
 			template<class TCLASS, typename TINDEX, typename OUTTYPE>
 				void DoThreads(
@@ -379,7 +379,7 @@ namespace CoreArray
 					OUTTYPE *InBuf, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelSectionEx is working.");
+					throw ErrParallel("CParallelSectionEx is working.");
 				if (SubBufSize <= 0)
                 	throw ErrParallel("Invalid 'SubBufSize' in the function 'DoThreads'");
 				// Initialize
@@ -392,8 +392,8 @@ namespace CoreArray
 				Rec.TotalSize = TotalSize; Rec.SubBufSize = SubBufSize;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelSectionEx>(
-					&CparallelSectionEx::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
+				CParallelBase::DoThreads<CParallelSectionEx>(
+					&CParallelSectionEx::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
 				// finally
 				_ptr = NULL;
 			}
@@ -407,7 +407,7 @@ namespace CoreArray
 					OUTTYPE *InBuf, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelSectionEx is working.");
+					throw ErrParallel("CParallelSectionEx is working.");
 				if (SubBufSize <= 0)
                 	throw ErrParallel("Invalid 'SubBufSize' in the function 'DoThreads'");
 				// Initialize
@@ -422,8 +422,8 @@ namespace CoreArray
 				Rec.TotalSize = TotalSize; Rec.SubBufSize = SubBufSize;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelSection>(
-					&CparallelSectionEx::_pThreadEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
+				CParallelBase::DoThreads<CParallelSection>(
+					&CParallelSectionEx::_pThreadEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
 				_ptr = NULL;
 			}
 
@@ -521,11 +521,11 @@ namespace CoreArray
 
 		// Queueing model for parallel computing
 
-		class CparallelQueue: public CparallelBase, protected CdThreadsSuspending
+		class CParallelQueue: public CParallelBase, protected CdThreadsSuspending
 		{
 		public:
-			CparallelQueue(int _nThread=1);
-			virtual ~CparallelQueue();
+			CParallelQueue(int _nThread=1);
+			virtual ~CParallelQueue();
 
 			template<class TCLASS, typename TINDEX, typename OUTTYPE>
 			void DoThreads(
@@ -535,7 +535,7 @@ namespace CoreArray
 				TCLASS *Obj, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelQueue is working.");
+					throw ErrParallel("CParallelQueue is working.");
 				if (BufSize <= 0)
                     throw ErrParallel("The size of buffer should be > 0.");
 				if (TotalSize <= 0) return;
@@ -553,8 +553,8 @@ namespace CoreArray
 				Rec.IndexBase = Rec.WorkingIndex = Rec.FinishIndex = 0;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelQueue>(
-					&CparallelQueue::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
+				CParallelBase::DoThreads<CParallelQueue>(
+					&CParallelQueue::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
 				_ptr = NULL;
 			}
 
@@ -567,7 +567,7 @@ namespace CoreArray
 				TCLASS *Obj, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelQueue is working.");
+					throw ErrParallel("CParallelQueue is working.");
 				if (BufSize <= 0)
                     throw ErrParallel("The size of buffer should be > 0.");
 				if (TotalSize <= 0) return;
@@ -585,8 +585,8 @@ namespace CoreArray
 				Rec.IndexBase = Rec.WorkingIndex = Rec.FinishIndex = 0;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelQueue>(
-					&CparallelQueue::_pThread2<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
+				CParallelBase::DoThreads<CParallelQueue>(
+					&CParallelQueue::_pThread2<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
 				_ptr = NULL;
 			}
 
@@ -598,7 +598,7 @@ namespace CoreArray
 				TCLASS *Obj, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelQueue is working.");
+					throw ErrParallel("CParallelQueue is working.");
 				if (BufSize <= 0)
                     throw ErrParallel("The size of buffer should be > 0.");
 				if (TotalSize <= 0) return;
@@ -616,8 +616,8 @@ namespace CoreArray
 				Rec.IndexBase = Rec.WorkingIndex = Rec.FinishIndex = 0;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelQueue>(
-					&CparallelQueue::_pThreadEx<TCLASS, TINDEX, OUTTYPE>, this);
+				CParallelBase::DoThreads<CParallelQueue>(
+					&CParallelQueue::_pThreadEx<TCLASS, TINDEX, OUTTYPE>, this);
 				_ptr = NULL;
 			}
 
@@ -796,10 +796,10 @@ namespace CoreArray
 		};
 
 
-		class CparallelQueueEx: public CparallelQueue
+		class CParallelQueueEx: public CParallelQueue
 		{
     	public:
-			CparallelQueueEx(int _nThread=1);
+			CParallelQueueEx(int _nThread=1);
 
 			template<class TCLASS, typename TINDEX, typename OUTTYPE>
 			void DoThreads(
@@ -809,7 +809,7 @@ namespace CoreArray
 				TCLASS *Obj, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelQueueEx is working.");
+					throw ErrParallel("CParallelQueueEx is working.");
 				if (BufSize <= 0)
 					throw ErrParallel("The size of buffer should be > 0.");
 				if (SubBufSize <= 0)
@@ -831,8 +831,8 @@ namespace CoreArray
 				Rec.IndexBase = Rec.WorkingIndex = Rec.FinishIndex = 0;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelQueueEx>(
-					&CparallelQueueEx::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
+				CParallelBase::DoThreads<CParallelQueueEx>(
+					&CParallelQueueEx::_pThread<TCLASS, TINDEX, OUTTYPE>, this);
 				_ptr = NULL;
 			}
 
@@ -845,7 +845,7 @@ namespace CoreArray
 				TCLASS *Obj, const TINDEX StartIndex = 0)
 			{
 				if (_ptr)
-					throw ErrParallel("CparallelQueue is working.");
+					throw ErrParallel("CParallelQueue is working.");
 				if (BufSize <= 0)
                     throw ErrParallel("The size of buffer should be > 0.");
 				if (TotalSize <= 0) return;
@@ -863,8 +863,8 @@ namespace CoreArray
 				Rec.IndexBase = Rec.WorkingIndex = Rec.FinishIndex = 0;
                 // Working
 				_ptr = (void*)&Rec;
-				CparallelBase::DoThreads<CparallelQueue>(
-					&CparallelQueue::_pThread2<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
+				CParallelBase::DoThreads<CParallelQueue>(
+					&CParallelQueue::_pThread2<TCLASS, TINDEX, OUTTYPE, THREADDATA>, this);
 				_ptr = NULL;
 			}
 

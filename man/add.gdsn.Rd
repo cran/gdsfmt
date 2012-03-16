@@ -88,10 +88,10 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 L <- -2500:2499
 
 # commom types
-add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP")
-add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50), valdim=c(110, 60))
+add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP", closezip=TRUE)
+add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50))
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))
-add.gdsn(f, "logical", val=as.logical(c(rep(c(TRUE, FALSE, NA), 50))))
+add.gdsn(f, "logical", val=rep(c(TRUE, FALSE, NA), 50))
 add.gdsn(f, "factor", val=as.factor(c(letters, NA, "AA", "CC")))
 add.gdsn(f, "NA", val=rep(NA, 10))
 add.gdsn(f, "NaN", val=c(rep(NaN, 20), 1:20))
@@ -99,6 +99,11 @@ add.gdsn(f, "bit2-matrix", val=matrix(L[1:5000], nrow=50, ncol=100), storage="bi
 # list and data.frame
 add.gdsn(f, "list", val=list(X=1:10, Y=seq(1, 10, 0.25)))
 add.gdsn(f, "data.frame", val=data.frame(X=1:19, Y=seq(1, 10, 0.5)))
+
+# save a .RData object
+obj <- list(X=1:10, Y=seq(1, 10, 0.1))
+save(obj, file="tmp.RData")
+addfile.gdsn(f, "tmp.RData", filename="tmp.RData")
 
 f
 

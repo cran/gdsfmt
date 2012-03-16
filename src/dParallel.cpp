@@ -8,7 +8,7 @@
 //
 // dParallel.cpp: Functions for parallel computing
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -40,7 +40,7 @@ namespace CoreArray
 				void (*proc)(CoreArray::CdThread *, int, void*);
 				int ThreadIndex;
 				void *Param;
-				CoreArray::Parallel::CparallelBase *cpBase;
+				CoreArray::Parallel::CParallelBase *cpBase;
 			};
 
 			int _pDoThread(CoreArray::CdThread *Thread, _pThreadStruct Data)
@@ -53,7 +53,7 @@ namespace CoreArray
 
 				Data.cpBase->DoneThread();
 				return 0;
-			};
+			}
 		}
 	}
 }
@@ -147,11 +147,11 @@ void CdConsoleProgress::ShowProgress()
 }
 
 
-// CparallelBase
+// CParallelBase
 
 static const char *errNThread = "Invalid # of threads (%d)";
 
-CparallelBase::CparallelBase(int _nThread)
+CParallelBase::CParallelBase(int _nThread)
 {
 	if (_nThread < 1)
 		throw ErrParallel(errNThread, _nThread);
@@ -159,22 +159,22 @@ CparallelBase::CparallelBase(int _nThread)
 	fProgress = NULL;
 }
 
-CparallelBase::~CparallelBase()
+CParallelBase::~CParallelBase()
 {
 	CloseThreads();
 }
 
-void CparallelBase::InitThread()
+void CParallelBase::InitThread()
 {
 	DisableFPUException();
 }
 
-void CparallelBase::DoneThread()
+void CParallelBase::DoneThread()
 {
 	// do nothing ...
 }
 
-void CparallelBase::CloseThreads()
+void CParallelBase::CloseThreads()
 {
 	vector<CdThread*>::iterator it;
 	for (it=fThreads.begin(); it!=fThreads.end(); it++)
@@ -185,7 +185,7 @@ void CparallelBase::CloseThreads()
 	fThreads.clear();
 }
 
-void CparallelBase::SetnThread(int _nThread)
+void CParallelBase::SetnThread(int _nThread)
 {
 	CloseThreads();
 	if (_nThread < 1)
@@ -193,13 +193,13 @@ void CparallelBase::SetnThread(int _nThread)
 	fnThread = _nThread;
 }
 
-void CparallelBase::AutoSetnThread()
+void CParallelBase::AutoSetnThread()
 {
 	fnThread = Mach::GetNumberOfCPU();
 	if (fnThread < 1) fnThread = 1;
 }
 
-void CparallelBase::DoThreads(void (*Proc)(CdThread *, int, void*), void *param)
+void CParallelBase::DoThreads(void (*Proc)(CdThread *, int, void*), void *param)
 {
 	if (!Proc) return;
 	CloseThreads();
@@ -233,13 +233,13 @@ void CparallelBase::DoThreads(void (*Proc)(CdThread *, int, void*), void *param)
 	CloseThreads();
 }
 
-void CparallelBase::SetProgress(CdBaseProgression *Val)
+void CParallelBase::SetProgress(CdBaseProgression *Val)
 {
 	if (fProgress) delete fProgress;
 	fProgress = Val;
 }
 
-void CparallelBase::SetConsoleProgress(CdBaseProgression::TPercentMode mode)
+void CParallelBase::SetConsoleProgress(CdBaseProgression::TPercentMode mode)
 {
 	if (dynamic_cast<CdConsoleProgress*>(fProgress))
     	return;
@@ -248,29 +248,28 @@ void CparallelBase::SetConsoleProgress(CdBaseProgression::TPercentMode mode)
 }
 
 
-// CparallelSection
+// CParallelSection
 
-CparallelSection::CparallelSection(int _nThread): CparallelBase(_nThread)
+CParallelSection::CParallelSection(int _nThread): CParallelBase(_nThread)
 {
 	_ptr = NULL;
 }
 
-CparallelSection::~CparallelSection() {}
+CParallelSection::~CParallelSection() {}
 
 
-// CparallelQueue
+// CParallelQueue
 
-CparallelQueue::CparallelQueue(int _nThread): CparallelBase(_nThread)
+CParallelQueue::CParallelQueue(int _nThread): CParallelBase(_nThread)
 {
 	_ptr = NULL;
 }
 
-CparallelQueue::~CparallelQueue() {}
+CParallelQueue::~CParallelQueue() {}
 
 
-// CparallelQueueEx
+// CParallelQueueEx
 
-CparallelQueueEx::CparallelQueueEx(int _nThread):
-	CparallelQueue(_nThread)
+CParallelQueueEx::CParallelQueueEx(int _nThread):
+	CParallelQueue(_nThread)
 {}
-

@@ -8,7 +8,7 @@
 //
 // dStruct.cpp: Data container - array, matrix, etc
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -212,7 +212,7 @@ CdBaseOpRead::CdBaseOpRead(CBufdStream* vFilter): CdBaseOp(vFilter)
 	fStatus = dsValid;
 }
 
-CdBaseOpRead::~CdBaseOpRead() { };
+CdBaseOpRead::~CdBaseOpRead() { }
 
 void CdBaseOpRead::Init()
 {
@@ -238,7 +238,7 @@ CdOpReadText::CdOpReadText(char const *const FileName): CdBaseOpRead(
 	Init(); InitParam();
 }
 
-CdOpReadText::~CdOpReadText() {};
+CdOpReadText::~CdOpReadText() { }
 
 void CdOpReadText::InitParam()
 {
@@ -418,7 +418,7 @@ CdOpWriteText::CdOpWriteText(char const *const FileName): CdBaseOpWrite(
 	new CBufdStream(new CdFileStream(FileName, CdFileStream::fmCreate)))
 {
 	InitParam();
-};
+}
 
 CdOpWriteText::CdOpWriteText(CBufdStream* vFilter): CdBaseOpWrite(vFilter)
 {
@@ -751,9 +751,9 @@ void CdContainer::_LoadUTF8(TdIterator &it, CBufdStream &Buf, size_t Len)
 
 // CdSequenceX
 
-CdSequenceX::CdSequenceX() {};
+CdSequenceX::CdSequenceX() { }
 
-CdSequenceX::~CdSequenceX() {};
+CdSequenceX::~CdSequenceX() { }
 
 void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 {
@@ -1140,7 +1140,7 @@ void CdSequenceX::SaveStreamText(CBufdStream &Writer, TdDefParamText *Param)
 	}
 }
 
-void CdSequenceX::LoadDirect(CdFilter &Reader)
+void CdSequenceX::LoadDirect(CdSerial &Reader)
 {
 	TdIterator I;
 	clock_t tm;
@@ -1166,7 +1166,7 @@ void CdSequenceX::LoadDirect(CdFilter &Reader)
 	Notify64(mcLoaded, Cnt);
 }
 
-void CdSequenceX::SaveDirect(CdFilter &Writer)
+void CdSequenceX::SaveDirect(CdSerial &Writer)
 {
 	TdIterator I;
 	clock_t tm;
@@ -1214,7 +1214,7 @@ void CdSequenceX::xAssignToDim(CdSequenceX &Dest) const
 
 // CdVectorX
 
-inline static TdIterator IteratorPtr(CdContainer *Handler, const TdPtr64 ptr)
+COREARRAY_FORCE_INLINE static TdIterator IteratorPtr(CdContainer *Handler, const TdPtr64 ptr)
 {
 	TdIterator rv;
 	rv.Handler = Handler; rv.Ptr = ptr;
@@ -1294,7 +1294,7 @@ TdIterator CdVectorX::atEnd()
 	return rv;
 }
 
-void CdVectorX::SaveStruct(CdFilter &Writer, bool IncludeName)
+void CdVectorX::SaveStruct(CdSerial &Writer, bool IncludeName)
 {
 	CdSequenceX::SaveStruct(Writer, IncludeName);
 
@@ -1313,7 +1313,7 @@ void CdVectorX::SaveStruct(CdFilter &Writer, bool IncludeName)
 		Writer.FlushWrite();
 
 		{
-			TdAutoRef<CdFilter> M(new CdFilter(vAlloc_Stream));
+			TdAutoRef<CdSerial> M(new CdSerial(vAlloc_Stream));
 			SaveDirect(*M);
 			DoneAllocator(fAllocator);
 			InitAllocator(fAllocator, fPipeInfo==NULL, true, blFilter, M.get());
@@ -1348,7 +1348,7 @@ void CdVectorX::CloseWriter()
 				vAlloc_Stream->AddRef();
 				DoneAllocator(fAllocator);
 				vAlloc_Stream->SetPosition(0);
-				CdFilter * Reader = new CdFilter(vAlloc_Stream);
+				CdSerial * Reader = new CdSerial(vAlloc_Stream);
 				vAlloc_Stream->Release();
 				if (fPipeInfo)
 					fPipeInfo->PushReadPipe(*Reader);
@@ -1576,8 +1576,8 @@ void CdVectorX::SetLoadMode(TdStoreMode Mode)
 					vAlloc_Stream = fGDSStream->Collection()[vAllocID];
 				vAlloc_Stream->SetPosition(0);
 
-				CdFilter *Reader = NULL;
-				Reader = new CdFilter(vAlloc_Stream);
+				CdSerial *Reader = NULL;
+				Reader = new CdSerial(vAlloc_Stream);
 				if (fStoreMode == lmKeepInMem)
 				{
 					if (fPipeInfo)
@@ -1634,7 +1634,7 @@ void CdVectorX::SetPackedMode(const char *Mode)
 			{
 				TdAutoRef<CdTempStream> Temp(new CdTempStream(""));
 				{
-					TdAutoRef<CdFilter> Filter(new CdFilter(Temp.get()));
+					TdAutoRef<CdSerial> Filter(new CdSerial(Temp.get()));
 					SaveDirect(*Filter);
 					if (fPipeInfo)
 						_GetStreamPipeInfo(Filter.get(), true);
@@ -1647,7 +1647,7 @@ void CdVectorX::SetPackedMode(const char *Mode)
 			// New Filter
 			{
 				DoneAllocator(fAllocator);
-				CdFilter *Filter = new CdFilter(vAlloc_Stream);
+				CdSerial *Filter = new CdSerial(vAlloc_Stream);
 				if (fPipeInfo)
 					fPipeInfo->PushReadPipe(*Filter);
 				InitAllocator(fAllocator, true, fPipeInfo==NULL, blFilter, Filter);
@@ -1678,9 +1678,6 @@ void CdVectorX::Append(void const* Buffer, ssize_t Cnt, TSVType InSV)
 	if (InSV != svCustom)
     	throw ErrSequence("InSV should be svCustom for 'CdVectorX::Append'.");
 	#endif
-
-	TIterDataExt Rec;
-	Rec.pBuf = (void*)Buffer; Rec.LastDim = Cnt; Rec.Seq = this;
 
 	if (!fDims.empty())
 	{
@@ -1775,12 +1772,12 @@ void CdVectorX::_Offset(TdIterator &it, ssize_t I)
 	it.Ptr += fElmSize * (Int64)I;
 }
 
-void CdVectorX::_LoadIter(TdIterator &it, CdFilter &Reader)
+void CdVectorX::_LoadIter(TdIterator &it, CdSerial &Reader)
 {
 	// do nothing ...
 }
 
-void CdVectorX::_SaveIter(TdIterator &it, CdFilter &Writer) {
+void CdVectorX::_SaveIter(TdIterator &it, CdSerial &Writer) {
 	// do nothing ...
 }
 
@@ -1798,7 +1795,7 @@ void CdVectorX::_Swap(TdIterator &it1, TdIterator &it2)
 	fAllocator.Swap(it1.Ptr, it2.Ptr, fElmSize);
 }
 
-void CdVectorX::KeepInStream(CdFilter &Reader, void * Data)
+void CdVectorX::KeepInStream(CdSerial &Reader, void * Data)
 {
 	if (fGDSStream)
 	{
@@ -1811,7 +1808,7 @@ void CdVectorX::KeepInStream(CdFilter &Reader, void * Data)
 		vAlloc_Ptr = Reader.NamePosition(PropNames[pnDATA]);
 		vAlloc_Stream = fGDSStream->Collection()[vAllocID];
 
-		CdFilter *Reader = new CdFilter(vAlloc_Stream);
+		CdSerial *Reader = new CdSerial(vAlloc_Stream);
 		if (fPipeInfo)
 			fPipeInfo->PushReadPipe(*Reader);
 		DoneAllocator(fAllocator);
@@ -1856,7 +1853,7 @@ TdPtr64 CdVectorX::AllocNeed(bool Full)
 	return fEndPtr;
 }
 
-void CdVectorX::LoadBefore(CdFilter &Reader, TdVersion Version)
+void CdVectorX::LoadBefore(CdSerial &Reader, TdVersion Version)
 {
 	CdSequenceX::LoadBefore(Reader, Version);
 
@@ -1917,7 +1914,7 @@ void CdVectorX::LoadBefore(CdFilter &Reader, TdVersion Version)
 	fChanged = fNeedUpdate = false;
 }
 
-void CdVectorX::LoadAfter(CdFilter &Reader, TdVersion Version)
+void CdVectorX::LoadAfter(CdSerial &Reader, TdVersion Version)
 {
 	if (fStoreMode==lmKeepInMem && !Empty())
 	{
@@ -1927,7 +1924,7 @@ void CdVectorX::LoadAfter(CdFilter &Reader, TdVersion Version)
 			Reader[PropNames[pnDATA]] >> vAllocID;
 			vAlloc_Ptr = Reader.NamePosition(PropNames[pnDATA]);
 
-			TdAutoRef<CdFilter> rd(new CdFilter(fGDSStream->Collection()[vAllocID]));
+			TdAutoRef<CdSerial> rd(new CdSerial(fGDSStream->Collection()[vAllocID]));
 			rd->Stream()->AddRef();
 			try {
 				LoadDirect(*rd);
@@ -1955,7 +1952,7 @@ void CdVectorX::LoadAfter(CdFilter &Reader, TdVersion Version)
 	CdContainer::LoadAfter(Reader, Version);
 }
 
-void CdVectorX::SaveBefore(CdFilter &Writer)
+void CdVectorX::SaveBefore(CdSerial &Writer)
 {
 	CdSequenceX::SaveBefore(Writer);
 
@@ -1979,7 +1976,7 @@ void CdVectorX::SaveBefore(CdFilter &Writer)
 	}
 }
 
-void CdVectorX::SaveAfter(CdFilter &Writer)
+void CdVectorX::SaveAfter(CdSerial &Writer)
 {
 	if ((fGDSStream!=NULL) || !Empty())
 	{
@@ -2012,7 +2009,7 @@ void CdVectorX::GetPipeInfo()
 		fNeedUpdate = true;
 }
 
-void CdVectorX::LoadDirect(CdFilter &Reader)
+void CdVectorX::LoadDirect(CdSerial &Reader)
 {
 	if (DirectStream())
 	{
@@ -2044,7 +2041,7 @@ void CdVectorX::LoadDirect(CdFilter &Reader)
 		CdSequenceX::LoadDirect(Reader);
 }
 
-void CdVectorX::SaveDirect(CdFilter &Writer)
+void CdVectorX::SaveDirect(CdSerial &Writer)
 {
 	if (DirectStream())
 	{

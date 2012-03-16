@@ -8,7 +8,7 @@
 //
 // dStream.cpp: Stream classes and functions
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -93,7 +93,7 @@ static COREARRAY_FASTCALL int InvalidCompare(TdAllocator &obj, const TdPtr64 I,
 	const void *Buf, ssize_t Len)
 {
 	throw ErrAllocator(ErrAllocator::eaRead);
-};
+}
 
 static COREARRAY_FASTCALL UInt8 InvalidRead8(TdAllocator &obj, const TdPtr64 I)
 {
@@ -955,9 +955,9 @@ void *CdMemoryStream::BufPointer()
 
 // CdStdInStream
 
-CdStdInStream::CdStdInStream() {};
+CdStdInStream::CdStdInStream() {}
 
-CdStdInStream::~CdStdInStream() {};
+CdStdInStream::~CdStdInStream() {}
 
 ssize_t CdStdInStream::Read(void *Buffer, ssize_t Count)
 {
@@ -1059,7 +1059,7 @@ static short ZStrategies[5] = {
 		Z_FIXED                 // zsFixed
 	};
 
-static inline int ZCheck(int Code)
+COREARRAY_FORCE_INLINE static int ZCheck(int Code)
 {
 	if (Code < 0) throw EZLibError(Code);
 	return Code;
@@ -1202,6 +1202,8 @@ CdZIPInflate::CdZIPInflate(CdStream* Source): CdBaseZStream(Source)
 	fZStream.next_in = fBuffer;
 	fZStream.avail_in = 0;
 	fBlockSize = 1024*1024; // 1024K
+	fRandomAccess = true;
+	fBlockStart = fCurPos = 0;
 	ZCheck(inflateInit_(&fZStream, ZLIB_VERSION, sizeof(fZStream)));
 }
 
@@ -1211,6 +1213,8 @@ CdZIPInflate::CdZIPInflate(CdStream* Source, int windowBits):
 	fZStream.next_in = fBuffer;
 	fZStream.avail_in = 0;
 	fBlockSize = 1024*1024; // 1024K
+	fRandomAccess = true;
+	fBlockStart = fCurPos = 0;
 	ZCheck(inflateInit2_(&fZStream, windowBits, ZLIB_VERSION, sizeof(fZStream)));
 }
 
@@ -1252,7 +1256,7 @@ ssize_t CdZIPInflate::Read(void *Buffer, ssize_t Count)
 		{
 			fBlockStart += fBlockSize;
 			// Add an access point
-			if (fRanAccess)
+			if (fRandomAccess)
 			{
 				int DivI = fCurPos / fBlockSize;
 				if (DivI > 0)
@@ -1310,7 +1314,7 @@ TdPtr64 CdZIPInflate::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
 
 		if (vOff < fCurPos)
 		{
-			if (fRanAccess && vOff>=fBlockSize)
+			if (fRandomAccess && vOff>=fBlockSize)
 			{
 				inflateEnd(&fZStream);
 				int i = vOff / fBlockSize;
@@ -1322,7 +1326,7 @@ TdPtr64 CdZIPInflate::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
 			} else
 				Seek(0, soBeginning);
 		} else {
-			if (fRanAccess && vOff>=fBlockStart+fBlockSize)
+			if (fRandomAccess && vOff>=fBlockStart+fBlockSize)
 			{
 				int i = vOff / fBlockSize;
 				TZIPPointRec *p = PointIndex(i-1);
@@ -1369,11 +1373,11 @@ void CdZIPInflate::ClearPoints()
 	vPoints.clear();
 }
 
-void CdZIPInflate::SetRanAccess(bool Value)
+void CdZIPInflate::SetRandomAccess(bool Value)
 {
-	if (Value != fRanAccess)
+	if (Value != fRandomAccess)
 	{
-		fRanAccess = Value;
+		fRandomAccess = Value;
 		ClearPoints();
 	}
 }
@@ -1416,7 +1420,7 @@ EZLibError::EZLibError(int Code)
 
 // CdBlockStream
 
-inline static void xClearList(CdBlockStream::TBlockInfo *Head)
+static void xClearList(CdBlockStream::TBlockInfo *Head)
 {
 	CdBlockStream::TBlockInfo *p = Head;
 	while (p != NULL)

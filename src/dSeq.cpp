@@ -6,9 +6,9 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dSeq.hpp: CoreArray Containers for extended types
+// dSeq.cpp: CoreArray Containers for extended types
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -32,46 +32,58 @@
 #endif
 
 
+namespace CoreArray
+{
+	// Bit Array
+
+	extern const UInt8 CoreArray_MaskBit1Array[8] =
+		{ 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+	extern const UInt8 CoreArray_MaskBit1ArrayNot[8] =
+		{ 0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F };
+
+	extern const UInt8 CoreArray_MaskBit2Array[4] =
+		{ 0x03, 0x0C, 0x30, 0xC0 };
+	extern const UInt8 CoreArray_MaskBit2ArrayNot[4] =
+		{ 0xFC, 0xF3, 0xCF, 0x3F };
+
+	extern const UInt8 CoreArray_MaskBit4Array[2] =
+		{ 0x0F, 0xF0 };
+	extern const UInt8 CoreArray_MaskBit4ArrayNot[2] =
+		{ 0xF0, 0x0F };
+
+
+	// Class Names
+
+	extern const char *BitStreamNames[32] =
+	{
+		"dBit1", "dBit2", "dBit3", "dBit4", "dBit5", "dBit6", "dBit7", "dBit8",
+		"dBit9", "dBit10", "dBit11", "dBit12", "dBit13", "dBit14", "dBit15",
+		"dBit16", "dBit17", "dBit18", "dBit19", "dBit20", "dBit21", "dBit22",
+		"dBit23", "dBit24", "dBit25", "dBit26", "dBit27", "dBit28", "dBit29",
+		"dBit30", "dBit31", "dBit32"
+	};
+
+	extern const char *SBitStreamNames[32] =
+	{
+		"dSBit1", "dSBit2", "dSBit3", "dSBit4", "dSBit5", "dSBit6", "dSBit7", "dSBit8",
+		"dSBit9", "dSBit10", "dSBit11", "dSBit12", "dSBit13", "dSBit14", "dSBit15",
+		"dSBit16", "dSBit17", "dSBit18", "dSBit19", "dSBit20", "dSBit21", "dSBit22",
+		"dSBit23", "dSBit24", "dSBit25", "dSBit26", "dSBit27", "dSBit28", "dSBit29",
+		"dSBit30", "dSBit31", "dSBit32"
+	};
+
+	#ifdef COREARRAY_SUNPROCC
+		extern bool CoreArray_ifRegClass = false;
+	#else
+		static bool CoreArray_ifRegClass = false;
+	#endif
+}
+
+
+
 using namespace std;
 using namespace CoreArray;
 using namespace CoreArray::Internal;
-
-
-// Bit Array
-
-UInt8 CoreArray::MaskBit1Array[8] =
-	{ 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
-UInt8 CoreArray::MaskBit1ArrayNot[8] =
-	{ 0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F };
-
-UInt8 CoreArray::MaskBit2Array[4] =
-	{ 0x03, 0x0C, 0x30, 0xC0 };
-UInt8 CoreArray::MaskBit2ArrayNot[4] =
-	{ 0xFC, 0xF3, 0xCF, 0x3F };
-
-UInt8 CoreArray::MaskBit4Array[2] =
-	{ 0x0F, 0xF0 };
-UInt8 CoreArray::MaskBit4ArrayNot[2] =
-	{ 0xF0, 0x0F };
-
-// Class Names
-const char *CoreArray::BitStreamNames[32] =
-{
-	"dBit1", "dBit2", "dBit3", "dBit4", "dBit5", "dBit6", "dBit7", "dBit8",
-	"dBit9", "dBit10", "dBit11", "dBit12", "dBit13", "dBit14", "dBit15",
-	"dBit16", "dBit17", "dBit18", "dBit19", "dBit20", "dBit21", "dBit22",
-	"dBit23", "dBit24", "dBit25", "dBit26", "dBit27", "dBit28", "dBit29",
-	"dBit30", "dBit31", "dBit32"
-};
-
-const char *CoreArray::SBitStreamNames[32] =
-{
-	"dSBit1", "dSBit2", "dSBit3", "dSBit4", "dSBit5", "dSBit6", "dSBit7", "dSBit8",
-	"dSBit9", "dSBit10", "dSBit11", "dSBit12", "dSBit13", "dSBit14", "dSBit15",
-	"dSBit16", "dSBit17", "dSBit18", "dSBit19", "dSBit20", "dSBit21", "dSBit22",
-	"dSBit23", "dSBit24", "dSBit25", "dSBit26", "dSBit27", "dSBit28", "dSBit29",
-	"dSBit30", "dSBit31", "dSBit32"
-};
 
 
 template<typename TClass> static CdObjRef * OnObjCreate()
@@ -79,12 +91,9 @@ template<typename TClass> static CdObjRef * OnObjCreate()
 	return new TClass();
 }
 
-
-static bool ifRegClass = false;
-
 void CoreArray::RegisterClass()
 {
-	if (ifRegClass) return;
+	if (CoreArray_ifRegClass) return;
 
 	#define REG_CLASS(T, CLASS, CType, Desp)	\
 		dObjManager().AddClass(TdTraits< T >::StreamName(), \
@@ -191,27 +200,25 @@ void CoreArray::RegisterClass()
 #endif
 	REG_CLASS(UInt32, CdUInt32, ctArray, "unsigned integer of 32 bits");
 	REG_CLASS_EX("dBit32", CdBit32, ctArray, "unsigned integer of 32 bits");
-
 	REG_CLASS(UInt64, CdUInt64, ctArray, "unsigned integer of 64 bits");
 
 	// float
-
 	REG_CLASS(Float32, CdFloat32, ctArray, "float  32");
 	REG_CLASS(Float64, CdFloat64, ctArray, "float  64");
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	REG_CLASS(Float128, CdFloat128, ctArray, "float 128");
+	#endif
 
 	// string
-
 	REG_CLASS(UTF8*, CdFStr8, ctArray, "UTF-08 string");
 	REG_CLASS(UTF16*, CdFStr16, ctArray, "UTF-16 string");
 	REG_CLASS(UTF32*, CdFStr32, ctArray, "UTF-32 string");
 
 	// stream container
-
 	dObjManager().AddClass("dStream", OnObjCreate<CdGDSStreamContainer>,
 		CdObjClassMgr::ctStream, "Stream Container");
 
-	ifRegClass = true;
+	CoreArray_ifRegClass = true;
 
 	#undef REG_CLASS
 	#undef REG_CLASS_EX
@@ -232,7 +239,7 @@ void CoreArray::bitClear(TdAllocator &alloc, TdPtr64 p, Int64 Len)
 			B = alloc.r8(p);
 			kEnd = (7 < k+(ssize_t)Len-1) ? 7 : (k+(ssize_t)Len-1);
 			for (; k <= kEnd; k++, Len--)
-				B = B & MaskBit1ArrayNot[k];
+				B = B & CoreArray_MaskBit1ArrayNot[k];
 			alloc.w8(p, B); p++;
 		}
 		// Middle
@@ -305,12 +312,12 @@ void CoreArray::bitBinShl(void *Buf, size_t NByte, UInt8 NShl)
 	}
 }
 
-inline static UInt8 xb(UInt8 v)
+COREARRAY_FORCE_INLINE static UInt8 xb(UInt8 v)
 {
 	return v & 0x07;
-};
+}
 
-inline static size_t bitCpyToBuf(TdAllocator &alloc, const TdPtr64 pS,
+static size_t bitCpyToBuf(TdAllocator &alloc, const TdPtr64 pS,
 	void *Buf, size_t L)
 {
 	TdPtr64 ppS, p;
@@ -334,7 +341,7 @@ void CoreArray::bitBufToCpy(TdAllocator &alloc, TdPtr64 pD, void *Buf, size_t L)
     	xpDL = ((xpD+L-1) < 7) ? (xpD+L-1) : 7;
 		for (i = xpD; i <= xpDL; i++)
 		{
-			B = (B & MaskBit1ArrayNot[i]) | (*pB & MaskBit1Array[i]);
+			B = (B & CoreArray_MaskBit1ArrayNot[i]) | (*pB & CoreArray_MaskBit1Array[i]);
 			--L; pD++;
 		}
 		alloc.w8(p, B); ++pB;
@@ -352,7 +359,7 @@ void CoreArray::bitBufToCpy(TdAllocator &alloc, TdPtr64 pD, void *Buf, size_t L)
 	{
 		B = alloc.r8(pD);
 		for (i = 0; (size_t)i < L; i++)
-			B = (B & MaskBit1ArrayNot[i]) | (*pB & MaskBit1Array[i]);
+			B = (B & CoreArray_MaskBit1ArrayNot[i]) | (*pB & CoreArray_MaskBit1Array[i]);
 		alloc.w8(pD, B);
 	}
 }
@@ -391,4 +398,3 @@ void CoreArray::bitMoveBits(TdAllocator &alloc, TdPtr64 pS, TdPtr64 pD, TdPtr64 
 		}
 	}
 }
-

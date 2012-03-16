@@ -8,7 +8,7 @@
 //
 // dFile.cpp: Functions and classes for CoreArray Generic Data Structure (GDS)
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -43,12 +43,11 @@ namespace CoreArray
 		virtual CdStream* InitPipe(CBufdStream *Filter)
 		{
 			fStream = Filter->Stream();
-			if (dynamic_cast<CdFilter*>(Filter))
-				fPStream = new CdZIPInflate(dynamic_cast<CdFilter*>(Filter)->
+			if (dynamic_cast<CdSerial*>(Filter))
+				fPStream = new CdZIPInflate(dynamic_cast<CdSerial*>(Filter)->
 					BlockStream());
 			else
 				fPStream = new CdZIPInflate(Filter->Stream());
-			fPStream->SetRanAccess(true);
 			return fPStream;
 		}
 		virtual CdStream* FreePipe()
@@ -69,9 +68,10 @@ namespace CoreArray
 			TdCompressRemainder &vRemainder): fRemainder(vRemainder)
 			{ fLevel = vLevel; }
 
-		inline CdZIPDeflate::TZLevel Level() const { return fLevel; };
-		inline CdStream* Stream() const { return fStream; };
-		inline CdStream* StreamZIP() const { return fPStream; };
+		COREARRAY_FORCE_INLINE CdZIPDeflate::TZLevel Level() const { return fLevel; };
+		COREARRAY_FORCE_INLINE CdStream* Stream() const { return fStream; };
+		COREARRAY_FORCE_INLINE CdStream* StreamZIP() const { return fPStream; };
+
 	protected:
 		virtual CdStream* InitPipe(CBufdStream *Filter)
 		{
@@ -166,7 +166,7 @@ namespace CoreArray
                 Stream.WriteBuffer((void*)Ary, sizeof(Ary));
             }
 		}
-		virtual void LoadStream(CdFilter &Reader, TdVersion Version)
+		virtual void LoadStream(CdSerial &Reader, TdVersion Version)
 		{
 			Int64 Ary[2];
 			if (Reader["PIPE_SIZE"].rShortBuf(Ary, 2))
@@ -184,7 +184,7 @@ namespace CoreArray
                 throw ErrGDSObj("Invalid 'PIPE_LEVEL %d'", I);
 			vLevel = (CdZIPDeflate::TZLevel)I;
 		}
-		virtual void SaveStream(CdFilter &Writer)
+		virtual void SaveStream(CdSerial &Writer)
 		{
         	UpdateStreamSize();
 			Int64 Ary[2] = { fStreamTotalIn, fStreamTotalOut };
@@ -222,9 +222,9 @@ void CdPipeMgrItem::UpdateStreamSize()
 		fOwner->GetPipeInfo();
 }
 
-void CdPipeMgrItem::LoadStream(CdFilter &Reader, TdVersion Version) {}
+void CdPipeMgrItem::LoadStream(CdSerial &Reader, TdVersion Version) {}
 
-void CdPipeMgrItem::SaveStream(CdFilter &Writer) {}
+void CdPipeMgrItem::SaveStream(CdSerial &Writer) {}
 
 int CdPipeMgrItem::Which(const char *txt, const char **Strs, int nStrs)
 {
@@ -285,14 +285,14 @@ CdPipeMgrItem *CdStreamPipeMgr::Match(CdGDSObj &Obj, const char *Mode)
 static const char *rsAttrName = "No Attribute Name ('%s').";
 static const char *rsAttrNameExist = "Attribute '%s' has existed.";
 
-CdObjAttr::CdObjAttr(CdGDSObj &vOwner): fOwner(vOwner) {};
+CdObjAttr::CdObjAttr(CdGDSObj &vOwner): fOwner(vOwner) {}
 
 CdObjAttr::~CdObjAttr()
 {
 	vector<TdPair*>::iterator it;
 	for (it = fList.begin(); it != fList.end(); it++)
 		delete *it;
-};
+}
 
 void CdObjAttr::Assign(CdObjAttr &Source)
 {
@@ -370,7 +370,7 @@ TdsData & CdObjAttr::operator[](int Index)
 	return fList.at(Index)->val;
 }
 
-void CdObjAttr::LoadAfter(CdFilter &Reader, const TdVersion Version)
+void CdObjAttr::LoadAfter(CdSerial &Reader, const TdVersion Version)
 {
 	Int32 Cnt;
 	if (Reader["ATTRCNT"] >> Cnt)
@@ -400,7 +400,7 @@ void CdObjAttr::LoadAfter(CdFilter &Reader, const TdVersion Version)
 		fList.clear();
 }
 
-void CdObjAttr::SaveAfter(CdFilter &Writer)
+void CdObjAttr::SaveAfter(CdSerial &Writer)
 {
 	Int32 Cnt = fList.size();
 	Writer["ATTRCNT"] << Cnt;
@@ -587,7 +587,7 @@ CdGDSFile *CdGDSObj::GDSFile()
 		return NULL;
 }
 
-void CdGDSObj::LoadBefore(CdFilter &Reader, TdVersion Version)
+void CdGDSObj::LoadBefore(CdSerial &Reader, TdVersion Version)
 {
 	// PipeInfo
 	if (fPipeInfo) delete fPipeInfo;
@@ -603,13 +603,13 @@ void CdGDSObj::LoadBefore(CdFilter &Reader, TdVersion Version)
 	}
 }
 
-void CdGDSObj::LoadAfter(CdFilter &Reader, TdVersion Version)
+void CdGDSObj::LoadAfter(CdSerial &Reader, TdVersion Version)
 {
 	CdObjMsg::LoadAfter(Reader, Version);
 	fAttr.LoadAfter(Reader, Version);
 }
 
-void CdGDSObj::SaveBefore(CdFilter &Writer)
+void CdGDSObj::SaveBefore(CdSerial &Writer)
 {
 	if (fPipeInfo)
 	{
@@ -618,13 +618,13 @@ void CdGDSObj::SaveBefore(CdFilter &Writer)
 	}
 }
 
-void CdGDSObj::SaveAfter(CdFilter &Writer)
+void CdGDSObj::SaveAfter(CdSerial &Writer)
 {
 	CdObjMsg::SaveAfter(Writer);
 	fAttr.SaveAfter(Writer);
 }
 
-void CdGDSObj::SaveStruct(CdFilter &Writer, bool IncludeName)
+void CdGDSObj::SaveStruct(CdSerial &Writer, bool IncludeName)
 {
 	CdObjMsg::SaveStruct(Writer, IncludeName);
 	Writer.Truncate();
@@ -638,7 +638,7 @@ void CdGDSObj::SaveToBlockStream()
 	#endif
 	if (fGDSStream)
 	{
-		TdAutoRef<CdFilter> Writer(new CdFilter(fGDSStream));
+		TdAutoRef<CdSerial> Writer(new CdSerial(fGDSStream));
 		SaveStruct(*Writer, true);
 	}
 }
@@ -929,7 +929,7 @@ bool CdGDSFolder::HasChild(CdGDSObj *Obj, bool SubFolder)
 	return false;
 }
 
-void CdGDSFolder::LoadAfter(CdFilter &Reader, TdVersion Version)
+void CdGDSFolder::LoadAfter(CdSerial &Reader, TdVersion Version)
 {
 	fList.clear();
 
@@ -960,7 +960,7 @@ void CdGDSFolder::LoadAfter(CdFilter &Reader, TdVersion Version)
 	fAttr.LoadAfter(Reader, Version);
 }
 
-void CdGDSFolder::SaveAfter(CdFilter &Writer)
+void CdGDSFolder::SaveAfter(CdSerial &Writer)
 {
 	Int32 L = fList.size();
 	Writer["DIRCNT"] << L;
@@ -993,7 +993,7 @@ void CdGDSFolder::SaveToBlockStream()
 	#endif
 	if (fGDSStream)
 	{
-		TdAutoRef<CdFilter> Writer(new CdFilter(fGDSStream));
+		TdAutoRef<CdSerial> Writer(new CdSerial(fGDSStream));
 		SaveStruct(*Writer, false);
 	}
 }
@@ -1039,7 +1039,7 @@ void CdGDSFolder::_LoadItem(TItem &I)
 		#ifdef COREARRAY_DEBUG_CODE
 		_CheckGDSStream();
 		#endif
-		TdAutoRef<CdFilter> Reader(new CdFilter(
+		TdAutoRef<CdSerial> Reader(new CdSerial(
 			fGDSStream->Collection()[I.StreamID]));
 
 		if (I.IsFolder())
@@ -1126,7 +1126,7 @@ void CdGDSNull::SaveToBlockStream()
 	#endif
 	if (fGDSStream)
 	{
-		TdAutoRef<CdFilter> Writer(new CdFilter(fGDSStream));
+		TdAutoRef<CdSerial> Writer(new CdSerial(fGDSStream));
 		SaveStruct(*Writer, false);
 	}
 }
@@ -1160,7 +1160,7 @@ char const* CdGDSStreamContainer::dTraitName()
 	return "Stream";
 }
 
-void CdGDSStreamContainer::LoadAfter(CdFilter &Reader, TdVersion Version)
+void CdGDSStreamContainer::LoadAfter(CdSerial &Reader, TdVersion Version)
 {
 	if (fGDSStream != NULL)
 	{
@@ -1183,7 +1183,7 @@ void CdGDSStreamContainer::LoadAfter(CdFilter &Reader, TdVersion Version)
 	CdGDSObj::LoadAfter(Reader, Version);
 }
 
-void CdGDSStreamContainer::SaveAfter(CdFilter &Writer)
+void CdGDSStreamContainer::SaveAfter(CdSerial &Writer)
 {
 	if (fGDSStream != NULL)
 	{
@@ -1201,7 +1201,7 @@ void CdGDSStreamContainer::SaveAfter(CdFilter &Writer)
 	CdGDSObj::SaveAfter(Writer);
 }
 
-void CdGDSStreamContainer::SaveStruct(CdFilter &Writer, bool IncludeName)
+void CdGDSStreamContainer::SaveStruct(CdSerial &Writer, bool IncludeName)
 {
 	CdGDSObj::SaveStruct(Writer, IncludeName);
 
@@ -1482,7 +1482,7 @@ void CdGDSFile::LoadStream(CdStream* Stream, bool ReadOnly)
 		fRoot.fGDSStream = (*this)[Entry];
 		fRoot.fGDSStream->AddRef();
 
-		TdAutoRef<CdFilter> Reader(new CdFilter(fRoot.fGDSStream));
+		TdAutoRef<CdSerial> Reader(new CdSerial(fRoot.fGDSStream));
 		Reader->rBeginNameSpace();
 		Internal::CdObject_LoadStruct(fRoot, *Reader, fVersion);
 		Reader->rEndStruct();

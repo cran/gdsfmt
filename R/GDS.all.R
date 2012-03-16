@@ -1,3 +1,30 @@
+# ===========================================================
+#     _/_/_/   _/_/_/  _/_/_/_/    _/_/_/_/  _/_/_/   _/_/_/
+#      _/    _/       _/             _/    _/    _/   _/   _/
+#     _/    _/       _/_/_/_/       _/    _/    _/   _/_/_/
+#    _/    _/       _/             _/    _/    _/   _/
+# _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
+# ===========================================================
+#
+# GDS.all.r: the R interface of CoreArray library
+#
+# Copyright (C) 2012	Xiuwen Zheng
+#
+# This file is part of CoreArray.
+#
+# CoreArray is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License Version 3 as
+# published by the Free Software Foundation.
+#
+# CoreArray is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with CoreArray.
+# If not, see <http://www.gnu.org/licenses/>.
+
 
 #############################################################
 # File Operations
@@ -6,8 +33,7 @@
 createfn.gds <- function(fn)
 {
 	r <- .C("gdsCreateGDS", filename=as.character(fn), id=integer(1),
-		root=integer(2), err=integer(1), NAOK=TRUE,
-		PACKAGE="gdsfmt")
+		root=integer(2), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 	{
 		stop(lasterr.gds())
@@ -38,8 +64,7 @@ openfn.gds <- function(fn, readonly=TRUE)
 closefn.gds <- function(gds)
 {
 	stopifnot(class(gds)=="gdsclass")
-	r <- .C("gdsCloseGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE,
-		PACKAGE="gdsfmt")
+	r <- .C("gdsCloseGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 		stop(lasterr.gds())
 	return(invisible(NULL))
@@ -48,8 +73,7 @@ closefn.gds <- function(gds)
 sync.gds <- function(gds)
 {
 	stopifnot(class(gds)=="gdsclass")
-	r <- .C("gdsSyncGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE,
-		PACKAGE="gdsfmt")
+	r <- .C("gdsSyncGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 		stop(lasterr.gds())
 	return(invisible(NULL))
@@ -64,8 +88,7 @@ sync.gds <- function(gds)
 cnt.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
-	r <- .C("gdsNodeChildCnt", as.integer(node), cnt=as.integer(1),
-		NAOK=TRUE, PACKAGE="gdsfmt")
+	r <- .C("gdsNodeChildCnt", as.integer(node), cnt=as.integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$cnt < 0)
 		stop(lasterr.gds())
 	return(r$cnt)
@@ -117,10 +140,13 @@ index.gdsn <- function(node, index, silent=FALSE)
 		return(node)
 	cnt <- cnt.gdsn(node)
 	if (is.character(index))
+	{
 		r <- .C("gdsNodeIndexEx", node=as.integer(node), as.character(index),
 			as.integer(length(index)), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-	else r <- .C("gdsNodeIndex", node=as.integer(node), as.integer(index),
-		as.integer(length(index)), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	} else {
+		r <- .C("gdsNodeIndex", node=as.integer(node), as.integer(index),
+			as.integer(length(index)), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	}
 	if (r$err != 0)
 	{
 		if (!silent) stop(lasterr.gds())
@@ -279,9 +305,9 @@ put.attr.gdsn <- function(node, name, val=NULL)
 	if (name != "")
 	{
 		storage <- switch( storage.mode(val),
-			"NULL" = 0, "integer" = 1, "double" = 2,
-			"character" = 3, "logical" = 4,
+			"NULL" = 0, "integer" = 1, "double" = 2, "character" = 3, "logical" = 4,
 			stop("Unsupported type!") )
+		if (is.null(val)) val <- integer(0)
 		r <- .C("gdsPutAttr", as.integer(node), name, as.integer(storage),
 			val, err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 		if (r$err != 0)
@@ -294,8 +320,7 @@ put.attr.gdsn <- function(node, name, val=NULL)
 get.attr.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
-	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), NAOK=TRUE,
-		PACKAGE="gdsfmt")
+	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$Cnt > 0)
 	{
 		rv <- vector("list", r$Cnt)
@@ -306,11 +331,11 @@ get.attr.gdsn <- function(node)
 		{
 			rt <- r1$rtype[i]
 			r2 <- .C( "gdsGetAttr", as.integer(node), as.integer(i), rt,
-				data=switch(rt, integer(1), double(1), character(1), logical(1)),
+				data=switch(rt+1, integer(0), integer(1), double(1), character(1), logical(1)),
 				name=character(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-			if (r2$err == 0) {
-				if (!is.null(r2$data))
-					rv[[i]] <- r2$data
+			if (r2$err == 0)
+			{
+				if (!is.null(r2$data)) rv[[i]] <- r2$data
 				rn[i] <- r2$name
 			} else
 				stop(lasterr.gds())
@@ -395,7 +420,7 @@ append.gdsn <- function(node, val, check=TRUE)
 	if (r$err == 0)
 	{
 		if (r$CntWarn != 0)
-			warning("Not a complete sub-dataset.");
+			warning("No a complete sub-dataset.");
 	} else {
 		stop(lasterr.gds())
 	}
@@ -461,8 +486,8 @@ read.gdsn <- function(node, start, count)
 	{
 		r <- .C("gdsObjReadData", as.integer(node), cnt=as.integer(r$cnt),
 			as.integer(r$rstart), count=as.integer(r$rcount), as.integer(r$rtype),
-			data=switch(r$rtype, integer(r$total), double(r$total),
-			character(r$total), logical(r$total)),
+			data=switch(r$rtype+1, integer(0), integer(r$total), double(r$total),
+				character(r$total), logical(r$total)),
 			err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 
 		if (rfactor)
@@ -478,7 +503,8 @@ read.gdsn <- function(node, start, count)
 			{
 				if ((r$count[1] == 1) || (r$count[2] == 1))
 					return(r$data)
-				else return(array(r$data, dim=rev(r$count[1:r$cnt])))
+				else
+					return(array(r$data, dim=rev(r$count[1:r$cnt])))
 			} else if (r$cnt <= 1)
 				return(r$data)
 			else
@@ -498,8 +524,7 @@ write.gdsn <- function(node, val, start, count)
 	{
 		if (missing(count))
 		{
-			if (is.character(val))
-				val[is.na(val)] <- ""
+			if (is.character(val)) val[is.na(val)] <- ""
 
 			rt <- switch( storage.mode(val),
 				"integer" = 1, "double" = 2, "character" = 3, "logical" = 1,
@@ -531,8 +556,7 @@ write.gdsn <- function(node, val, start, count)
 			if (r$total != length(val))
 				stop(paste("the length of val ", length(val),
 					" is not equal to count(", r$total, ").", sep=""))
-			if (is.character(val))
-				val[is.na(val)] <- ""
+			if (is.character(val)) val[is.na(val)] <- ""
 
 			r <- .C("gdsObjWriteData", as.integer(node), as.integer(r$cnt),
 				as.integer(r$rstart), as.integer(r$rcount), as.integer(r$rtype),
@@ -593,7 +617,9 @@ print.gdsclass <- function(x, ...)
 			cat(sprintf("(%0.2f%%)", 100*n$cpratio))
 		if (length(get.attr.gdsn(node)) > 0)
 			cat(" ] *\n")
-		else cat(" ]\n")
+		else
+			cat(" ]\n")
+
 		r <- .C("gdsNodeEnumPtr", as.integer(node), id=integer(cnt*2),
 			err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 		if ((r$err == 0) & (cnt > 0))
@@ -630,8 +656,8 @@ print.gdsn <- function(x, expand=TRUE, ...)
 		cnt <- cnt.gdsn(node)
 		cat(space, "+ ", name.gdsn(node, fullname), "	[ ", n$desp, " ", sep="")
 		cat(n$dim, sep="x")
-		if (n$compress!="") cat("", n$compress)
-		if (!is.nan(n$cpratio))
+		if (n$compress != "") cat("", n$compress)
+		if (is.finite(n$cpratio))
 			cat(sprintf("(%0.2f%%)", 100*n$cpratio))
 		if (length(get.attr.gdsn(node)) > 0)
 			cat(" ] *\n")
@@ -650,7 +676,8 @@ print.gdsn <- function(x, expand=TRUE, ...)
 					class(m) <- "gdsn"
 					if (level==1)
 						s <- paste("|--", space, sep="")
-					else s <- paste("|  ", space, sep="")
+					else
+						s <- paste("|  ", space, sep="")
 					enum(m, s, level+1, TRUE, FALSE)
 				}
 			}

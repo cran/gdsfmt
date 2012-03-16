@@ -8,7 +8,7 @@
 //
 // dPlatform.h: Functions for independent platforms
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,10 +29,12 @@
  *	\file     dPlatform.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2011
+ *	\date     2007 - 2012
  *	\brief    Functions for independent platforms
  *	\details
-*/
+ *	\todo     Big endianness is not supported currently
+ *  \todo     Need to improve: UTF8toUTF32
+**/
 
 #ifndef _dPlatform_H_
 #define _dPlatform_H_
@@ -60,6 +62,8 @@
 
 namespace CoreArray
 {
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
+
 	#ifndef COREARRAY_HAVE_INT128
 
 	struct int128_t;
@@ -150,14 +154,14 @@ namespace CoreArray
 		static const bool isClass = false;
 		static const TSVType SVType = svCustomInt;
 
-		inline static const char * TraitName() { return "Int128"; };
-		inline static const char * StreamName() { return "dInt128"; };
+		static const char * TraitName() { return "Int128"; }
+		static const char * StreamName() { return "dInt128"; }
 
 	#ifndef COREARRAY_HAVE_INT128
 		static Int128 Min()
-			{ Int128 rv; rv.Low = 0; rv.High = INT64_MIN; return rv; };
+			{ Int128 rv; rv.Low = 0; rv.High = INT64_MIN; return rv; }
 		static Int128 Max()
-			{ Int128 rv; rv.Low = UINT64_MAX; rv.High = INT64_MAX; return rv; };
+			{ Int128 rv; rv.Low = UINT64_MAX; rv.High = INT64_MAX; return rv; }
 	#else
 	#  error "Int128"
 	#endif
@@ -171,14 +175,14 @@ namespace CoreArray
 		static const bool isClass = false;
 		static const TSVType SVType = svCustomInt;
 
-		inline static const char * TraitName() { return "UInt128"; };
-		inline static const char * StreamName() { return "dUInt128"; };
+		static const char * TraitName() { return "UInt128"; }
+		static const char * StreamName() { return "dUInt128"; }
 
 	#ifndef COREARRAY_HAVE_INT128
 		static UInt128 Min()
-			{ return UInt128(0); };
+			{ return UInt128(0); }
 		static UInt128 Max()
-			{ UInt128 rv; rv.Low = rv.High = -1; return rv; };
+			{ UInt128 rv; rv.Low = rv.High = -1; return rv; }
 	#else
 	#  error "UInt128"
 	#endif
@@ -193,14 +197,16 @@ namespace CoreArray
 		static const bool isClass = false;
 		static const TSVType SVType = svCustomFloat;
 
-		inline static const char * TraitName() { return "Float128"; };
-		inline static const char * StreamName() { return "Float128"; };
+		static const char * TraitName() { return "Float128"; }
+		static const char * StreamName() { return "Float128"; }
 
 		static Float128 Min()
-			{ return Float128::min(); };
+			{ return Float128::min(); }
 		static Float128 Max()
-			{ return Float128::max(); };
+			{ return Float128::max(); }
 	};
+	#endif
+
 	#endif
 
 
@@ -252,7 +258,10 @@ namespace CoreArray
 	std::string FloatToStr(const float val);
 	std::string FloatToStr(const double val);
 	std::string FloatToStr(const long double val);
+
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	std::string FloatToStr(const Float128 val);
+	#endif
 
 
 	// get a string from an integer
@@ -264,8 +273,11 @@ namespace CoreArray
 	std::string IntToStr(const UInt32 val);
 	std::string IntToStr(const Int64 val);
 	std::string IntToStr(const UInt64 val);
+
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	std::string IntToStr(const Int128 val);
 	std::string IntToStr(const UInt128 val);
+	#endif
 
 
 	// UTF functions
@@ -298,7 +310,7 @@ namespace CoreArray
 		size_t Cvt(const char * &inbuf, size_t &inbytesleft,
 			char* &outbuf, size_t &outbytesleft);
 
-		inline iconv_t Handle() const { return fHandle; };
+		COREARRAY_FORCE_INLINE iconv_t Handle() const { return fHandle; }
 //		static std::vector<std::string> List();
 	protected:
 		iconv_t fHandle;
@@ -319,11 +331,11 @@ namespace CoreArray
 	class ErrCoreArray: public std::exception
 	{
 	public:
-		ErrCoreArray() {};
+		ErrCoreArray() {}
 		ErrCoreArray(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		ErrCoreArray(const std::string &msg) { fMessage = msg; }
 		virtual const char *what() const throw() { return fMessage.c_str(); }
-		virtual ~ErrCoreArray() throw() {};
+		virtual ~ErrCoreArray() throw() {}
 	protected:
 		std::string fMessage;
 		void Init(const char *fmt, va_list arglist);
@@ -348,17 +360,16 @@ namespace CoreArray
 		ErrOSError(const std::string &msg) { fMessage = msg; }
 	};
 
-	// Return the last code from the OS
+	/// Return the last code from the OS
 	int GetLastOSError();
-	// Format a system error message
+	/// Format a system error message
 	UTF8String SysErrMessage(int err);
-	// Format the last system error message
+	/// Format the last system error message
 	UTF8String LastSysErrMsg();
-	// Raise an exception with the last Operating System error code
-	template<class X> inline void RaiseLastOSError()
-		{ throw X(LastSysErrMsg()); }
+	/// Raise an exception with the last Operating System error code
+	template<class X> void RaiseLastOSError() { throw X(LastSysErrMsg()); }
 
-
+	/// convert the date and time information to a string
 	std::string NowDateToStr();
 
 
@@ -430,19 +441,24 @@ namespace CoreArray
 		void Lock();
 		void Unlock();
 		bool TryLock();
-		inline TdMutex &Mutex() { return mutex; };
+		COREARRAY_FORCE_INLINE TdMutex &Mutex() { return mutex; }
 	private:
 		TdMutex mutex;
 	};
 
+
+	/// The auto object for locking and unlocking a mutex object
 	struct TdAutoMutex
 	{
 		CdThreadMutex * mutex;
-		TdAutoMutex(CdThreadMutex *m) { mutex = m; if (m) m->Lock(); };
-		~TdAutoMutex() { if (mutex) mutex->Unlock(); };
-		inline void Reset(CdThreadMutex *m)
+		TdAutoMutex(CdThreadMutex *m) { mutex = m; if (m) m->Lock(); }
+		~TdAutoMutex() { if (mutex) mutex->Unlock(); }
+
+		/// Reset the mutex object
+		void Reset(CdThreadMutex *m)
 		{
-			if (m != mutex) {
+			if (m != mutex)
+			{
 				if (mutex) mutex->Unlock();
 				mutex = m;
 				if (m) m->Lock();
@@ -460,7 +476,7 @@ namespace CoreArray
 	{
 		class CdThBasic {
         public:
-			virtual ~CdThBasic() {};
+			virtual ~CdThBasic() {}
 		};
 
 		template<typename Tx> class CdThBasicEx: public CdThBasic {
@@ -488,7 +504,7 @@ namespace CoreArray
 				(CdThBasicEx< Internal::TdThreadDataEx<Tx> >*)Data;
 			return (*p->Data.proc)(Thread, p->Data.Data);
 		}
-	};
+	}
 
     /// Thread class
 	class CdThread
@@ -527,10 +543,12 @@ namespace CoreArray
 		virtual int RunThread();
 		int EndThread();
 		void Terminate();
-		inline bool Terminated() const { return terminated; };
-		inline TStruct &Thread() { return thread; };
-		inline int &ExitCode() { return fExitCode; };
-        inline std::string &ErrorInfo() { return fErrorInfo; };
+
+		COREARRAY_FORCE_INLINE bool Terminated() const { return terminated; }
+		COREARRAY_FORCE_INLINE TStruct &Thread() { return thread; }
+		COREARRAY_FORCE_INLINE int &ExitCode() { return fExitCode; }
+        COREARRAY_FORCE_INLINE std::string &ErrorInfo() { return fErrorInfo; }
+
 	protected:
 		TStruct thread;
 		int fExitCode;
@@ -544,13 +562,12 @@ namespace CoreArray
 	};
 
 
-	// closure or delegate for C++
+	/// Closure or delegate for C++
 	template<class Tx> struct TdThreadObjProc
 	{
 		void (Tx::*proc)(CdThread *);
 		Tx * obj;
-		inline void Proc(CdThread *thread)
-			{ (obj->*proc)(thread); };
+		COREARRAY_FORCE_INLINE void Proc(CdThread *thread) { (obj->*proc)(thread); }
 	};
 
 
@@ -603,7 +620,7 @@ namespace CoreArray
 
 		}
 
-		inline size_t MaxThreads() const { return fMaxThreads; }
+		COREARRAY_FORCE_INLINE size_t MaxThreads() const { return fMaxThreads; }
 		void SetMaxThreads(size_t NewMaxThreads);
 	protected:
         CdThreadMutex fPoolMutex;
@@ -616,7 +633,7 @@ namespace CoreArray
 	class ErrThread: public ErrOSError
 	{
 	public:
-		ErrThread() {};
+		ErrThread() {}
 		ErrThread(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		ErrThread(const std::string &msg) { fMessage = msg; }
 	};
@@ -626,7 +643,7 @@ namespace CoreArray
 	class ErrConvert: public ErrCoreArray
 	{
 	public:
-		ErrConvert() {};
+		ErrConvert() {}
 		ErrConvert(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		ErrConvert(const std::string &msg) { fMessage = msg; }
 	};
@@ -657,24 +674,23 @@ namespace CoreArray
 			int STrait = TdTraits<SourceT>::trVal >
 		struct TValCvt
 		{
-			inline static DestT Cvt(const SourceT &val) { return val; };
-			inline static void Array(DestT *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const SourceT &val) { return val; }
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = *s++; }
 		};
 
 		template<typename DestT, typename SourceT>
-			struct TValCvt<DestT, SourceT,
-			COREARRAY_TR_INTEGER, COREARRAY_TR_FLOAT>
+			struct TValCvt<DestT, SourceT, COREARRAY_TR_INTEGER, COREARRAY_TR_FLOAT>
 		{
 		#ifdef COREARRAY_GNUG
-			inline static DestT Cvt(const SourceT &val)
-				{ return DestT(typename TdTraits<DestT>::TType(val)); };
-			inline static void Array(DestT *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const SourceT &val)
+				{ return DestT(typename TdTraits<DestT>::TType(val)); }
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = DestT(typename TdTraits<DestT>::TType(*s++)); }
 		#else
-			inline static DestT Cvt(const SourceT &val)
-				{ return DestT(TdTraits<DestT>::TType(val)); };
-			inline static void Array(DestT *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const SourceT &val)
+				{ return DestT(TdTraits<DestT>::TType(val)); }
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = DestT(TdTraits<DestT>::TType(*s++)); }
 		#endif
 		};
@@ -684,72 +700,72 @@ namespace CoreArray
 		template<typename DestT> struct TValCvt<DestT, UTF8String,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF8String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF8String &val)
 				{ return StrToInt(val.c_str()); }
-			inline static void Array(DestT *p, UTF8String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF8String *s, ssize_t L)
 				{ for (; L > 0; p++, s++, L--) *p = StrToInt(s->c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF8*,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF8 * val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF8 * val)
 				{ return StrToInt(val); }
-			inline static void Array(DestT *p, UTF8 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF8 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToInt(*s++); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF8String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_INTEGER>
 		{
-			inline static UTF8String Cvt(const SourceT val)
+			COREARRAY_FORCE_INLINE static UTF8String Cvt(const SourceT val)
 				{ return IntToStr(val); }
-			inline static void Array(UTF8String *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF8String *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = IntToStr(*s++); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF8String,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF8String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF8String &val)
 				{ return StrToFloat(val.c_str()); }
-			inline static void Array(DestT *p, UTF8String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF8String *s, ssize_t L)
 				{ for (; L > 0; p++, s++, L--) *p = StrToFloat(s->c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF8*,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF8 *val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF8 *val)
 				{ return StrToFloat(val); }
-			inline static void Array(DestT *p, UTF8 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF8 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToFloat(*s++); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF8String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_FLOAT>
 		{
-			inline static UTF8String Cvt(const SourceT &val)
+			COREARRAY_FORCE_INLINE static UTF8String Cvt(const SourceT &val)
 				{ return FloatToStr(val); }
-			inline static void Array(UTF8String *p, const SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF8String *p, const SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = FloatToStr(*s++); }
 		};
 
 		template<> struct TValCvt<UTF16String, UTF8String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF16String Cvt(const UTF8String &val)
+			COREARRAY_FORCE_INLINE static UTF16String Cvt(const UTF8String &val)
 				{ return CoreArray::UTF8toUTF16(val); }
-			inline static void Array(UTF16String *p, UTF8String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, UTF8String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF8toUTF16(*s++); }
 		};
 
 		template<> struct TValCvt<UTF32String, UTF8String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF32String Cvt(const UTF8String &val)
+			COREARRAY_FORCE_INLINE static UTF32String Cvt(const UTF8String &val)
 				{ return CoreArray::UTF8toUTF32(val); }
-			inline static void Array(UTF32String *p, UTF8String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF32String *p, UTF8String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF8toUTF32(*s++); }
 		};
 
@@ -758,72 +774,72 @@ namespace CoreArray
 		template<typename DestT> struct TValCvt<DestT, UTF16String,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF16String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF16String &val)
 				{ return StrToInt(UTF16toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF16String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF16String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToInt(UTF16toUTF8(*s++).c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF16*,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF16 *val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF16 *val)
 				{ return StrToInt(UTF16toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF16 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF16 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToInt(UTF16toUTF8(*s++).c_str()); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF16String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_INTEGER>
 		{
-			inline static UTF16String Cvt(const SourceT val)
+			COREARRAY_FORCE_INLINE static UTF16String Cvt(const SourceT val)
 				{ return UTF7toUTF16(IntToStr(val)); }
-			inline static void Array(UTF16String *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = UTF7toUTF16(IntToStr(*s++)); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF16String,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF16String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF16String &val)
 				{ return StrToFloat(UTF16toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF16String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF16String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToFloat(UTF16toUTF8(*s++).c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF16*,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF16 *val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF16 *val)
 				{ return StrToFloat(UTF16toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF16 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF16 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToFloat(UTF16toUTF8(*s++).c_str()); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF16String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_FLOAT>
 		{
-			inline static UTF16String Cvt(const SourceT &val)
+			COREARRAY_FORCE_INLINE static UTF16String Cvt(const SourceT &val)
 				{ return UTF7toUTF16(FloatToStr(val)); }
-			inline static void Array(UTF16String *p, const SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, const SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = UTF7toUTF16(FloatToStr(*s++)); }
 		};
 
 		template<> struct TValCvt<UTF8String, UTF16String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF8String Cvt(const UTF16String &val)
+			COREARRAY_FORCE_INLINE static UTF8String Cvt(const UTF16String &val)
 				{ return CoreArray::UTF16toUTF8(val); }
-			inline static void Array(UTF16String *p, UTF8String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, UTF8String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF8toUTF16(*s++); }
 		};
 
 		template<> struct TValCvt<UTF32String, UTF16String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF32String Cvt(const UTF16String &val)
+			COREARRAY_FORCE_INLINE static UTF32String Cvt(const UTF16String &val)
 				{ return CoreArray::UTF16toUTF32(val); }
-			inline static void Array(UTF16String *p, UTF32String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, UTF32String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF32toUTF16(*s++); }
 		};
 
@@ -832,91 +848,91 @@ namespace CoreArray
 		template<typename DestT> struct TValCvt<DestT, UTF32String,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF32String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF32String &val)
 				{ return StrToInt(UTF32toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF32String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF32String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToInt(UTF32toUTF8(*s++).c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF32*,
 			COREARRAY_TR_INTEGER, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF32 *val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF32 *val)
 				{ return StrToInt(UTF32toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF32 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF32 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToInt(UTF32toUTF8(*s++).c_str()); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF32String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_INTEGER>
 		{
-			inline static UTF32String Cvt(const SourceT val)
+			COREARRAY_FORCE_INLINE static UTF32String Cvt(const SourceT val)
 				{ return UTF7toUTF32(IntToStr(val)); }
-			inline static void Array(UTF32String *p, SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF32String *p, SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = UTF7toUTF32(IntToStr(*s++)); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF32String,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF32String &val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF32String &val)
 				{ return StrToFloat(UTF32toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF32String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF32String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToFloat(UTF32toUTF8(*s++).c_str()); }
 		};
 
 		template<typename DestT> struct TValCvt<DestT, UTF32*,
 			COREARRAY_TR_FLOAT, COREARRAY_TR_STRING>
 		{
-			inline static DestT Cvt(const UTF32 *val)
+			COREARRAY_FORCE_INLINE static DestT Cvt(const UTF32 *val)
 				{ return StrToFloat(UTF32toUTF8(val).c_str()); }
-			inline static void Array(DestT *p, UTF32 **s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(DestT *p, UTF32 **s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = StrToFloat(UTF32toUTF8(*s++).c_str()); }
 		};
 
 		template<typename SourceT> struct TValCvt<UTF32String, SourceT,
 			COREARRAY_TR_STRING, COREARRAY_TR_FLOAT>
 		{
-			inline static UTF32String Cvt(const SourceT &val)
+			COREARRAY_FORCE_INLINE static UTF32String Cvt(const SourceT &val)
 				{ return UTF7toUTF32(FloatToStr(val)); }
-			inline static void Array(UTF32String *p, const SourceT *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF32String *p, const SourceT *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = UTF7toUTF32(FloatToStr(*s++)); }
 		};
 
 		template<> struct TValCvt<UTF8String, UTF32String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF8String Cvt(const UTF32String &val)
+			COREARRAY_FORCE_INLINE static UTF8String Cvt(const UTF32String &val)
 				{ return CoreArray::UTF32toUTF8(val); }
-			inline static void Array(UTF8String *p, UTF32String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF8String *p, UTF32String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF32toUTF8(*s++); }
 		};
 
 		template<> struct TValCvt<UTF16String, UTF32String,
 			COREARRAY_TR_STRING, COREARRAY_TR_STRING>
 		{
-			inline static UTF16String Cvt(const UTF32String &val)
+			COREARRAY_FORCE_INLINE static UTF16String Cvt(const UTF32String &val)
 				{ return CoreArray::UTF32toUTF16(val); }
-			inline static void Array(UTF16String *p, UTF32String *s, ssize_t L)
+			COREARRAY_FORCE_INLINE static void Array(UTF16String *p, UTF32String *s, ssize_t L)
 				{ for (; L > 0; L--) *p++ = CoreArray::UTF32toUTF16(*s++); }
 		};
-	};
+	}
 
 	/// Conversion from SourceT to DestT
 	/** \tparam  DestT    type of destination
 	 *  \tparam  SourceT  type of source
 	*/
 	template<typename DestT, typename SourceT>
-	inline DestT ValCvt(const SourceT &val)
-		{ return Internal::TValCvt<DestT, SourceT>::Cvt(val); };
+	COREARRAY_FORCE_INLINE DestT ValCvt(const SourceT &val)
+		{ return Internal::TValCvt<DestT, SourceT>::Cvt(val); }
 
 	/// Conversion from SourceT to DestT
 	/** \tparam  DestT    type of destination
 	 *  \tparam  SourceT  type of source
 	*/
 	template<typename DestT, typename SourceT>
-	inline void ValCvtArray(DestT *p, SourceT *s, ssize_t L)
-		{ Internal::TValCvt<DestT, SourceT>::Array(p, s, L); };
+	COREARRAY_FORCE_INLINE void ValCvtArray(DestT *p, SourceT *s, ssize_t L)
+		{ Internal::TValCvt<DestT, SourceT>::Array(p, s, L); }
 
 
 	// Endian

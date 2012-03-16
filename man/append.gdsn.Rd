@@ -35,13 +35,26 @@ append.gdsn(node, val, check = TRUE)
 # commom types
 n <- add.gdsn(f, "int", val=matrix(as.integer(1:10000), nrow=100, ncol=100),
   compress="ZIP")
-# no warning
+
+# no warning, and add a new column
 append.gdsn(n, -1:-100)
 f
+
 # a warning
 append.gdsn(n, -1:-50)
 f
 
+# no warning here, and add a new column
+append.gdsn(n, -51:-100)
+f
+
+# you should call "readmode.gdsn", before reading
+readmode.gdsn(n)
+
+# check the last column
+read.gdsn(n, start=c(1, 102), count=c(-1, 1))
+
+# close the gds file
 closefn.gds(f)
 }
 

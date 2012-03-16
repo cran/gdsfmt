@@ -8,7 +8,7 @@
 //
 // dPlatform.cpp: Functions for independent platforms
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -31,7 +31,7 @@
 #include <time.h>
 
 #include <float.h>
-#ifdef COREARRAY_SUNPROCC
+#ifdef COREARRAY_SUN
 #  include <ieeefp.h>
 #endif
 
@@ -51,10 +51,13 @@
 	#include <unistd.h>
 	#include <langinfo.h>
 	#include <sys/types.h>
-	#include <sys/sysctl.h>
+
+	#if defined(COREARRAY_BSD) || defined(COREARRAY_MACOS)
+	#  include <sys/sysctl.h>
+	#endif
 
 	#if !defined(COREARRAY_CYGWIN) && !defined(COREARRAY_MACOS)
-		#include <sys/sysinfo.h>
+	#  include <sys/sysinfo.h>
 	#endif
 
 #endif
@@ -105,6 +108,8 @@ using namespace CoreArray;
 using namespace CoreArray::Internal;
 
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
+
 #ifndef COREARRAY_HAVE_INT128
 
 // int128_t
@@ -150,7 +155,7 @@ uint128_t::operator UInt64() const
 
 #ifndef COREARRAY_HAVE_FLOAT128
 
-#ifndef COREARRAY_SUNPROCC
+#ifndef COREARRAY_SUN
 #  pragma pack(push, 1)
 #else
 #  pragma pack(1)
@@ -263,7 +268,7 @@ typedef union
 	} numout;
 } structFloat128;
 
-#ifndef COREARRAY_SUNPROCC
+#ifndef COREARRAY_SUN
 #  pragma pack(pop)
 #else
 #  pragma pack(8)
@@ -358,6 +363,8 @@ Float128 Float128::max()
 
 #endif
 
+#endif
+
 
 // Math Operation
 
@@ -382,6 +389,15 @@ TFPClass CoreArray::FloatClassify(const float val)
 			case _FPCLASS_SNAN: case _FPCLASS_QNAN: return fpNaN;
 			default: return fpFinite;
 		}
+	#elif defined(COREARRAY_SUN)
+		switch (fpclass(val))
+		{
+			case FP_SNAN:
+			case FP_QNAN: return fpNaN;
+			case FP_NINF: return fpNegInf;
+			case FP_PINF: return fpPosInf;
+			default: return fpFinite;
+		}
 	#elif defined(COREARRAY_GNUG)
 		switch (fpclassify(val))
 		{
@@ -403,15 +419,6 @@ TFPClass CoreArray::FloatClassify(const float val)
 				return fpNaN;
 			default: return fpFinite;
 		}
-	#elif defined(COREARRAY_SUNPROCC)
-		switch (_fpclass(val))
-		{
-			case FP_SNAN:
-			case FP_QNAN: return fpNaN;
-			case FP_NINF: return fpNegInf;
-			case FP_PINF: return fpPosInf;
-			default: return fpFinite;
-		}
 	#else
 		#error "Not support!"
 	#endif
@@ -431,6 +438,15 @@ TFPClass CoreArray::FloatClassify(const double val)
 		#endif
 			case _FPCLASS_SNAN: case _FPCLASS_QNAN:
 				return fpNaN;
+			default: return fpFinite;
+		}
+	#elif defined(COREARRAY_SUN)
+		switch (fpclass(val))
+		{
+			case FP_SNAN:
+			case FP_QNAN: return fpNaN;
+			case FP_NINF: return fpNegInf;
+			case FP_PINF: return fpPosInf;
 			default: return fpFinite;
 		}
 	#elif defined(COREARRAY_GNUG)
@@ -475,6 +491,15 @@ TFPClass CoreArray::FloatClassify(const long double val)
 				return fpNaN;
 			default: return fpFinite;
 		}
+	#elif defined(COREARRAY_SUN)
+		switch (fpclass(val))
+		{
+			case FP_SNAN:
+			case FP_QNAN: return fpNaN;
+			case FP_NINF: return fpNegInf;
+			case FP_PINF: return fpPosInf;
+			default: return fpFinite;
+		}
 	#elif defined(COREARRAY_GNUG)
 		switch (fpclassify(val))
 		{
@@ -503,7 +528,9 @@ TFPClass CoreArray::FloatClassify(const long double val)
 
 bool CoreArray::IsFinite(const float V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (finite(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isfinite(V);
 	#elif defined(COREARRAY_BORLANDC) || defined(COREARRAY_MSC)
 		return _finite(V);
@@ -514,7 +541,9 @@ bool CoreArray::IsFinite(const float V)
 
 bool CoreArray::IsFinite(const double V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (finite(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isfinite(V);
 	#elif defined(COREARRAY_BORLANDC) || defined(COREARRAY_MSC)
 		return _finite(V);
@@ -525,7 +554,9 @@ bool CoreArray::IsFinite(const double V)
 
 bool CoreArray::IsFinite(const long double V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (finite(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isfinite(V);
 	#elif defined(COREARRAY_BORLANDC)
 		return _finitel(V);
@@ -538,7 +569,9 @@ bool CoreArray::IsFinite(const long double V)
 
 bool CoreArray::IsNaN(const float V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (isnanf(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isnan(V);
 	#elif defined(COREARRAY_BORLANDC)
 		return _isnan(V);
@@ -551,7 +584,9 @@ bool CoreArray::IsNaN(const float V)
 
 bool CoreArray::IsNaN(const double V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (isnand(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isnan(V);
 	#elif defined(COREARRAY_BORLANDC)
 		return _isnan(V);
@@ -564,7 +599,9 @@ bool CoreArray::IsNaN(const double V)
 
 bool CoreArray::IsNaN(const long double V)
 {
-	#if defined(COREARRAY_GNUG)
+	#if defined(COREARRAY_SUN)
+		return (isnand(V) != 0);
+	#elif defined(COREARRAY_GNUG)
 		return isnan(V);
 	#elif defined(COREARRAY_BORLANDC)
 		return _isnanl(V);
@@ -579,6 +616,8 @@ bool CoreArray::IsInf(const float V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_PINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_PINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && !signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -594,6 +633,8 @@ bool CoreArray::IsInf(const double V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_PINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_PINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && !signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -609,6 +650,8 @@ bool CoreArray::IsInf(const long double V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_PINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_PINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && !signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -624,6 +667,8 @@ bool CoreArray::IsNegInf(const float V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_NINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_NINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -639,6 +684,8 @@ bool CoreArray::IsNegInf(const double V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_NINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_NINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -654,6 +701,8 @@ bool CoreArray::IsNegInf(const long double V)
 {
 	#if defined(COREARRAY_GNUG) && defined(COREARRAY_MINGW32)
 		return fpclass(V) == _FPCLASS_NINF;
+	#elif defined(COREARRAY_SUN)
+		return fpclass(V) == FP_NINF;
 	#elif defined(COREARRAY_GNUG)
 		return (fpclassify(V) == FP_INFINITE) && signbit(V);
 	#elif defined(COREARRAY_BORLANDC)
@@ -668,31 +717,40 @@ bool CoreArray::IsNegInf(const long double V)
 bool CoreArray::EqaulFloat(const float v1, const float v2)
 {
 	if (IsFinite(v1))
+	{
 		if (IsFinite(v2))
 			return (v1 == v2);
-		else return false;
-	else
+		else
+			return false;
+	} else {
 		return !IsFinite(v2);
+	}
 }
 
 bool CoreArray::EqaulFloat(const double v1, const double v2)
 {
 	if (IsFinite(v1))
+	{
 		if (IsFinite(v2))
 			return (v1 == v2);
-		else return false;
-	else
+		else
+			return false;
+	} else {
 		return !IsFinite(v2);
+	}
 }
 
 bool CoreArray::EqaulFloat(const long double v1, const long double v2)
 {
 	if (IsFinite(v1))
+	{
 		if (IsFinite(v2))
 			return (v1 == v2);
-		else return false;
-	else
+		else
+			return false;
+	} else {
 		return !IsFinite(v2);
+	}
 }
 
 void CoreArray::EnableFPUException()
@@ -701,6 +759,12 @@ void CoreArray::EnableFPUException()
 		_controlfp(0, MCW_EM);
 	#elif defined(COREARRAY_MINGW32)
 		_controlfp(0, _MCW_EM);
+	#elif defined(COREARRAY_SUN)
+		#if defined(__sparc)
+			fpsetmask(FP_X_INV | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP);
+		#else
+			fpsetmask(FP_X_INV | FP_X_DNML | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP);
+		#endif
 	#elif defined(COREARRAY_GNUG)
 		// _controlfp(0, MCW_EM);
 	#else
@@ -716,6 +780,12 @@ void CoreArray::DisableFPUException()
 	#elif defined(COREARRAY_MINGW32)
 		_controlfp(_EM_INVALID | _EM_DENORMAL | _EM_ZERODIVIDE |
 			_EM_OVERFLOW | _EM_UNDERFLOW | _EM_INEXACT, _MCW_EM);
+	#elif defined(COREARRAY_SUN)
+		#if defined(__sparc)
+			fpsetmask(~(FP_X_INV | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP));
+		#else
+			fpsetmask(~(FP_X_INV | FP_X_DNML | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP));
+		#endif
 	#elif defined(COREARRAY_GNUG)
 		// _controlfp
 	#else
@@ -725,14 +795,18 @@ void CoreArray::DisableFPUException()
 
 void CoreArray::DefaultFPUControl()
 {
-	#if defined(COREARRAY_GNUG)
-		//return isfinite(V);
+	#if defined(COREARRAY_SUN)
+		DisableFPUException();
+	#elif defined(COREARRAY_GNUG)
+		DisableFPUException();
 	#elif defined(COREARRAY_BORLANDC) || defined(COREARRAY_MSC)
 		_fpreset();
+		DisableFPUException();
 	#else
 		"..."
 	#endif
 }
+
 
 static string fpInfString("+Inf");
 static string fpInfString2("Inf");
@@ -776,10 +850,12 @@ string CoreArray::FloatToStr(const long double val)
 	}
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 string CoreArray::FloatToStr(const Float128 val)
 {
     return FloatToStr((long double)val);
 }
+#endif
 
 string CoreArray::IntToStr(const Int8 val)
 {
@@ -821,6 +897,9 @@ string CoreArray::IntToStr(const UInt64 val)
 	return _FmtNum("%llu", val);
 }
 
+
+#ifndef COREARRAY_NO_EXTENDED_TYPES
+
 string CoreArray::IntToStr(const Int128 val)
 {
 #ifndef COREARRAY_HAVE_INT128
@@ -842,6 +921,8 @@ string CoreArray::IntToStr(const UInt128 val)
 #  error ""
 #endif
 }
+
+#endif
 
 
 #if defined(COREARRAY_WINDOWS) || defined(COREARRAY_MSDOS)
@@ -889,7 +970,7 @@ template<> struct IConvName<UTF32>
 
 // OutUTF, InUTF should be UTF8, UTF16, or UTF32
 template<typename OutUTF, typename InUTF>
-inline basic_string<OutUTF> UTFCvt(const InUTF *In, size_t InLen)
+	basic_string<OutUTF> UTFCvt(const InUTF *In, size_t InLen)
 {
 	OutUTF buf[ICONVBUFFER/sizeof(OutUTF)];
 	basic_string<OutUTF> rvstr;
@@ -962,7 +1043,9 @@ size_t TdICONV::Cvt(const char * &inbuf, size_t &inbytesleft,
 	char* &outbuf, size_t &outbytesleft)
 {
 	size_t rv;
-#ifdef COREARRAY_CYGWIN
+#if defined(COREARRAY_CYGWIN)
+	rv = iconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+#elif defined(COREARRAY_SUN)
 	rv = iconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 #else
 	rv = iconv(fHandle, (char**)&inbuf, &inbytesleft, &outbuf, &outbytesleft);
@@ -995,32 +1078,38 @@ vector<string> TdICONV::List() {
 
 UTF16String CoreArray::UTF7toUTF16(const char* str)
 {
-	UTF16String rv;
-	rv.resize(strlen(str));
+	UTF16String rv(strlen(str), 0);
 	const char *p = str;
 	for (UTF16String::iterator it = rv.begin(); it != rv.end(); it++)
-		*it = *p++;
+		*it = (UInt8)*p++;
 	return rv;
 }
 
 UTF16String CoreArray::UTF7toUTF16(const UTF8String &s)
 {
-	return UTF16String(s.begin(), s.end());
+	UTF16String rv(s.size(), 0);
+	UTF8String::const_iterator ps = s.begin();
+	UTF16String::iterator pp = rv.begin();
+	for (; ps != s.end();) *pp++ = (UInt8)*ps++;
+	return rv;
 }
 
 UTF32String CoreArray::UTF7toUTF32(const char *str)
 {
-	UTF32String rv;
-	rv.resize(strlen(str));
+	UTF32String rv(strlen(str), 0);
 	const char *p = str;
 	for (UTF32String::iterator it = rv.begin(); it != rv.end(); it++)
-		*it = *p++;
+		*it = (UInt8)*p++;
 	return rv;
 }
 
 UTF32String CoreArray::UTF7toUTF32(const UTF8String &s)
 {
-	return UTF32String(s.begin(), s.end());
+	UTF32String rv(s.size(), 0);
+	UTF8String::const_iterator ps = s.begin();
+	UTF32String::iterator pp = rv.begin();
+	for (; ps != s.end();) *pp++ = (UInt8)*ps++;
+	return rv;
 }
 
 UTF16String CoreArray::UTF8toUTF16(const UTF8String &s)
@@ -1032,8 +1121,7 @@ UTF16String CoreArray::UTF8toUTF16(const UTF8String &s)
 			s.length(), NULL, 0);
 		if (L <= 0)
 			RaiseLastOSError<ErrOSError>();
-		UTF16String rv;
-		rv.resize(L);
+		UTF16String rv(L, 0);
 		if (MultiByteToWideChar(Init.DefaultSystemCodePage, 0, s.c_str(),
 				s.length(), (wchar_t*)rv.data(), L) <= 0)
 			RaiseLastOSError<ErrOSError>();
@@ -1041,7 +1129,7 @@ UTF16String CoreArray::UTF8toUTF16(const UTF8String &s)
 	#elif defined(COREARRAY_UNIX)
 		return UTFCvt<UTF16, UTF8>(s.data(), s.length());
 	#else
-    	return UTF16String(s.begin(), s.end());
+    	return UTF7toUTF16(s);
 	#endif
 	} else
 		return UTF16String();
@@ -1057,8 +1145,7 @@ UTF16String CoreArray::PChartoUTF16(const char * str)
 			len, NULL, 0);
 		if (L <= 0)
 			RaiseLastOSError<ErrOSError>();
-		UTF16String rv;
-		rv.resize(L);
+		UTF16String rv(L, 0);
 		if (MultiByteToWideChar(Init.DefaultSystemCodePage, 0, str,
 				len, (wchar_t*)rv.data(), L) <= 0)
 			RaiseLastOSError<ErrOSError>();
@@ -1066,12 +1153,7 @@ UTF16String CoreArray::PChartoUTF16(const char * str)
 	#elif defined(COREARRAY_UNIX)
 		return UTFCvt<UTF16, UTF8>(str, strlen(str));
 	#else
-		UTF16String rv;
-		rv.resize(len);
-		char const* p = str;
-		for (UTF16String::iterator it = rv.begin(); it != rv.end(); it++)
-			*it = *p++;
-		return rv;
+		return UTF7toUTF16(str);
 	#endif
 	} else
 		return UTF16String();
@@ -1082,13 +1164,11 @@ UTF32String CoreArray::UTF8toUTF32(const UTF8String &s)
 	if (!s.empty())
 	{
 	#if defined(COREARRAY_WINDOWS)
-		// need to improve
 		UTF16String r = UTF8toUTF16(s);
 		return UTF32String(r.begin(), r.end());
 	#elif defined(COREARRAY_UNIX)
 		return UTFCvt<UTF32, UTF8>(s.data(), s.length());
 	#else
-		// need to improve
 		UTF16String r = UTF8toUTF16(s);
 		return UTF32String(r.begin(), r.end());
 	#endif
@@ -1105,8 +1185,7 @@ UTF8String CoreArray::UTF16toUTF8(const UTF16String &ws)
 			ws.length(), NULL, 0, NULL, NULL);
 		if (L <= 0)
 			RaiseLastOSError<ErrOSError>();
-		UTF8String rv;
-		rv.resize(L);
+		UTF8String rv(L, 0);
 		if (WideCharToMultiByte(Init.DefaultSystemCodePage, 0, ws.c_str(),
 				ws.length(), (char*)rv.data(), L, NULL, NULL) <= 0)
 			RaiseLastOSError<ErrOSError>();
@@ -1759,7 +1838,7 @@ unsigned WINAPI COREARRAY_CALL_ALIGN ThreadWrap2(void *lpThreadParameter)
 
 #elif defined(COREARRAY_POSIX_THREAD)
 
-void * COREARRAY_CALL_ALIGN ThreadWrap1(void *lpThreadParameter)
+extern "C" void * COREARRAY_CALL_ALIGN ThreadWrap1(void *lpThreadParameter)
 {
 	DisableFPUException();
 	CdThread *p = (CdThread*)lpThreadParameter;
@@ -1767,7 +1846,7 @@ void * COREARRAY_CALL_ALIGN ThreadWrap1(void *lpThreadParameter)
 	return (void*)rd;
 }
 
-void * COREARRAY_CALL_ALIGN ThreadWrap2(void *lpThreadParameter)
+extern "C" void * COREARRAY_CALL_ALIGN ThreadWrap2(void *lpThreadParameter)
 {
 	TdThreadData *p = (TdThreadData*)lpThreadParameter;
 	int &rv = p->thread->ExitCode();
@@ -1789,6 +1868,7 @@ void * COREARRAY_CALL_ALIGN ThreadWrap2(void *lpThreadParameter)
 #else
 	"..."
 #endif
+
 
 CdThread::CdThread()
 {
@@ -1820,7 +1900,7 @@ CdThread::~CdThread()
 	if (vPrivate) delete vPrivate;
 }
 
-inline void CdThread::Done()
+void CdThread::Done()
 {
 	#if defined(COREARRAY_WINDOWS)
 	if (thread.Handle != NULL) {
@@ -2268,4 +2348,3 @@ UInt128 CoreArray::COREARRAY_ENDIAN_CVT128(UInt128 x)
 }
 
 #endif
-

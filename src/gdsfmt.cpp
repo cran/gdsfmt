@@ -182,7 +182,7 @@ public:
 	{
 		for (int i=0; i < MaxFiles; i++)
 		{
-			if (Files[i] == NULL)
+			if (Files[i] != NULL)
 			{
 				try {
 					delete Files[i];
@@ -246,8 +246,10 @@ const static int rtFloat		= 2;
 const static int rtString		= 3;
 const static int rtLogical		= 4;
 
+// error information
 static const char *erNotFolder = "It is not a folder!";
 static const char *erNotFile = "It is not a stream container!";
+
 
 inline static void RStrAgn(const char *Text, char **rstr)
 {
@@ -264,22 +266,27 @@ inline static const char * RStr(const char *Name)
 
 static void CopyDec(int *Value, int Cnt, int *Buf)
 {
-	if (Value != NULL) {
-		for (int i=1; i <= Cnt; i++) {
+	if (Value != NULL)
+	{
+		for (int i=1; i <= Cnt; i++)
+		{
 			*Buf = *Value - 1;
 			if (*Buf < 0)
 				throw ErrGDSFmt("Invalid 'start'!");
 			Buf++; Value++;
 		}
-	} else
+	} else {
 		for (int i=1; i <= Cnt; i++)
 			*Buf++ = 1;
+	}
 }
 
 static void CopyCnt(int *Count, int *DLen, int *Start, int Cnt)
 {
-	for (int k=1; k <= Cnt; k++) {
-		if (*Count >= 0) {
+	for (int k=1; k <= Cnt; k++)
+	{
+		if (*Count >= 0)
+		{
 			if ((*Count + *Start - 1) > *DLen)
 				throw ErrGDSFmt("Invalid 'start' and 'count': out of bound.");
 		} else {
@@ -1044,7 +1051,7 @@ DLLEXPORT void gdsxObjDesp(CdGDSObj **Node, int *DimCnt, int *Start,
 			else if (COREARRAY_SVSTR(Obj->SVType()))
 				*RType = rtString;
 			else
-				*RType = -1;
+				*RType = rtNULL;
 
 			*err = false;
 

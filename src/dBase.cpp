@@ -8,7 +8,7 @@
 //
 // dBase.cpp: Basic classes for CoreArray library
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -132,10 +132,10 @@ namespace CoreArray
 			return true;
 		}
 
-		inline const CdStream* Stream() const { return fStream; }
-		inline bool Offset() const { return fOffset; }
-		inline TdPtr64 Start() const { return fStart; }
-		inline TdPtr64 Length() const { return fLength; }
+		COREARRAY_FORCE_INLINE const CdStream* Stream() const { return fStream; }
+		COREARRAY_FORCE_INLINE bool Offset() const { return fOffset; }
+		COREARRAY_FORCE_INLINE TdPtr64 Start() const { return fStart; }
+		COREARRAY_FORCE_INLINE TdPtr64 Length() const { return fLength; }
 	protected:
 		TdPtr64 vPos, fStart, fLength;
 		CdStream* fStream;
@@ -153,14 +153,14 @@ namespace CoreArray
 		template<typename DestT, int trT>
 			struct TValCvt<DestT, TShortRec, trT, COREARRAY_TR_UNKNOWN>
 		{
-			inline static DestT Cvt(const TShortRec &val)
+			static DestT Cvt(const TShortRec &val)
 				{ throw Err_dFilter("Error!"); };
 		};
 
 		template<typename DestT, int trT>
 			struct TValCvt<DestT, EmptyT, trT, COREARRAY_TR_UNKNOWN>
 		{
-			inline static DestT Cvt(const EmptyT &val)
+			static DestT Cvt(const EmptyT &val)
 				{ throw Err_dFilter("Error!"); };
 		};
 	}
@@ -193,7 +193,7 @@ static const char *SWriteError = "Stream write error";
 static const char *esInvalidOp = "Invalid Operation in function '%s'!";
 #endif
 
-// CdObjClassMgr, CdFilter, CdFilter, CdFilter
+// CdObjClassMgr, CdSerial, CdSerial, CdSerial
 static const char *esDupClass = "Duplicate Class Stream Name '%s'!";
 static const char *esStackEmpty = "Stream Stack is empty!";
 static const char *esRelPosOutRange = "Relative position is out of the Currentrent struct!";
@@ -223,13 +223,13 @@ static char PropNameMapStr[64] = {
 	'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
 	's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
-void CoreArray::Internal::CdObject_LoadStruct(CdObject &Obj, CdFilter &Reader,
+void CoreArray::Internal::CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader,
 	TdVersion Version)
 {
 	Obj.LoadStruct(Reader, Version);
 }
 
-void CoreArray::Internal::CdObject_SaveStruct(CdObject &Obj, CdFilter &Writer,
+void CoreArray::Internal::CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer,
 	bool IncludeName)
 {
     Obj.SaveStruct(Writer, IncludeName);
@@ -245,7 +245,7 @@ TdVersion CdObject::dVersion() { return COREARRAY_CLASS_VERSION; }
 
 TdVersion CdObject::SaveVersion() { return dVersion(); }
 
-void CdObject::LoadStruct(CdFilter &Reader, TdVersion Version)
+void CdObject::LoadStruct(CdSerial &Reader, TdVersion Version)
 {
 	Reader.rInitNameSpace();
 	LoadBefore(Reader, Version);
@@ -265,7 +265,7 @@ void CdObject::LoadStruct(CdFilter &Reader, TdVersion Version)
     }
 }
 
-void CdObject::SaveStruct(CdFilter &Writer, bool IncludeName)
+void CdObject::SaveStruct(CdSerial &Writer, bool IncludeName)
 {
 	Writer.wBeginNameSpace();
 	{
@@ -283,17 +283,17 @@ void CdObject::SaveStruct(CdFilter &Writer, bool IncludeName)
 	Writer.wEndStruct();
 }
 
-void CdObject::LoadBefore(CdFilter &Reader, TdVersion Version) {}
+void CdObject::LoadBefore(CdSerial &Reader, TdVersion Version) {}
 
-void CdObject::Loading(CdFilter &Reader, TdVersion Version) {}
+void CdObject::Loading(CdSerial &Reader, TdVersion Version) {}
 
-void CdObject::LoadAfter(CdFilter &Reader, TdVersion Version) {}
+void CdObject::LoadAfter(CdSerial &Reader, TdVersion Version) {}
 
-void CdObject::SaveBefore(CdFilter &Writer) {}
+void CdObject::SaveBefore(CdSerial &Writer) {}
 
-void CdObject::Saving(CdFilter &Writer) {}
+void CdObject::Saving(CdSerial &Writer) {}
 
-void CdObject::SaveAfter(CdFilter &Writer) {}
+void CdObject::SaveAfter(CdSerial &Writer) {}
 
 CdObject& CdObject::operator= (const CdObject& m) { return *this; }
 
@@ -324,12 +324,21 @@ ssize_t CdRef::Release()
 	{
 		fReference--;
 		ssize_t rv = fReference;
-		if (fReference <= 0)
-			delete this;
+		if (fReference <= 0) delete this;
 		return rv;
 	} else
 		return 0;
 }
+
+
+// A broadcast object
+
+void TdOnBroadcast::Notify(CdObjMsg *Sender, Int32 MsgCode, void *Param)
+{
+	if (Event)
+		(Obj->*Event)(Sender, MsgCode, Param);
+}
+
 
 // CdObjMsg
 
@@ -342,7 +351,7 @@ CdObjMsg::CdObjMsg()
 CdObjMsg::~CdObjMsg()
 {
 	fMsgList.clear();
-};
+}
 
 void CdObjMsg::AddMsg(const TdOnBroadcast &MsgObj)
 {
@@ -388,7 +397,7 @@ void CdObjMsg::EndMsg()
 bool CdObjMsg::MsgFilter(Int32 MsgCode, void *Param)
 {
 	return true;
-};
+}
 
 // CdLogRecord
 
@@ -416,7 +425,7 @@ void CdLogRecord::Add(Int32 vType, const char *fmt, ...)
 	Add(buf, vType);
 }
 
-void CdLogRecord::LoadBefore(CdFilter &Reader, TdVersion Version)
+void CdLogRecord::LoadBefore(CdSerial &Reader, TdVersion Version)
 {
 	fList.clear();
 	UInt32 Cnt = 0;
@@ -435,7 +444,7 @@ void CdLogRecord::LoadBefore(CdFilter &Reader, TdVersion Version)
     	throw Err_dFilter("Invalid LOGSIZE and LOGDATA.");
 }
 
-void CdLogRecord::SaveBefore(CdFilter &Writer)
+void CdLogRecord::SaveBefore(CdSerial &Writer)
 {
 	vector<TdItem>::const_iterator it;
 	UInt32 Cnt = fList.size();
@@ -531,12 +540,14 @@ UInt64 CdStream::rUInt64()
 	return COREARRAY_ENDIAN_CVT64(rv);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 UInt128 CdStream::rUInt128()
 {
 	UInt128 rv;
 	ReadBuffer((void*)&rv, 128);
 	return COREARRAY_ENDIAN_CVT128(rv);
 }
+#endif
 
 Float32 CdStream::rFloat32()
 {
@@ -552,12 +563,14 @@ Float64 CdStream::rFloat64()
 	return rv;
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 Float128 CdStream::rFloat128()
 {
 	Float128 rv;
 	ReadBuffer((void*)&rv, 16);
 	return rv;
 }
+#endif
 
 void CdStream::wUInt8(UInt8 val)
 {
@@ -582,11 +595,13 @@ void CdStream::wUInt64(UInt64 val)
 	WriteBuffer((void*)&val, 8);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void CdStream::wUInt128(UInt128 val)
 {
 	val = COREARRAY_ENDIAN_CVT128(val);
 	WriteBuffer((void*)&val, 16);
 }
+#endif
 
 void CdStream::wFloat32(const Float32 &val)
 {
@@ -598,10 +613,12 @@ void CdStream::wFloat64(const Float64 &val)
 	WriteBuffer((void*)&val, 8);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void CdStream::wFloat128(const Float128 &val)
 {
 	WriteBuffer((void*)&val, 16);
 }
+#endif
 
 CdStream& CdStream::operator= (const CdStream& m)
 {
@@ -853,12 +870,14 @@ UInt64 CBufdStream::rUInt64()
 	return COREARRAY_ENDIAN_CVT64(rv);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 UInt128 CBufdStream::rUInt128()
 {
 	UInt128 rv;
 	Read((void*)&rv, 16);
 	return COREARRAY_ENDIAN_CVT128(rv);
 }
+#endif
 
 UInt16 CBufdStream::rPack16u()
 {
@@ -903,11 +922,13 @@ UInt64 CBufdStream::rPack64u()
 	return rv;
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 UInt128 CBufdStream::rPack128u()
 {
 	/// \todo "rPack128u" is not supported currently
 	throw Err_dFilter("Not support rPack128u.");
 }
+#endif
 
 Float32 CBufdStream::rFloat32()
 {
@@ -923,12 +944,14 @@ Float64 CBufdStream::rFloat64()
 	return rv;
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 Float128 CBufdStream::rFloat128()
 {
 	Float128 rv;
 	Read((void*)&rv, 16);
 	return rv;
 }
+#endif
 
 UTF8String CBufdStream::rStrUTF8()
 {
@@ -989,11 +1012,13 @@ void CBufdStream::wUInt64(UInt64 val)
 	Write((void*)&val, 8);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void CBufdStream::wUInt128(UInt128 val)
 {
 	val = COREARRAY_ENDIAN_CVT128(val);
 	Write((void*)&val, 16);
 }
+#endif
 
 void CBufdStream::wPack16u(UInt16 Value)
 {
@@ -1038,11 +1063,13 @@ void CBufdStream::wPack64u(UInt64 Value)
 	if (Value > 0) wUInt8(Value);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void CBufdStream::wPack128u(UInt128 Value)
 {
 	/// \todo "wPack128u" is not supported currently
 	throw Err_dFilter("Not support wPack128u.");
 }
+#endif
 
 void CBufdStream::wFloat32(const Float32 &val)
 {
@@ -1054,10 +1081,12 @@ void CBufdStream::wFloat64(const Float64 &val)
 	Write((void*)&val, 8);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void CBufdStream::wFloat128(const Float128 &val)
 {
 	Write((void*)&val, 16);
 }
+#endif
 
 void CBufdStream::wStrUTF8(const UTF8 *Value)
 {
@@ -1294,7 +1323,8 @@ void CBufdStream::wPropName(const char *Name)
 			ch = 0x02 + 10 + ch - 'A';
 		else if (('a'<=ch) && (ch<='z'))
 			ch = 0x02 + 10 + 26 + ch - 'a';
-		else throw Err_BufStream(esPropName, Name);
+		else
+			throw Err_BufStream(esPropName, Name);
 		wBits(ch, 6, Rec);
 		p++;
 	}
@@ -1328,9 +1358,9 @@ void CBufdStream::wObjName(const char *Name)
 	DoneWBit(Rec);
 }
 
-// CdFilter
+// CdSerial
 
-CdFilter::CdFilter(CdStream* vStream, ssize_t vBufSize, CdObjClassMgr* vClassMgr):
+CdSerial::CdSerial(CdStream* vStream, ssize_t vBufSize, CdObjClassMgr* vClassMgr):
 	CBufdStream(vStream, vBufSize)
 {
 	fClassMgr = (vClassMgr) ? vClassMgr : &dObjMgr;
@@ -1339,12 +1369,12 @@ CdFilter::CdFilter(CdStream* vStream, ssize_t vBufSize, CdObjClassMgr* vClassMgr
 	fVar.fFilter = this;
 }
 
-CdFilter::~CdFilter()
+CdSerial::~CdSerial()
 {
 	fLog->Release();
 }
 
-TdPtr64 CdFilter::rBeginStruct()
+TdPtr64 CdSerial::rBeginStruct()
 {
 	fFilterRec.push_front(CVarList());
 	CVarList &p = fFilterRec.front();
@@ -1357,7 +1387,7 @@ TdPtr64 CdFilter::rBeginStruct()
 	return p.Length - TdPosType::size;
 }
 
-TdPtr64 CdFilter::rBeginNameSpace()
+TdPtr64 CdSerial::rBeginNameSpace()
 {
 	fFilterRec.push_front(CVarList());
 	CVarList &p = fFilterRec.front();
@@ -1370,14 +1400,14 @@ TdPtr64 CdFilter::rBeginNameSpace()
 	return p.Length - TdPosType::size;
 }
 
-void CdFilter::rEndStruct()
+void CdSerial::rEndStruct()
 {
 	CVarList &p = Current();
 	fPosition = p.Start + p.Length;
 	fFilterRec.pop_front();
 }
 
-void CdFilter::wBeginStruct()
+void CdSerial::wBeginStruct()
 {
 	fFilterRec.push_front(CVarList());
 	CVarList &p = fFilterRec.front();
@@ -1386,7 +1416,7 @@ void CdFilter::wBeginStruct()
 	*this << TdPosType(0);
 }
 
-void CdFilter::wBeginNameSpace()
+void CdSerial::wBeginNameSpace()
 {
 	fFilterRec.push_front(CVarList());
 	CVarList &p = fFilterRec.front();
@@ -1394,7 +1424,7 @@ void CdFilter::wBeginNameSpace()
 	*this << TdPosType(0) << UInt16(0);
 }
 
-void CdFilter::wEndStruct()
+void CdSerial::wEndStruct()
 {
 	CVarList &p = Current();
 	p.Length = fPosition - p.Start;
@@ -1406,27 +1436,27 @@ void CdFilter::wEndStruct()
 	fFilterRec.pop_front();
 }
 
-bool CdFilter::HasName(const char *Name)
+bool CdSerial::HasName(const char *Name)
 {
 	CVarList &p = Current();
 	return p.Name2Iter(Name)!=p.VarList.end();
 }
 
-TdTypeID CdFilter::NameType(const char *Name)
+TdTypeID CdSerial::NameType(const char *Name)
 {
 	CVarList &p = Current();
 	list<CBaseVar*>::iterator it = p.Name2Iter(Name);
 	return (it==p.VarList.end()) ? osUnknown : (*it)->Kind;
 }
 
-TdPtr64 CdFilter::NamePosition(const char *Name)
+TdPtr64 CdSerial::NamePosition(const char *Name)
 {
 	CVarList &p = Current();
 	list<CBaseVar*>::iterator it = p.Name2Iter(Name);
 	return (it==p.VarList.end()) ? -1 : (*it)->Start;
 }
 
-bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
+bool CdSerial::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 {
 	/// \todo "osFloat128" is not supported currently
 
@@ -1486,9 +1516,14 @@ bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 			case osInt16:    case osUInt16:
 			case osInt32:    case osUInt32:
 			case osInt64:    case osUInt64:
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case osInt128:   case osUInt128:
+			#endif
 			case os16Packed: case os32Packed:
-			case os64Packed: case os128Packed:
+			case os64Packed:
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			case os128Packed:
+			#endif
 				if (CurKind == Kind)
 				{
 					memcpy(OutBuf, (*it)->PtrData(), (*it)->SizeOf());
@@ -1503,10 +1538,12 @@ bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 							*static_cast<UInt32*>(OutBuf) = (*it)->Int(); break;
 						case osInt64: case osUInt64: case os64Packed:
 							*static_cast<UInt64*>(OutBuf) = (*it)->Int(); break;
+						#ifndef COREARRAY_NO_EXTENDED_TYPES
 						case osInt128:
 							*static_cast<Int128*>(OutBuf) = (*it)->Int(); break;
 						case osUInt128: case os128Packed:
 							*static_cast<UInt128*>(OutBuf) = (*it)->Int(); break;
+						#endif
 					default:
 						return false;
 					}
@@ -1514,7 +1551,10 @@ bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 				break;
 
 			// float number
-			case osFloat32: case osFloat64: case osFloat128:
+			case osFloat32: case osFloat64:
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			case osFloat128:
+			#endif
 				if (CurKind == Kind)
 				{
 					memcpy(OutBuf, (*it)->PtrData(), (*it)->SizeOf());
@@ -1525,8 +1565,10 @@ bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 							*static_cast<Float32*>(OutBuf) = (*it)->Float(); break;
 						case osFloat64:
 							*static_cast<Float64*>(OutBuf) = (*it)->Float(); break;
+						#ifndef COREARRAY_NO_EXTENDED_TYPES
 						case osFloat128:
 							*static_cast<Float128*>(OutBuf) = (*it)->Float(); break;
+						#endif
 					default:
 						return false;
 					}
@@ -1618,7 +1660,7 @@ bool CdFilter::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 		return false;
 }
 
-bool CdFilter::rValue(TdTypeID Kind, const char *const Name, void *OutBuffer,
+bool CdSerial::rValue(TdTypeID Kind, const char *const Name, void *OutBuffer,
 	ssize_t BufLen)
 {
 	if (Kind==osRecord || Kind==osShortRec)
@@ -1693,7 +1735,7 @@ bool CdFilter::rValue(TdTypeID Kind, const char *const Name, void *OutBuffer,
 		return rValue(Kind, Name, OutBuffer);
 }
 
-void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
+void CdSerial::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 	ssize_t BufLen)
 {
 	/// \todo "osFloat128" is not supported currently
@@ -1742,6 +1784,7 @@ void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 				break;
 			case osNameSpace:
 				wBeginNameSpace(); break;
+
             // integer
 			case osInt8: case osUInt8:
 				wUInt8(*static_cast<const UInt8*>(InBuf)); break;
@@ -1751,23 +1794,31 @@ void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 				wUInt32(*static_cast<const UInt32*>(InBuf)); break;
 			case osInt64: case osUInt64:
 				wUInt64(*static_cast<const UInt64*>(InBuf)); break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case osInt128: case osUInt128:
 				wUInt128(*static_cast<const UInt128*>(InBuf)); break;
+			#endif
 			case os16Packed:
             	wPack16u(*static_cast<const UInt16*>(InBuf)); break;
 			case os32Packed:
             	wPack32u(*static_cast<const UInt32*>(InBuf)); break;
 			case os64Packed:
             	wPack64u(*static_cast<const UInt64*>(InBuf)); break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case os128Packed:
             	wPack128u(*static_cast<const UInt128*>(InBuf)); break;
+            #endif
+
 			// float number
 			case osFloat32:
 				wFloat32(*static_cast<const Float32*>(InBuf)); break;
 			case osFloat64:
 				wFloat64(*static_cast<const Float64*>(InBuf)); break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case osFloat128:
 				throw Err_dFilter("Not support Float128.");
+			#endif
+
 			// string
 			case osStrUTF8:
 				wStrUTF8(static_cast<const UTF8*>(InBuf)); break;
@@ -1775,6 +1826,7 @@ void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 				wStrUTF16(static_cast<const UTF16*>(InBuf)); break;
 			case osStrUTF32:
 				wStrUTF32(static_cast<const UTF32*>(InBuf)); break;
+
 			// others
 			case osStreamPos:
 				*this << *static_cast<const TdPosType*>(InBuf); break;
@@ -1785,7 +1837,7 @@ void CdFilter::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 		throw Err_dFilter(esInvalidType, (int)Kind);
 }
 
-CdStream* CdFilter::BlockStream()
+CdStream* CdSerial::BlockStream()
 {
 	if (!fFilterRec.empty())
 	{
@@ -1797,14 +1849,14 @@ CdStream* CdFilter::BlockStream()
 		return fStream;
 }
 
-void CdFilter::CheckInStruct()
+void CdSerial::CheckInStruct()
 {
 	CVarList &p = Current();
 	if ((fPosition<p.Start) || (fPosition>p.Start+p.Length))
 		throw Err_dFilter(esInvalidPos);
 }
 
-bool CdFilter::EndOfStruct()
+bool CdSerial::EndOfStruct()
 {
 	CVarList &p = Current();
 	if (fPosition == p.Start+p.Length)
@@ -1815,14 +1867,14 @@ bool CdFilter::EndOfStruct()
 		throw Err_dFilter(esInvalidPos);
 }
 
-void CdFilter::StructInfo(TdPtr64 &Start, TdPtr64 &Length)
+void CdSerial::StructInfo(TdPtr64 &Start, TdPtr64 &Length)
 {
 	CVarList &p = Current();
 	Start = p.Start + TdPosType::size;
 	Length = p.Length - TdPosType::size;
 }
 
-TdPtr64 CdFilter::GetRelPos()
+TdPtr64 CdSerial::GetRelPos()
 {
 	CVarList &p = Current();
 	TdPtr64 r = fStream->Position() - p.Start;
@@ -1831,7 +1883,7 @@ TdPtr64 CdFilter::GetRelPos()
 	return r;
 }
 
-void CdFilter::SetRelPos(const TdPtr64 Value)
+void CdSerial::SetRelPos(const TdPtr64 Value)
 {
 	CVarList &p = Current();
 	if ((Value<0) || (Value>p.Length))
@@ -1839,7 +1891,7 @@ void CdFilter::SetRelPos(const TdPtr64 Value)
 	fPosition = p.Start + Value;
 }
 
-void CdFilter::SetLog(CdLogRecord &vLog)
+void CdSerial::SetLog(CdLogRecord &vLog)
 {
 	if (fLog != &vLog)
 	{
@@ -1848,13 +1900,13 @@ void CdFilter::SetLog(CdLogRecord &vLog)
 	}
 }
 
-CdFilter::TdVar &CdFilter::operator[] (const char *vName)
+CdSerial::TdVar &CdSerial::operator[] (const char *vName)
 {
 	fVar.fName = vName;
 	return fVar;
 }
 
-void CdFilter::rInitNameSpace()
+void CdSerial::rInitNameSpace()
 {
 	CVarList &Cur = Current();
 	Cur.ClearVarList();
@@ -1894,6 +1946,7 @@ void CdFilter::rInitNameSpace()
                 	Read((void*)X.Data, X.Len);
 				}
                 break;
+
         	// integer
 			case osInt8:
 				Cur.AddVar<Int8>(*this, Kind, fPosition, Name) = rUInt8();
@@ -1919,12 +1972,14 @@ void CdFilter::rInitNameSpace()
 			case osUInt64:
 				Cur.AddVar<UInt64>(*this, Kind, fPosition, Name) = rUInt64();
 				break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case osInt128:
 				Cur.AddVar<Int128>(*this, Kind, fPosition, Name) = rUInt128();
 				break;
 			case osUInt128:
 				Cur.AddVar<UInt128>(*this, Kind, fPosition, Name) = rUInt128();
 				break;
+			#endif
 			case os16Packed:
 				Cur.AddVar<UInt16>(*this, Kind, fPosition, Name) = rPack16u();
             	break;
@@ -1934,9 +1989,12 @@ void CdFilter::rInitNameSpace()
 			case os64Packed:
 				Cur.AddVar<UInt64>(*this, Kind, fPosition, Name) = rPack64u();
 				break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			case os128Packed:
 				Cur.AddVar<UInt128>(*this, Kind, fPosition, Name) = rPack128u();
 				break;
+			#endif
+
 			// float
 			case osFloat32:
 				Cur.AddVar<Float32>(*this, Kind, fPosition, Name) = rFloat32();
@@ -1944,8 +2002,11 @@ void CdFilter::rInitNameSpace()
 			case osFloat64:
 				Cur.AddVar<Float64>(*this, Kind, fPosition, Name) = rFloat64();
 				break;
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
             case osFloat128:
             	throw Err_dFilter("Not support Float128.");
+            #endif
+
 			// string
 			case osStrUTF8:
 				Cur.AddVar<UTF8String>(*this, Kind, fPosition, Name) = rStrUTF8();
@@ -1956,6 +2017,7 @@ void CdFilter::rInitNameSpace()
 			case osStrUTF32:
 				Cur.AddVar<UTF32String>(*this, Kind, fPosition, Name) = rStrUTF32();
 				break;
+
             // others
 			case osStreamPos:
 				*this >> Cur.AddVar<TdPosType>(*this, Kind, fPosition, Name);
@@ -1966,14 +2028,14 @@ void CdFilter::rInitNameSpace()
 	}
 }
 
-CdFilter::CVarList & CdFilter::Current()
+CdSerial::CVarList & CdSerial::Current()
 {
 	if (fFilterRec.size() <= 0)
 		throw Err_dFilter(esStackEmpty);
 	return fFilterRec.front();
-};
+}
 
-void CdFilter::CVarList::_AddVarItem(CdFilter &Filter, CBaseVar *rec)
+void CdSerial::CVarList::_AddVarItem(CdSerial &Filter, CBaseVar *rec)
 {
 	#ifdef COREARRAY_DEBUG_CODE
 	if (VarCount < 0)
@@ -1995,14 +2057,14 @@ void CdFilter::CVarList::_AddVarItem(CdFilter &Filter, CBaseVar *rec)
 	VarList.push_back(rec);
 }
 
-void CdFilter::CVarList::ClearVarList()
+void CdSerial::CVarList::ClearVarList()
 {
 	list<CBaseVar*>::iterator it = VarList.begin();
 	for (; it != VarList.end(); it++) delete *it;
 	VarList.clear();
 }
 
-list<CdFilter::CBaseVar*>::iterator CdFilter::CVarList::Name2Iter(
+list<CdSerial::CBaseVar*>::iterator CdSerial::CVarList::Name2Iter(
 	const char * Name)
 {
 	list<CBaseVar*>::iterator it;
@@ -2014,12 +2076,13 @@ list<CdFilter::CBaseVar*>::iterator CdFilter::CVarList::Name2Iter(
 	return VarList.end();
 }
 
-bool CdFilter::TdVar::rShortBuf(Int32 *pval, size_t ValCnt)
+bool CdSerial::TdVar::rShortBuf(Int32 *pval, size_t ValCnt)
 {
 	bool rv = fFilter->rValue(osShortRec, fName,
 		pval, ValCnt*sizeof(Int32));
 	#ifndef COREARRAY_LITTLE_ENDIAN
-	if (rv) {
+	if (rv)
+	{
 		for (; ValCnt > 0; ValCnt--, pval++)
 			*pval = COREARRAY_ENDIAN_CVT32(*pval);
 	}
@@ -2027,12 +2090,13 @@ bool CdFilter::TdVar::rShortBuf(Int32 *pval, size_t ValCnt)
 	return rv;
 }
 
-bool CdFilter::TdVar::rShortBuf(Int64 *pval, size_t ValCnt)
+bool CdSerial::TdVar::rShortBuf(Int64 *pval, size_t ValCnt)
 {
 	bool rv = fFilter->rValue(osShortRec, fName,
 		pval, ValCnt*sizeof(Int64));
 	#ifndef COREARRAY_LITTLE_ENDIAN
-	if (rv) {
+	if (rv)
+	{
 		for (; ValCnt > 0; ValCnt--, pval++)
 			*pval = COREARRAY_ENDIAN_CVT64(*pval);
 	}
@@ -2040,12 +2104,13 @@ bool CdFilter::TdVar::rShortBuf(Int64 *pval, size_t ValCnt)
 	return rv;
 }
 
-bool CdFilter::TdVar::rBuf(Int32 *pval, size_t ValCnt)
+bool CdSerial::TdVar::rBuf(Int32 *pval, size_t ValCnt)
 {
 	bool rv = fFilter->rValue(osRecord, fName,
 		pval, ValCnt*sizeof(Int32));
 	#ifndef COREARRAY_LITTLE_ENDIAN
-	if (rv) {
+	if (rv)
+	{
 		for (; ValCnt > 0; ValCnt--, pval++)
 			*pval = COREARRAY_ENDIAN_CVT32(*pval);
 	}
@@ -2053,12 +2118,13 @@ bool CdFilter::TdVar::rBuf(Int32 *pval, size_t ValCnt)
 	return rv;
 }
 
-bool CdFilter::TdVar::rBuf(Int64 *pval, size_t ValCnt)
+bool CdSerial::TdVar::rBuf(Int64 *pval, size_t ValCnt)
 {
 	bool rv = fFilter->rValue(osRecord, fName,
 		pval, ValCnt*sizeof(Int64));
 	#ifndef COREARRAY_LITTLE_ENDIAN
-	if (rv) {
+	if (rv)
+	{
 		for (; ValCnt > 0; ValCnt--, pval++)
 			*pval = COREARRAY_ENDIAN_CVT64(*pval);
 	}
@@ -2066,7 +2132,7 @@ bool CdFilter::TdVar::rBuf(Int64 *pval, size_t ValCnt)
 	return rv;
 }
 
-void CdFilter::TdVar::wShortBuf(const Int32 *pval, size_t ValCnt)
+void CdSerial::TdVar::wShortBuf(const Int32 *pval, size_t ValCnt)
 {
 	#ifndef COREARRAY_LITTLE_ENDIAN
 	auto_ptr<Int32> buf(new Int32[ValCnt]);
@@ -2078,7 +2144,7 @@ void CdFilter::TdVar::wShortBuf(const Int32 *pval, size_t ValCnt)
 	fFilter->wValue(osShortRec, fName, pval, ValCnt*sizeof(Int32));
 }
 
-void CdFilter::TdVar::wShortBuf(const Int64 *pval, size_t ValCnt)
+void CdSerial::TdVar::wShortBuf(const Int64 *pval, size_t ValCnt)
 {
 	#ifndef COREARRAY_LITTLE_ENDIAN
 	auto_ptr<Int64> buf(new Int64[ValCnt]);
@@ -2090,7 +2156,7 @@ void CdFilter::TdVar::wShortBuf(const Int64 *pval, size_t ValCnt)
 	fFilter->wValue(osShortRec, fName, pval, ValCnt*sizeof(Int64));
 }
 
-void CdFilter::TdVar::wBuf(const Int32 *pval, size_t ValCnt)
+void CdSerial::TdVar::wBuf(const Int32 *pval, size_t ValCnt)
 {
 	#ifndef COREARRAY_LITTLE_ENDIAN
 	auto_ptr<Int32> buf(new Int32[ValCnt]);
@@ -2102,7 +2168,7 @@ void CdFilter::TdVar::wBuf(const Int32 *pval, size_t ValCnt)
 	fFilter->wValue(osRecord, fName, pval, ValCnt*sizeof(Int32));
 }
 
-void CdFilter::TdVar::wBuf(const Int64 *pval, size_t ValCnt)
+void CdSerial::TdVar::wBuf(const Int64 *pval, size_t ValCnt)
 {
 	#ifndef COREARRAY_LITTLE_ENDIAN
 	auto_ptr<Int64> buf(new Int64[ValCnt]);
@@ -2168,7 +2234,7 @@ CdObjClassMgr::TdOnObjCreate CdObjClassMgr::NameToClass(
 		return NULL;
 }
 
-CdObjRef* CdObjClassMgr::toObj(CdFilter &Reader, TdInit OnInit, void *Data)
+CdObjRef* CdObjClassMgr::toObj(CdSerial &Reader, TdInit OnInit, void *Data)
 {
 	TdOnObjCreate OnCreate;
 	TdVersion Version;
@@ -2271,12 +2337,18 @@ const char *TdsData::dvtNames(int index)
 		case dvtUInt32:  return "UInt32";
 		case dvtInt64:   return "Int64";
 		case dvtUInt64:  return "UInt64";
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case dvtInt128:  return "Int128";
 		case dvtUInt128: return "UInt128";
+		#endif
+
 		// float number
 		case dvtFloat32:  return "Float32";
 		case dvtFloat64:  return "Float64";
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case dvtFloat128: return "Float128";
+		#endif
+
 		// string
 		case dvtSString8:  return "UTF-8 short string";
 		case dvtSString16: return "UTF-16 short string";
@@ -2284,6 +2356,7 @@ const char *TdsData::dvtNames(int index)
 		case dvtStr8:      return "UTF-8 string";
 		case dvtStr16:     return "UTF-16 string";
 		case dvtStr32:     return "UTF-32 string";
+
 		// others
 		case dvtBoolean: return "boolean";
 		case dvtObjRef:  return "CdObjRef";
@@ -2292,6 +2365,8 @@ const char *TdsData::dvtNames(int index)
 	}
 }
 
+
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 
 #define DSDATA_INT(TYPE) \
 	case dvtInt8:    return ValCvt<TYPE, Int8>(VAL<Int8>()); \
@@ -2306,11 +2381,30 @@ const char *TdsData::dvtNames(int index)
 	case dvtUInt128: return ValCvt<TYPE, UInt128>(VAL<UInt128>());
 
 // TdsData : float number
-
 #define DSDATA_FLOAT(TYPE) \
 	case dvtFloat32:  return ValCvt<TYPE, Float32>(VAL<Float32>()); \
 	case dvtFloat64:  return ValCvt<TYPE, Float64>(VAL<Float64>()); \
 	case dvtFloat128: return ValCvt<TYPE, Float128>(VAL<Float128>());
+
+#else
+
+#define DSDATA_INT(TYPE) \
+	case dvtInt8:    return ValCvt<TYPE, Int8>(VAL<Int8>()); \
+	case dvtUInt8:   return ValCvt<TYPE, UInt8>(VAL<UInt8>()); \
+	case dvtInt16:   return ValCvt<TYPE, Int16>(VAL<Int16>()); \
+	case dvtUInt16:  return ValCvt<TYPE, UInt16>(VAL<UInt16>()); \
+	case dvtInt32:   return ValCvt<TYPE, Int32>(VAL<Int32>()); \
+	case dvtUInt32:  return ValCvt<TYPE, UInt32>(VAL<UInt32>()); \
+	case dvtInt64:   return ValCvt<TYPE, Int64>(VAL<Int64>()); \
+	case dvtUInt64:  return ValCvt<TYPE, UInt64>(VAL<UInt64>()); \
+
+// TdsData : float number
+#define DSDATA_FLOAT(TYPE) \
+	case dvtFloat32:  return ValCvt<TYPE, Float32>(VAL<Float32>()); \
+	case dvtFloat64:  return ValCvt<TYPE, Float64>(VAL<Float64>()); \
+
+#endif
+
 
 // TdsData : string
 
@@ -2434,6 +2528,7 @@ UInt64 TdsData::getUInt64() const
 	}
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 Int128 TdsData::getInt128() const
 {
 	switch (dsType)
@@ -2455,6 +2550,7 @@ UInt128 TdsData::getUInt128() const
 		DSDATA_RETURN_OTHER(UInt128, dvtUInt128)
 	}
 }
+#endif
 
 Float32 TdsData::getFloat32() const
 {
@@ -2480,6 +2576,7 @@ Float64 TdsData::getFloat64() const
 	}
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 Float128 TdsData::getFloat128() const
 {
 	switch (dsType)
@@ -2491,6 +2588,7 @@ Float128 TdsData::getFloat128() const
 		DSDATA_RETURN_OTHER(Float128, dvtFloat128)
 	}
 }
+#endif
 
 UTF8String TdsData::getStr8() const
 {
@@ -2609,6 +2707,7 @@ void TdsData::setUInt64(UInt64 val)
 	VAL<UInt64>() = val;
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void TdsData::setInt128(const Int128 &val)
 {
 	_Done();
@@ -2622,6 +2721,7 @@ void TdsData::setUInt128(const UInt128 &val)
 	dsType = dvtUInt128;
 	VAL<UInt128>() = val;
 }
+#endif
 
 void TdsData::setFloat32(Float32 val)
 {
@@ -2637,12 +2737,14 @@ void TdsData::setFloat64(Float64 val)
 	VAL<Float64>() = val;
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 void TdsData::setFloat128(const Float128 &val)
 {
 	_Done();
 	dsType = dvtFloat128;
 	VAL<Float128>() = val;
 }
+#endif
 
 void TdsData::setStr8(const UTF8String &val)
 {
@@ -2746,12 +2848,20 @@ bool TdsData::isEmpty() const
 
 bool TdsData::isInt() const
 {
-	return (dvtInt8 <= dsType) && (dsType <= dvtUInt128);
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
+		return (dvtInt8 <= dsType) && (dsType <= dvtUInt128);
+	#else
+		return (dvtInt8 <= dsType) && (dsType <= dvtUInt64);
+	#endif
 }
 
 bool TdsData::isFloat() const
 {
-	return (dvtFloat32 <= dsType) && (dsType <= dvtFloat128);
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
+		return (dvtFloat32 <= dsType) && (dsType <= dvtFloat128);
+	#else
+		return (dvtFloat32 <= dsType) && (dsType <= dvtFloat64);
+	#endif
 }
 
 bool TdsData::isNum() const
@@ -2773,7 +2883,9 @@ bool TdsData::isNaN() const
 		case dvtInt16: case dvtUInt16:
 		case dvtInt32: case dvtUInt32:
 		case dvtInt64: case dvtUInt64:
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case dvtInt128: case dvtUInt128:
+		#endif
 			return false;
 		case dvtFloat32:  return !IsFinite(VAL<Float32>());
 		case dvtFloat64:  return !IsFinite(VAL<Float64>());
@@ -2800,6 +2912,7 @@ bool TdsData::isStr() const
 bool TdsData::Packed()
 {
 	#define xRANGE(L, I, H) ((L<=I) && (I<=H))
+	#define yRANGE(L, H) (L<=H)
 	Int64 I = 0;
 	UInt64 U = 0;
 	TdsType t = dsType;
@@ -2832,22 +2945,23 @@ bool TdsData::Packed()
 			dsType = dvtUInt32; VAL<UInt32>() = I;
 		}
 	} else {
-		if (xRANGE(INT8_MIN, U, INT8_MAX)) {
+		if (yRANGE(U, INT8_MAX)) {
     		dsType = dvtInt8; VAL<Int8>() = U;
-		} else if (xRANGE(0, U, UINT8_MAX)) {
+		} else if (yRANGE(U, UINT8_MAX)) {
 			dsType = dvtUInt8; VAL<UInt8>() = U;
-		} else if (xRANGE(INT16_MIN, U, INT16_MAX)) {
+		} else if (yRANGE(U, INT16_MAX)) {
 			dsType = dvtInt16; VAL<Int16>() = U;
-		} else if (xRANGE(0, U, UINT16_MAX)) {
+		} else if (yRANGE(U, UINT16_MAX)) {
 			dsType = dvtUInt16; VAL<UInt16>() = U;
-		} else if (xRANGE(INT32_MIN, U, INT32_MAX)) {
+		} else if (yRANGE(U, INT32_MAX)) {
 			dsType = dvtInt32; VAL<Int32>() = U;
-		} else if (xRANGE(0, U, UINT32_MAX)) {
+		} else if (yRANGE(U, UINT32_MAX)) {
 			dsType = dvtUInt32; VAL<UInt32>() = U;
 		}
 	}
 
 	return t != dsType;
+	#undef yRANGE
 	#undef xRANGE
 }
 
@@ -2931,7 +3045,7 @@ TdsData & TdsData::operator= (const TdsData &_Right)
 	return *this;
 }
 
-CdFilter& CoreArray::operator>> (CdFilter &s, TdsData& out)
+CdSerial& CoreArray::operator>> (CdSerial &s, TdsData& out)
 {
 	out._Done();
 	out.dsType = s.rUInt8();
@@ -2953,9 +3067,11 @@ CdFilter& CoreArray::operator>> (CdFilter &s, TdsData& out)
 		case TdsData::dvtInt64: case TdsData::dvtUInt64:
 			out.VAL<UInt64>() = s.rUInt64();
 			break;
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case TdsData::dvtInt128: case TdsData::dvtUInt128:
 			out.VAL<UInt128>() = s.rUInt128();
 			break;
+		#endif
 
 		// float number
 		case TdsData::dvtFloat32:
@@ -2964,9 +3080,11 @@ CdFilter& CoreArray::operator>> (CdFilter &s, TdsData& out)
 		case TdsData::dvtFloat64:
 			out.VAL<Float64>() = s.rFloat64();
 			break;
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case TdsData::dvtFloat128:
 			out.VAL<Float128>() = s.rFloat128();
 			break;
+		#endif
 
 		// string
 		case TdsData::dvtSString8:
@@ -3013,7 +3131,7 @@ CdFilter& CoreArray::operator>> (CdFilter &s, TdsData& out)
 	return s;
 }
 
-CdFilter& CoreArray::operator<< (CdFilter &s, TdsData &in)
+CdSerial& CoreArray::operator<< (CdSerial &s, TdsData &in)
 {
 	s.wUInt8(in.dsType);
 
@@ -3032,9 +3150,11 @@ CdFilter& CoreArray::operator<< (CdFilter &s, TdsData &in)
 		case TdsData::dvtInt64: case TdsData::dvtUInt64:
         	s.wUInt64(in.VAL<UInt64>());
 			break;
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case TdsData::dvtInt128: case TdsData::dvtUInt128:
 			s.wUInt128(in.VAL<UInt128>());
 			break;
+		#endif
 
 		// float number
 		case TdsData::dvtFloat32:
@@ -3043,9 +3163,11 @@ CdFilter& CoreArray::operator<< (CdFilter &s, TdsData &in)
 		case TdsData::dvtFloat64:
 			s.wFloat64(in.VAL<Float64>());
 			break;
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		case TdsData::dvtFloat128:
 			s.wFloat128(in.VAL<Float128>());
 			break;
+		#endif
 
 		// string
 		case TdsData::dvtSString8:
@@ -3085,4 +3207,3 @@ CdFilter& CoreArray::operator<< (CdFilter &s, TdsData &in)
 	}
 	return s;
 }
-

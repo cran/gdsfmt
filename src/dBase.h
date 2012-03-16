@@ -8,7 +8,7 @@
 //
 // dBase.h: Basic classes for CoreArray library
 //
-// Copyright (C) 2011	Xiuwen Zheng
+// Copyright (C) 2012	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dBase.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2011
+ *	\date     2007 - 2012
  *	\brief    Basic classes for CoreArray library
  *	\details
 **/
@@ -80,15 +80,17 @@ namespace CoreArray
 	 */
 	typedef UInt16 TdVersion;
 
-	/// Type ID used in CdFilter
+	/// Type ID used in CdSerial
 	/** Users should not change the values or order. **/
 	enum TdTypeID
 	{
 		osUnknown    = 0,  ///< Unknown type id
+
 		// Record
 		osRecord     = 1,  ///< Long record block
 		osShortRec   = 2,  ///< Short record block (size < 256 bytes)
 		osNameSpace  = 3,  ///< Name space block
+
 		// Integer
 		osInt8       = 4,  ///< Signed integer of 8 bits
 		osUInt8      = 5,  ///< Unsigned integer of 8 bits
@@ -98,20 +100,33 @@ namespace CoreArray
 		osUInt32     = 9,  ///< Unsigned integer of 32 bits
 		osInt64      = 10, ///< Signed integer of 64 bits
 		osUInt64     = 11, ///< Unsigned integer of 64 bits
+
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		osInt128     = 12, ///< Signed integer of 128 bits
 		osUInt128    = 13, ///< Unsigned integer of 128 bits
+		#endif
+
 		os16Packed   = 14, ///< Unsigned integer of 16 bits, packed in stream
 		os32Packed   = 15, ///< Unsigned integer of 32 bits, packed in stream
 		os64Packed   = 16, ///< Unsigned integer of 64 bits, packed in stream
+
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		os128Packed  = 17, ///< Unsigned integer of 128 bits, packed in stream
+		#endif
+
 		// Float
 		osFloat32    = 18, ///< Float number of single precision (32 bits)
 		osFloat64    = 19, ///< Float number of double precision (64 bits)
+
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		osFloat128   = 20, ///< Float number of quadruple precision (128 bits)
+		#endif
+
 		// String
 		osStrUTF8    = 21, ///< UTF-8 string
 		osStrUTF16   = 22, ///< UTF-16 string
 		osStrUTF32   = 23, ///< UTF-32 string
+
 		// others
 		osStreamPos  = 24  ///< Integer of stream position, 6 bytes
 	};
@@ -123,16 +138,16 @@ namespace CoreArray
 	// CdObject
 
 	class CdObject;
-	class CdFilter;
+	class CdSerial;
 	class CdObjClassMgr;
 
 	namespace Internal
 	{
 		/// Access CdObject::LoadStruct
-		void CdObject_LoadStruct(CdObject &Obj, CdFilter &Reader,
+		void CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader,
 			TdVersion Version);
 		/// Access CdObject::SaveStruct
-		void CdObject_SaveStruct(CdObject &Obj, CdFilter &Writer,
+		void CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer,
 			bool IncludeName);
 	}
 
@@ -145,10 +160,10 @@ namespace CoreArray
 	public:
 		/// Access CdObject::LoadStruct
 		friend void Internal::CdObject_LoadStruct(CdObject &Obj,
-			CdFilter &Reader, TdVersion Version);
+			CdSerial &Reader, TdVersion Version);
 		/// Access CdObject::SaveStruct
 		friend void Internal::CdObject_SaveStruct(CdObject &Obj,
-			CdFilter &Writer, bool IncludeName);
+			CdSerial &Writer, bool IncludeName);
 
 		/// Constructor, do nothing
 		CdObject() {}
@@ -168,17 +183,17 @@ namespace CoreArray
 	protected:
 		// Load functions
 		/// Call ::LoadBefore, ::Loading, ::LoadAfter
-		void LoadStruct(CdFilter &Reader, TdVersion Version);
-		virtual void LoadBefore(CdFilter &Reader, TdVersion Version);
-		virtual void Loading(CdFilter &Reader, TdVersion Version);
-		virtual void LoadAfter(CdFilter &Reader, TdVersion Version);
+		void LoadStruct(CdSerial &Reader, TdVersion Version);
+		virtual void LoadBefore(CdSerial &Reader, TdVersion Version);
+		virtual void Loading(CdSerial &Reader, TdVersion Version);
+		virtual void LoadAfter(CdSerial &Reader, TdVersion Version);
 
 		// Save functions
 		/// Prepare Writer, and call ::SaveBefore, ::Saving, ::SaveAfter
-		virtual void SaveStruct(CdFilter &Writer, bool IncludeName);
-		virtual void SaveBefore(CdFilter &Writer);
-		virtual void Saving(CdFilter &Writer);
-		virtual void SaveAfter(CdFilter &Writer);
+		virtual void SaveStruct(CdSerial &Writer, bool IncludeName);
+		virtual void SaveBefore(CdSerial &Writer);
+		virtual void Saving(CdSerial &Writer);
+		virtual void SaveAfter(CdSerial &Writer);
 	private:
 		CdObject& operator= (const CdObject& m);
 		CdObject& operator= (CdObject& m);
@@ -189,14 +204,15 @@ namespace CoreArray
 	template<class TSender=CdObject> struct TdOnNotify
 	{
 	public:
-		inline TdOnNotify() { Clear(); };
-		inline operator bool() const { return (Event!=NULL); };
-		inline void Clear() { Obj = NULL; Event = NULL; };
-		inline void Notify(TSender *Sender)
-			{ if (this) if (Event) (Obj->*Event)(Sender); };
-		template<class T> inline TdOnNotify &Set( T *const vObj,
-			void (T::*vEvent)(TSender*) )
-			{ Obj = (CdObject*)vObj; Event = (TdOnDo)vEvent; return *this; };
+		COREARRAY_FORCE_INLINE TdOnNotify() { Clear(); }
+		COREARRAY_FORCE_INLINE operator bool() const { return (Event!=NULL); }
+		COREARRAY_FORCE_INLINE void Clear() { Obj = NULL; Event = NULL; }
+		COREARRAY_FORCE_INLINE void Notify(TSender *Sender)
+			{ if (this) if (Event) (Obj->*Event)(Sender); }
+		template<class T> COREARRAY_FORCE_INLINE TdOnNotify &Set( T *const vObj,
+				void (T::*vEvent)(TSender*) )
+			{ Obj = (CdObject*)vObj; Event = (TdOnDo)vEvent; return *this; }
+
 	private:
 		typedef void (CdObject::*TdOnDo)(TSender *);
 		CdObject * Obj;
@@ -237,7 +253,7 @@ namespace CoreArray
 		ssize_t Release();
 
 		/// Return the count
-		inline ssize_t Reference() const { return fReference; }
+		COREARRAY_FORCE_INLINE ssize_t Reference() const { return fReference; }
 
 	private:
 		ssize_t fReference;
@@ -254,13 +270,13 @@ namespace CoreArray
 	template<class T> struct TdAutoRef
 	{
 	public:
-		TdAutoRef() { fobj = NULL; };
-		TdAutoRef(T *vObj) { (fobj = vObj)->AddRef(); };
-		~TdAutoRef() { fobj->Release(); };
+		COREARRAY_FORCE_INLINE TdAutoRef() { fobj = NULL; }
+		COREARRAY_FORCE_INLINE TdAutoRef(T *vObj) { (fobj = vObj)->AddRef(); }
+		COREARRAY_FORCE_INLINE ~TdAutoRef() { fobj->Release(); }
 
-		inline T * get()
-			{ return fobj; };
-		inline T* operator=(T *_Right)
+		COREARRAY_FORCE_INLINE T * get()
+			{ return fobj; }
+		COREARRAY_FORCE_INLINE T* operator=(T *_Right)
 		{
 			if (_Right != fobj)
 			{
@@ -269,18 +285,18 @@ namespace CoreArray
 			}
 			return _Right;
 		}
-		inline T &operator*() const
-			{ return *fobj; };
-		inline T *operator->() const
-			{ return fobj; };
-		inline bool operator==(const T *_Right)
-			{ return fobj==_Right; };
-		inline bool operator==(const TdAutoRef<T> &_Right)
-			{ return fobj==_Right.fobj; };
-		inline bool operator!=(const T *_Right)
-			{ return fobj!=_Right; };
-		inline bool operator!=(const TdAutoRef<T> &_Right)
-			{ return fobj!=_Right.fobj; };
+		COREARRAY_FORCE_INLINE T &operator*() const
+			{ return *fobj; }
+		COREARRAY_FORCE_INLINE T *operator->() const
+			{ return fobj; }
+		COREARRAY_FORCE_INLINE bool operator==(const T *_Right)
+			{ return fobj==_Right; }
+		COREARRAY_FORCE_INLINE bool operator==(const TdAutoRef<T> &_Right)
+			{ return fobj==_Right.fobj; }
+		COREARRAY_FORCE_INLINE bool operator!=(const T *_Right)
+			{ return fobj!=_Right; }
+		COREARRAY_FORCE_INLINE bool operator!=(const TdAutoRef<T> &_Right)
+			{ return fobj!=_Right.fobj; }
 	private:
 		T *fobj;
 	};
@@ -306,17 +322,20 @@ namespace CoreArray
 	struct TdOnBroadcast
 	{
 	public:
-		TdOnBroadcast() { Obj = NULL; Event = NULL; };
+		COREARRAY_FORCE_INLINE TdOnBroadcast() { Obj = NULL; Event = NULL; }
 
-		inline operator bool() const { return (Event!=NULL); };
-		inline void Clear() { Obj = NULL; Event = NULL; };
-		inline void Notify(CdObjMsg *Sender, Int32 MsgCode, void *Param)
-			{ if (Event) (Obj->*Event)(Sender, MsgCode, Param); };
-		template<class T> inline TdOnBroadcast &Set(T *const vObj,
-			void (T::*vEvent)(CdObjMsg*, Int32, void*))
-			{ Obj = (CdObjMsg*)vObj; Event = (TdOnDo)vEvent; return *this; };
-		bool operator== (const TdOnBroadcast &v) const
-			{ return (Obj==v.Obj && Event==v.Event); };
+		COREARRAY_FORCE_INLINE void Clear() { Obj = NULL; Event = NULL; }
+		template<class T> COREARRAY_FORCE_INLINE TdOnBroadcast &Set(T *const vObj,
+				void (T::*vEvent)(CdObjMsg*, Int32, void*))
+			{ Obj = (CdObjMsg*)vObj; Event = (TdOnDo)vEvent; return *this; }
+
+		void Notify(CdObjMsg *Sender, Int32 MsgCode, void *Param);
+
+		COREARRAY_FORCE_INLINE operator bool() const { return (Event!=NULL); }
+		COREARRAY_FORCE_INLINE bool operator== (const TdOnBroadcast &v) const
+			{ return ((Obj==v.Obj) && (Event==v.Event)); }
+		COREARRAY_FORCE_INLINE bool operator!= (const TdOnBroadcast &v) const
+			{ return ((Obj!=v.Obj) || (Event!=v.Event)); }
 	private:
 		typedef void (CdObjMsg::*TdOnDo)(CdObjMsg *, Int32, void *);
 		CdObjMsg * Obj;
@@ -337,7 +356,7 @@ namespace CoreArray
 		/// Add a message receiver
 		void AddMsg(const TdOnBroadcast &MsgObj);
 		/// Add a message receiver, template
-		template<class T> inline void AddMsgEx(T *const vObj,
+		template<class T> COREARRAY_INLINE void AddMsgEx(T *const vObj,
 			void (T::*vEvent)(CdObjMsg*, Int32, void*))
 		{
 			TdOnBroadcast Do;
@@ -348,7 +367,7 @@ namespace CoreArray
 		/// Remove a message receiver
 		void RemoveMsg(const TdOnBroadcast &MsgObj);
 		/// Remove a message receiver, template
-		template<class T> inline void RemoveMsgEx(T *const vObj,
+		template<class T> COREARRAY_INLINE void RemoveMsgEx(T *const vObj,
 			void (T::*vEvent)(CdObjMsg*, Int32, void*))
 		{
 			TdOnBroadcast Do;
@@ -367,20 +386,20 @@ namespace CoreArray
 		void Notify(Int32 MsgCode, void *Param = NULL);
 
 		/// Broadcast a message of Int32 value
-		inline void Notify32(Int32 MsgCode, const Int32 Value)
-			{ Notify(MsgCode, (void*)&Value); };
+		COREARRAY_FORCE_INLINE void Notify32(Int32 MsgCode, const Int32 Value)
+			{ Notify(MsgCode, (void*)&Value); }
 		/// Broadcast a message of Int64 value
-		inline void Notify64(Int32 MsgCode, const Int64 Value)
-			{ Notify(MsgCode, (void*)&Value); };
+		COREARRAY_FORCE_INLINE void Notify64(Int32 MsgCode, const Int64 Value)
+			{ Notify(MsgCode, (void*)&Value); }
 		/// Broadcast a message of an array of Int32 value
-		inline void Notify32(Int32 MsgCode, Int32 const *Param)
-			{ Notify(MsgCode, (void*)Param); };
+		COREARRAY_FORCE_INLINE void Notify32(Int32 MsgCode, Int32 const *Param)
+			{ Notify(MsgCode, (void*)Param); }
 		/// Broadcast a message of an array of Int64 value
-		inline void Notify64(Int32 MsgCode, Int64 const *Param)
-			{ Notify(MsgCode, (void*)Param); };
+		COREARRAY_FORCE_INLINE void Notify64(Int32 MsgCode, Int64 const *Param)
+			{ Notify(MsgCode, (void*)Param); }
 
     	/// Return a vector of message receivers
-		inline const std::vector<TdOnBroadcast> &MsgList() const
+		COREARRAY_FORCE_INLINE const std::vector<TdOnBroadcast> &MsgList() const
 			{ return fMsgList; }
 	protected:
 		/// Determine messages to be sent (if return true), or blocked
@@ -438,12 +457,12 @@ namespace CoreArray
 		void Add(Int32 vType, const char *fmt, ...);
 
 		/// Return a vector of TdItem (record item)
-		inline std::vector<TdItem> &List() { return fList; }
+		COREARRAY_FORCE_INLINE std::vector<TdItem> &List() { return fList; }
 	protected:
 		std::vector<TdItem> fList;
 
-		virtual void LoadBefore(CdFilter &Reader, TdVersion Version);
-		virtual void SaveBefore(CdFilter &Writer);
+		virtual void LoadBefore(CdSerial &Reader, TdVersion Version);
+		virtual void SaveBefore(CdSerial &Writer);
 	};
 
 
@@ -481,10 +500,10 @@ namespace CoreArray
 		TdPtr64 CopyFrom(CdStream &Source, TdPtr64 Count=-1);
 
 		/// Return the current position
-		inline TdPtr64 Position()
-			{ return Seek(0, soCurrent); };
+		COREARRAY_FORCE_INLINE TdPtr64 Position()
+			{ return Seek(0, soCurrent); }
 		/// Reset the current position
-		inline void SetPosition(const TdPtr64 pos)
+		COREARRAY_FORCE_INLINE void SetPosition(const TdPtr64 pos)
 			{ Seek(pos, soBeginning); }
 
 		/// Read an unsigned integer of 8 bits
@@ -495,14 +514,19 @@ namespace CoreArray
 		UInt32 rUInt32();
 		/// Read an unsigned integer of 64 bits, taking endianness into account
 		UInt64 rUInt64();
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Read an unsigned integer of 128 bits, taking endianness into account
 		UInt128 rUInt128();
+		#endif
+
 		/// Read a float number of single precision
 		Float32 rFloat32();
 		/// Read a float number of double precision
 		Float64 rFloat64();
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Read a float number of quadruple precision
 		Float128 rFloat128();
+		#endif
 
 		/// Write an unsigned integer of 8 bits
 		void wUInt8(UInt8 val);
@@ -512,14 +536,20 @@ namespace CoreArray
 		void wUInt32(UInt32 val);
 		/// Write an unsigned integer of 64 bits, taking endianness into account
 		void wUInt64(UInt64 val);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Write an unsigned integer of 128 bits, taking endianness into account
 		void wUInt128(UInt128 val);
+		#endif
+
 		/// Write a float number of single precision
 		void wFloat32(const Float32 &val);
 		/// Write a float number of double precision
 		void wFloat64(const Float64 &val);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Write a float number of quadruple precision
 		void wFloat128(const Float128 &val);
+		#endif
+
 	private:
 		CdStream& operator= (const CdStream& m);
 		CdStream& operator= (CdStream& m);
@@ -527,46 +557,50 @@ namespace CoreArray
 
 
 	/// an operator, to read a signed integer of 8 bits from a stream
-	inline CdStream& operator>> (CdStream &s, Int8& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Int8& out)
     	{ out = s.rUInt8(); return s; }
 	/// an operator, to read an unsigned integer of 8 bits from a stream
-	inline CdStream& operator>> (CdStream &s, UInt8& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, UInt8& out)
 		{ out = s.rUInt8(); return s; }
 	/// an operator, to read a signed integer of 16 bits from a stream
-	inline CdStream& operator>> (CdStream &s, Int16& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Int16& out)
 		{ out = s.rUInt16(); return s; }
 	/// an operator, to read an unsigned integer of 16 bits from a stream
-	inline CdStream& operator>> (CdStream &s, UInt16& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, UInt16& out)
 		{ out = s.rUInt16(); return s; }
 	/// an operator, to read a signed integer of 32 bits from a stream
-	inline CdStream& operator>> (CdStream &s, Int32& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Int32& out)
 		{ out = s.rUInt32(); return s; }
 	/// an operator, to read an unsigned integer of 32 bits from a stream
-	inline CdStream& operator>> (CdStream &s, UInt32& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, UInt32& out)
 		{ out = s.rUInt32(); return s; }
 	/// an operator, to read a signed integer of 64 bits from a stream
-	inline CdStream& operator>> (CdStream &s, Int64& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Int64& out)
 		{ out = s.rUInt64(); return s; }
 	/// an operator, to read an unsigned integer of 64 bits from a stream
-	inline CdStream& operator>> (CdStream &s, UInt64& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, UInt64& out)
 		{ out = s.rUInt64(); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to read a signed integer of 128 bits from a stream
-	inline CdStream& operator>> (CdStream &s, Int128& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Int128& out)
 		{ out = s.rUInt128(); return s; }
 	/// an operator, to read an unsigned integer of 128 bits from a stream
-	inline CdStream& operator>> (CdStream &s, UInt128& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, UInt128& out)
 		{ out = s.rUInt128(); return s; }
+	#endif
 	/// an operator, to read a float number of single precision from a stream
-	inline CdStream& operator>> (CdStream &s, Float32& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Float32& out)
 		{ out = s.rFloat32(); return s; }
 	/// an operator, to read a float number of double precision from a stream
-	inline CdStream& operator>> (CdStream &s, Float64& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Float64& out)
 		{ out = s.rFloat64(); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to read a float number of quadruple precision from a stream
-	inline CdStream& operator>> (CdStream &s, Float128& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, Float128& out)
 		{ out = s.rFloat128(); return s; }
+	#endif
 	/// an operator, to read TdPosType from a stream (6 bytes)
-	inline CdStream& operator>> (CdStream &s, TdPosType& out)
+	COREARRAY_INLINE CdStream& operator>> (CdStream &s, TdPosType& out)
 	{
 		UInt64 L = 0;
 		s.ReadBuffer((void*)&L, TdPosType::size);
@@ -581,46 +615,50 @@ namespace CoreArray
 	}
 
 	/// an operator, to write a signed integer of 8 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const Int8 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Int8 in)
 		{ s.wUInt8(in); return s; }
 	/// an operator, to write an unsigned integer of 8 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const UInt8 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const UInt8 in)
 		{ s.wUInt8(in); return s; }
 	/// an operator, to write a signed integer of 16 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const Int16 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Int16 in)
 		{ s.wUInt16(in); return s; }
 	/// an operator, to write an unsigned integer of 16 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const UInt16 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const UInt16 in)
 		{ s.wUInt16(in); return s; }
 	/// an operator, to write a signed integer of 32 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const Int32 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Int32 in)
 		{ s.wUInt32(in); return s; }
 	/// an operator, to write an unsigned integer of 32 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const UInt32 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const UInt32 in)
 		{ s.wUInt32(in); return s; }
 	/// an operator, to write a signed integer of 64 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const Int64 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Int64 in)
 		{ s.wUInt64(in); return s; }
 	/// an operator, to write an unsigned integer of 64 bits to a stream
-	inline CdStream& operator<< (CdStream &s, const UInt64 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const UInt64 in)
 		{ s.wUInt64(in); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to write a signed integer of 128 bits to a stream
-	inline CdStream& operator<< (CdStream &s, Int128 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, Int128 in)
 		{ s.wUInt128(UInt128(in)); return s; }
 	/// an operator, to write an unsigned integer of 128 bits to a stream
-	inline CdStream& operator<< (CdStream &s, UInt128 in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, UInt128 in)
 		{ s.wUInt128(in); return s; }
+	#endif
 	/// an operator, to write a float number of single precision to a stream
-	inline CdStream& operator<< (CdStream &s, const Float32 &in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Float32 &in)
 		{ s.wFloat32(in); return s; }
 	/// an operator, to write a float number of double precision to a stream
-	inline CdStream& operator<< (CdStream &s, const Float64 &in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Float64 &in)
 		{ s.wFloat64(in); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to write a float number of quadruple precision to a stream
-	inline CdStream& operator<< (CdStream &s, const Float128 &in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const Float128 &in)
 		{ s.wFloat128(in); return s; }
+	#endif
 	/// an operator, to write TdPosType to a stream (6 bytes)
-	inline CdStream& operator<< (CdStream &s, const TdPosType &in)
+	COREARRAY_INLINE CdStream& operator<< (CdStream &s, const TdPosType &in)
 	{
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		UInt64 L = in;
@@ -642,8 +680,8 @@ namespace CoreArray
 	class CdStreamPipe
 	{
 	public:
-    	CdStreamPipe() { };
-		virtual ~CdStreamPipe() { };
+    	CdStreamPipe() {}
+		virtual ~CdStreamPipe() {}
 		friend class CBufdStream;
 	protected:
 		virtual CdStream* InitPipe(CBufdStream *Filter) = 0;
@@ -698,22 +736,28 @@ namespace CoreArray
 		UInt32 rUInt32();
 		/// Read an unsigned integer of 64 bits, taking endianness into account
 		UInt64 rUInt64();
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Read an unsigned integer of 128 bits, taking endianness into account
 		UInt128 rUInt128();
+		#endif
 		/// Read a packed unsigned integer of 16 bits, taking endianness into account
 		UInt16 rPack16u();
 		/// Read a packed unsigned integer of 32 bits, taking endianness into account
 		UInt32 rPack32u();
 		/// Read a packed unsigned integer of 64 bits, taking endianness into account
 		UInt64 rPack64u();
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Read a packed unsigned integer of 128 bits, taking endianness into account
 		UInt128 rPack128u();
+		#endif
 		/// Read a float number of single precision
 		Float32 rFloat32();
 		/// Read a float number of double precision
 		Float64 rFloat64();
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Read a float number of quadruple precision
 		Float128 rFloat128();
+		#endif
 		/// Read a UTF-8 string
 		UTF8String rStrUTF8();
 		/// Read a UTF-16 string
@@ -729,22 +773,30 @@ namespace CoreArray
 		void wUInt32(UInt32 val);
 		/// Write an unsigned integer of 64 bits, taking endianness into account
 		void wUInt64(UInt64 val);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Write an unsigned integer of 64 bits, taking endianness into account
 		void wUInt128(UInt128 val);
+		#endif
 		/// Write a packed unsigned integer of 16 bits, taking endianness into account
 		void wPack16u(UInt16 Value);
 		/// Write a packed unsigned integer of 32 bits, taking endianness into account
 		void wPack32u(UInt32 Value);
 		/// Write a packed unsigned integer of 64 bits, taking endianness into account
 		void wPack64u(UInt64 Value);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Write a packed unsigned integer of 128 bits, taking endianness into account
 		void wPack128u(UInt128 Value);
+		#endif
+
 		/// Write a float number of single precision
 		void wFloat32(const Float32 &val);
 		/// Write a float number of double precision
 		void wFloat64(const Float64 &val);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		/// Write a float number of quadruple precision
 		void wFloat128(const Float128 &val);
+		#endif
+
 		/// Write a UTF-8 string
 		void wStrUTF8(const UTF8 *Value);
 		/// Write a UTF-16 string
@@ -765,13 +817,14 @@ namespace CoreArray
 		void PushPipe(CdStreamPipe* APipe);
 		void PopPipe();
 
-		inline TdPtr64 &Position() { return fPosition; }
-		inline void SetPosition(const TdPtr64 pos) { fPosition = pos; }
+		COREARRAY_FORCE_INLINE TdPtr64 &Position() { return fPosition; }
+		COREARRAY_FORCE_INLINE void SetPosition(const TdPtr64 pos) { fPosition = pos; }
 
-		inline CdStream *Stream() const { return fStream; };
+		COREARRAY_FORCE_INLINE CdStream *Stream() const { return fStream; }
 		void SetStream(CdStream* Value);
-		inline CdStream *BaseStream() const { return fBaseStream; };
-		inline ssize_t BufSize() const { return fBufSize; };
+		COREARRAY_FORCE_INLINE CdStream *BaseStream() const { return fBaseStream; }
+
+		COREARRAY_FORCE_INLINE ssize_t BufSize() const { return fBufSize; }
 		void SetBufSize(const ssize_t NewBufSize);
 		virtual TdPtr64 GetSize();
 		virtual void SetSize(const TdPtr64 Value);
@@ -803,46 +856,50 @@ namespace CoreArray
 
 
 	/// an operator, to read a signed integer of 8 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Int8& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Int8& out)
 		{ out = s.rUInt8(); return s; }
 	/// an operator, to read an unsigned integer of 8 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UInt8& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UInt8& out)
 		{ out = s.rUInt8(); return s; }
 	/// an operator, to read a signed integer of 16 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Int16& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Int16& out)
 		{ out = s.rUInt16(); return s; }
 	/// an operator, to read an unsigned integer of 16 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UInt16& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UInt16& out)
 		{ out = s.rUInt16(); return s; }
 	/// an operator, to read a signed integer of 32 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Int32& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Int32& out)
 		{ out = s.rUInt32(); return s; }
 	/// an operator, to read an unsigned integer of 32 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UInt32& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UInt32& out)
 		{ out = s.rUInt32(); return s; }
 	/// an operator, to read a signed integer of 64 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Int64& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Int64& out)
 		{ out = s.rUInt64(); return s; }
 	/// an operator, to read an unsigned integer of 64 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UInt64& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UInt64& out)
 		{ out = s.rUInt64(); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to read a signed integer of 128 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Int128& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Int128& out)
 		{ out = s.rUInt128(); return s; }
 	/// an operator, to read an unsigned integer of 128 bits from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UInt128& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UInt128& out)
 		{ out = s.rUInt128(); return s; }
+	#endif
 	/// an operator, to read a float number of single precision from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Float32& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Float32& out)
 		{ out = s.rFloat32(); return s; }
 	/// an operator, to read a float number of double precision from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Float64& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Float64& out)
 		{ out = s.rFloat64(); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to read a float number of quadruple precision from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, Float128& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, Float128& out)
 		{ out = s.rFloat128(); return s; }
+	#endif
 	/// an operator, to read TdPosType from a buffer (6 bytes)
-	inline CBufdStream& operator>> (CBufdStream &s, TdPosType& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, TdPosType& out)
 	{
 		UInt64 L = 0;
 		s.Read((void*)&L, TdPosType::size);
@@ -856,56 +913,60 @@ namespace CoreArray
 		return s;
 	}
 	/// an operator, to read a UTF-8 string from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UTF8String& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UTF8String& out)
 		{ out = s.rStrUTF8(); return s; }
 	/// an operator, to read a UTF-16 string from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UTF16String& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UTF16String& out)
 		{ out = s.rStrUTF16(); return s; }
 	/// an operator, to read a UTF-32 string from a buffer
-	inline CBufdStream& operator>> (CBufdStream &s, UTF32String& out)
+	COREARRAY_INLINE CBufdStream& operator>> (CBufdStream &s, UTF32String& out)
 		{ out = s.rStrUTF32(); return s; }
 
 	/// an operator, to write a signed integer of 8 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Int8 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Int8 in)
 		{ s.wUInt8(in); return s; }
 	/// an operator, to write an unsigned integer of 8 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UInt8 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UInt8 in)
 		{ s.wUInt8(in); return s; }
 	/// an operator, to write a signed integer of 16 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Int16 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Int16 in)
 		{ s.wUInt16(in); return s; }
 	/// an operator, to write an unsigned integer of 16 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UInt16 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UInt16 in)
 		{ s.wUInt16(in); return s; }
 	/// an operator, to write a signed integer of 32 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Int32 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Int32 in)
 		{ s.wUInt32(in); return s; }
 	/// an operator, to write an unsigned integer of 32 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UInt32 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UInt32 in)
 		{ s.wUInt32(in); return s; }
 	/// an operator, to write a signed integer of 64 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Int64 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Int64 in)
 		{ s.wUInt64(in); return s; }
 	/// an operator, to write an unsigned integer of 64 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UInt64 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UInt64 in)
 		{ s.wUInt64(in); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to write a signed integer of 128 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Int128 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Int128 in)
 		{ s.wUInt128(in); return s; }
 	/// an operator, to write an unsigned integer of 128 bits to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UInt128 in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UInt128 in)
 		{ s.wUInt128(in); return s; }
+	#endif
 	/// an operator, to write a float number of single precision to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Float32 &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Float32 &in)
 		{ s.wFloat32(in); return s; }
 	/// an operator, to write a float number of double precision to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Float64 &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Float64 &in)
 		{ s.wFloat64(in); return s; }
+	#ifndef COREARRAY_NO_EXTENDED_TYPES
 	/// an operator, to write a float number of quadruple precision to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const Float128 &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const Float128 &in)
 		{ s.wFloat128(in); return s; }
+	#endif
 	/// an operator, to write TdPosType to a buffer (6 bytes)
-	inline CBufdStream& operator<< (CBufdStream &s, const TdPosType &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const TdPosType &in)
 	{
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		UInt64 L = in;
@@ -918,37 +979,40 @@ namespace CoreArray
 		return s;
 	}
 	/// an operator, to write a UTF-8 string to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UTF8String &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UTF8String &in)
 		{ s.wStrUTF8(in.c_str()); return s; }
 	/// an operator, to write a UTF-16 string to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UTF16String &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UTF16String &in)
 		{ s.wStrUTF16(in.c_str()); return s; }
 	/// an operator, to write a UTF-32 string to a buffer
-	inline CBufdStream& operator<< (CBufdStream &s, const UTF32String &in)
+	COREARRAY_INLINE CBufdStream& operator<< (CBufdStream &s, const UTF32String &in)
 		{ s.wStrUTF32(in.c_str()); return s; }
 
 
 
-	/// A filter between an class object and stream data
-	/** CdFilter provides functions for loading and saving an object from or to
-	 *  stream data, which covers elementary types (e.g integer, float) and
+	/// Serialization between a class object and stream data
+	/** CdSerial provides functions for loading and saving an object from or to
+	 *  stream data, which supports elementary types (e.g integer, float) and
 	 *  complex structure.
+	 *  The term "serialization" means the reversible deconstruction of a set of
+	 *  C++ data structures to a sequence of bytes, and then reconstituting an
+	 *  equivalent structure in another program context.
 	*/
-	class CdFilter: public CBufdStream
+	class CdSerial: public CBufdStream
 	{
 	public:
 		struct TdVar;
-		friend struct CdFilter::TdVar;
+		friend struct CdSerial::TdVar;
 
 		/// Constructor
 		/** \param vStream    an stream (it can be NULL)
 		 *  \param vBufSize   buffer size
 		 *  \param vClassMgr  specify the class manager, if NULL then use the default manager
 		*/
-		CdFilter(CdStream* vStream, ssize_t vBufSize=DefaultBufSize,
+		CdSerial(CdStream* vStream, ssize_t vBufSize=DefaultBufSize,
 			CdObjClassMgr* vClassMgr=NULL);
 		/// Destructor
-		virtual ~CdFilter();
+		virtual ~CdSerial();
 
 		/// Begin a block in read mode
 		TdPtr64 rBeginStruct();
@@ -988,7 +1052,7 @@ namespace CoreArray
 		void SetRelPos(const TdPtr64 Value);
 
 		/// Log record
-		inline CdLogRecord &Log() { return *fLog; };
+		COREARRAY_FORCE_INLINE CdLogRecord &Log() { return *fLog; }
 		/// Set log record
         void SetLog(CdLogRecord &vLog);
 
@@ -996,7 +1060,7 @@ namespace CoreArray
 		TdVar &operator[] (const char *vName);
 
 		/// Return class manager
-		inline CdObjClassMgr * ClassMgr() const { return fClassMgr; };
+		COREARRAY_FORCE_INLINE CdObjClassMgr * ClassMgr() const { return fClassMgr; }
 
 	protected:
 
@@ -1071,7 +1135,7 @@ namespace CoreArray
 			 *  \param  pos     the start position
 			 *  \param  Name    the variable name
 			*/
-			template<typename TYPE> TYPE & AddVar(CdFilter &Filter,
+			template<typename TYPE> TYPE & AddVar(CdSerial &Filter,
 				TdTypeID ID, TdPtr64 pos, const std::string &Name)
 			{
 				CVar<TYPE> *p = new CVar<TYPE>;
@@ -1084,12 +1148,13 @@ namespace CoreArray
 			std::list<CBaseVar*>::iterator Name2Iter(const char *Name);
 			/// Clear the variable list
 			void ClearVarList();
+
 		protected:
 			/// Add a new variable
 			/** \param  Filter  a filter, usually it is the caller
 			 *  \param  rec     a pointer to a CBaseVar object
 			*/
-			void _AddVarItem(CdFilter &Filter, CBaseVar *rec);
+			void _AddVarItem(CdSerial &Filter, CBaseVar *rec);
 		};
 
 		CdObjClassMgr* fClassMgr;
@@ -1098,145 +1163,162 @@ namespace CoreArray
 
 		CVarList &Current();
 	public:
-        /// A structure, used for connecting CdFilter and a variable
+        /// A structure, used for connecting CdSerial and a variable
 		struct TdVar
 		{
 		public:
-            friend class CdFilter;
+            friend class CdSerial;
 
 			TdVar() { fFilter = NULL; fName = NULL; }
 
-			inline CdFilter *Filter() { return fFilter; }
-			inline const char *Name() { return fName; }
+			COREARRAY_FORCE_INLINE CdSerial *Filter() { return fFilter; }
+			COREARRAY_FORCE_INLINE const char *Name() { return fName; }
 
 			// operator - Read
 			// integer
-			inline bool operator >> (Int8 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Int8 &val)
 				{ return fFilter->rValue(osInt8, fName, &val); }
-			inline bool operator >> (UInt8 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UInt8 &val)
 				{ return fFilter->rValue(osUInt8, fName, &val); }
-			inline bool operator >> (Int16 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Int16 &val)
 				{ return fFilter->rValue(osInt16, fName, &val); }
-			inline bool operator >> (UInt16 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UInt16 &val)
 				{ return fFilter->rValue(osUInt16, fName, &val); }
-			inline bool operator >> (Int32 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Int32 &val)
 				{ return fFilter->rValue(osInt32, fName, &val); }
-			inline bool operator >> (UInt32 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UInt32 &val)
 				{ return fFilter->rValue(osUInt32, fName, &val); }
-			inline bool operator >> (Int64 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Int64 &val)
 				{ return fFilter->rValue(osInt64, fName, &val); }
-			inline bool operator >> (UInt64 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UInt64 &val)
 				{ return fFilter->rValue(osUInt64, fName, &val); }
-			inline bool operator >> (Int128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE bool operator >> (Int128 &val)
 				{ return fFilter->rValue(osInt128, fName, &val); }
-			inline bool operator >> (UInt128 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UInt128 &val)
 				{ return fFilter->rValue(osUInt128, fName, &val); }
-			inline bool rPack(UInt16 &val)
+			#endif
+			COREARRAY_FORCE_INLINE bool rPack(UInt16 &val)
 				{ return fFilter->rValue(os16Packed, fName, &val); }
-			inline bool rPack(UInt32 &val)
+			COREARRAY_FORCE_INLINE bool rPack(UInt32 &val)
 				{ return fFilter->rValue(os32Packed, fName, &val); }
-			inline bool rPack(UInt64 &val)
+			COREARRAY_FORCE_INLINE bool rPack(UInt64 &val)
 				{ return fFilter->rValue(os64Packed, fName, &val); }
-			inline bool rPack(UInt128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE bool rPack(UInt128 &val)
 				{ return fFilter->rValue(os128Packed, fName, &val); }
+			#endif
+
 			// float number
-			inline bool operator >> (Float32 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Float32 &val)
 				{ return fFilter->rValue(osFloat32, fName, &val); }
-			inline bool operator >> (Float64 &val)
+			COREARRAY_FORCE_INLINE bool operator >> (Float64 &val)
 				{ return fFilter->rValue(osFloat64, fName, &val); }
-			inline bool operator >> (Float128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE bool operator >> (Float128 &val)
 				{ return fFilter->rValue(osFloat128, fName, &val); }
+			#endif
+
 			// string
-			inline bool operator >> (UTF8String &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UTF8String &val)
 				{ return fFilter->rValue(osStrUTF8, fName, &val); }
-			inline bool operator >> (UTF16String &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UTF16String &val)
 				{ return fFilter->rValue(osStrUTF16, fName, &val); }
-			inline bool operator >> (UTF32String &val)
+			COREARRAY_FORCE_INLINE bool operator >> (UTF32String &val)
 				{ return fFilter->rValue(osStrUTF32, fName, &val); }
 			// others
-			inline bool operator >> (TdPosType &val)
+			COREARRAY_FORCE_INLINE bool operator >> (TdPosType &val)
 				{ return fFilter->rValue(osStreamPos, fName, &val); }
 
-			inline bool rShortBuffer(void* Buf, ssize_t BufLen)
+			COREARRAY_FORCE_INLINE bool rShortBuffer(void* Buf, ssize_t BufLen)
 				{ return fFilter->rValue(osShortRec, fName, Buf, BufLen); }
 			bool rShortBuf(Int32 *pval, size_t ValCnt);
 			bool rShortBuf(Int64 *pval, size_t ValCnt);
 
-			inline bool rBuffer()
+			COREARRAY_FORCE_INLINE bool rBuffer()
 				{ return fFilter->rValue(osRecord, fName, NULL); }
-			inline bool rBuffer(void* Buf, ssize_t BufLen)
+			COREARRAY_FORCE_INLINE bool rBuffer(void* Buf, ssize_t BufLen)
 				{ return fFilter->rValue(osRecord, fName, Buf); }
 			bool rBuf(Int32 *pval, size_t ValCnt);
 			bool rBuf(Int64 *pval, size_t ValCnt);
 
+
 			// operator - Write
 			// integer
-			inline void operator << (const Int8 val)
+			COREARRAY_FORCE_INLINE void operator << (const Int8 val)
 				{ fFilter->wValue(osInt8, fName, &val); }
-			inline void operator << (const UInt8 val)
+			COREARRAY_FORCE_INLINE void operator << (const UInt8 val)
 				{ fFilter->wValue(osUInt8, fName, &val); }
-			inline void operator << (const Int16 val)
+			COREARRAY_FORCE_INLINE void operator << (const Int16 val)
 				{ fFilter->wValue(osInt16, fName, &val); }
-			inline void operator << (const UInt16 val)
+			COREARRAY_FORCE_INLINE void operator << (const UInt16 val)
 				{ fFilter->wValue(osUInt16, fName, &val); }
-			inline void operator << (const Int32 val)
+			COREARRAY_FORCE_INLINE void operator << (const Int32 val)
 				{ fFilter->wValue(osInt32, fName, &val); }
-			inline void operator << (const UInt32 val)
+			COREARRAY_FORCE_INLINE void operator << (const UInt32 val)
 				{ fFilter->wValue(osUInt32, fName, &val); }
-			inline void operator << (const Int64 val)
+			COREARRAY_FORCE_INLINE void operator << (const Int64 val)
 				{ fFilter->wValue(osInt64, fName, &val); }
-			inline void operator << (const UInt64 val)
+			COREARRAY_FORCE_INLINE void operator << (const UInt64 val)
 				{ fFilter->wValue(osUInt64, fName, &val); }
-			inline void operator << (const Int128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE void operator << (const Int128 &val)
 				{ fFilter->wValue(osInt128, fName, &val); }
-			inline void operator << (const UInt128 &val)
+			COREARRAY_FORCE_INLINE void operator << (const UInt128 &val)
 				{ fFilter->wValue(osUInt128, fName, &val); }
-			inline void wPack(const UInt16 val)
+			#endif
+			COREARRAY_FORCE_INLINE void wPack(const UInt16 val)
 				{ fFilter->wValue(os16Packed, fName, &val); }
-			inline void wPack(const UInt32 val)
+			COREARRAY_FORCE_INLINE void wPack(const UInt32 val)
 				{ fFilter->wValue(os32Packed, fName, &val); }
-			inline void wPack(const UInt64 val)
+			COREARRAY_FORCE_INLINE void wPack(const UInt64 val)
 				{ fFilter->wValue(os64Packed, fName, &val); }
-			inline void wPack(const UInt128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE void wPack(const UInt128 &val)
 				{ fFilter->wValue(os128Packed, fName, &val); }
+			#endif
+
 			// float number
-			inline void operator << (const Float32 val)
+			COREARRAY_FORCE_INLINE void operator << (const Float32 val)
 				{ fFilter->wValue(osFloat32, fName, &val); }
-			inline void operator << (const Float64 val)
+			COREARRAY_FORCE_INLINE void operator << (const Float64 val)
 				{ fFilter->wValue(osFloat64, fName, &val); }
-			inline void operator << (const Float128 &val)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
+			COREARRAY_FORCE_INLINE void operator << (const Float128 &val)
 				{ fFilter->wValue(osFloat128, fName, &val); }
+			#endif
+
 			// string
-			inline void operator << (const UTF8String &val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF8String &val)
 				{ fFilter->wValue(osStrUTF8, fName, val.c_str()); }
-			inline void operator << (const UTF8 *val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF8 *val)
 				{ fFilter->wValue(osStrUTF8, fName, val); }
-			inline void operator << (const UTF16String &val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF16String &val)
 				{ fFilter->wValue(osStrUTF16, fName, val.c_str()); }
-			inline void operator << (const UTF16 *val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF16 *val)
 				{ fFilter->wValue(osStrUTF16, fName, val); }
-			inline void operator << (const UTF32String &val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF32String &val)
 				{ fFilter->wValue(osStrUTF32, fName, val.c_str()); }
-			inline void operator << (const UTF32 *val)
+			COREARRAY_FORCE_INLINE void operator << (const UTF32 *val)
 				{ fFilter->wValue(osStrUTF32, fName, val); }
 			// others
-			inline void operator << (const TdPosType &val)
+			COREARRAY_FORCE_INLINE void operator << (const TdPosType &val)
 				{ fFilter->wValue(osStreamPos, fName, &val); }
 
-			inline void wShortBuffer(const void* Buf, ssize_t BufLen)
+			COREARRAY_FORCE_INLINE void wShortBuffer(const void* Buf, ssize_t BufLen)
 				{ fFilter->wValue(osShortRec, fName, Buf); }
 			void wShortBuf(const Int32 *pval, size_t ValCnt);
 			void wShortBuf(const Int64 *pval, size_t ValCnt);
 
-			inline void wBuffer()
+			COREARRAY_FORCE_INLINE void wBuffer()
 				{ fFilter->wValue(osRecord, fName, NULL); }
-			inline void wBuffer(const void* Buf, ssize_t BufLen)
+			COREARRAY_FORCE_INLINE void wBuffer(const void* Buf, ssize_t BufLen)
 				{ fFilter->wValue(osRecord, fName, Buf); }
 			void wBuf(const Int32 *pval, size_t ValCnt);
 			void wBuf(const Int64 *pval, size_t ValCnt);
 
 		private:
-			CdFilter *fFilter;
+			CdSerial *fFilter;
 			const char *fName;
 		};
 	private:
@@ -1301,12 +1383,12 @@ namespace CoreArray
 		 *  \param OnInit  a function of initialization of the object
 		 *  \param Data    be passed to OnInit
 		*/
-		virtual CdObjRef* toObj(CdFilter &Reader, TdInit OnInit=NULL,
+		virtual CdObjRef* toObj(CdSerial &Reader, TdInit OnInit=NULL,
 			void *Data=NULL);
 
 		const _ClassStruct &ClassStruct(const char *ClassName) const;
-			inline const std::map<const char *, _ClassStruct, _strCmp> &
-			ClassMap() const { return fClassMap; };
+			COREARRAY_FORCE_INLINE const std::map<const char *, _ClassStruct, _strCmp> &
+			ClassMap() const { return fClassMap; }
 	protected:
 		std::map<const char *, _ClassStruct, _strCmp> fClassMap;
 	};
@@ -1325,7 +1407,7 @@ namespace CoreArray
 	class Err_dObj: public ErrCoreArray
 	{
 	public:
-		Err_dObj() {};
+		Err_dObj() {}
 		Err_dObj(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		Err_dObj(const std::string &msg) { fMessage = msg; }
 	};
@@ -1335,7 +1417,7 @@ namespace CoreArray
 	class Err_dStream: public ErrCoreArray
 	{
 	public:
-		Err_dStream() {};
+		Err_dStream() {}
 		Err_dStream(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		Err_dStream(const std::string &msg) { fMessage = msg; }
 	};
@@ -1345,7 +1427,7 @@ namespace CoreArray
 	class Err_BufStream: public ErrCoreArray
 	{
 	public:
-        Err_BufStream() {};
+        Err_BufStream() {}
 		Err_BufStream(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		Err_BufStream(const std::string &msg) { fMessage = msg; }
 	};
@@ -1355,20 +1437,19 @@ namespace CoreArray
 	class Err_dFilter: public Err_BufStream
 	{
 	public:
-		Err_dFilter() {};
+		Err_dFilter() {}
 		Err_dFilter(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		Err_dFilter(const std::string &msg) { fMessage = msg; }
 	};
 
 
 
-	#pragma pack(push,1)
-	/// Generic data type, sizeof(TdsData) = 24
+	/// Generic data type
 	struct TdsData
 	{
 	public:
-		friend CdFilter& operator>> (CdFilter &s, TdsData& out);
-		friend CdFilter& operator<< (CdFilter &s, TdsData &in);
+		friend CdSerial& operator>> (CdSerial &s, TdsData& out);
+		friend CdSerial& operator<< (CdSerial &s, TdsData &in);
 
 		/// Data type for TdsData
 		typedef unsigned char TdsType;
@@ -1376,6 +1457,7 @@ namespace CoreArray
 		/// Type ID
 		enum {
 			dvtEmpty       = 0,    ///< NULL type
+
 			// integer
 			dvtInt8        = 1,    ///< Signed integer of 8 bits
 			dvtUInt8       = 2,    ///< Unsigned integer of 8 bits
@@ -1385,12 +1467,18 @@ namespace CoreArray
 			dvtUInt32      = 6,    ///< Unsigned integer of 32 bits
 			dvtInt64       = 7,    ///< Signed integer of 64 bits
 			dvtUInt64      = 8,    ///< Unsigned integer of 64 bits
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			dvtInt128      = 9,    ///< Signed integer of 128 bits
 			dvtUInt128     = 10,   ///< Unsigned integer of 128 bits
+			#endif
+
 			// float number
 			dvtFloat32     = 11,   ///< Float number of single precision (32 bits)
 			dvtFloat64     = 12,   ///< Float number of double precision (64 bits)
+			#ifndef COREARRAY_NO_EXTENDED_TYPES
 			dvtFloat128    = 13,   ///< Float number of quadruple precision (128 bits)
+			#endif
+
 			// string
 			dvtSString8    = 14,   ///< Short UTF-8 string, the length <= 22
 			dvtSString16   = 15,   ///< Short UTF-16 string, the length <= 11
@@ -1410,7 +1498,7 @@ namespace CoreArray
 		~TdsData();
 
 		/// Return type ID
-		inline TdsType Type() const { return dsType; }
+		COREARRAY_FORCE_INLINE TdsType Type() const { return dsType; }
 
 		/// Type ID of TdsData to a name
 		static const char *dvtNames(int index);
@@ -1425,13 +1513,17 @@ namespace CoreArray
 		UInt32 getUInt32() const;   ///< get UInt32, throw an exception if fail
 		Int64 getInt64() const;     ///< get Int64, throw an exception if fail
 		UInt64 getUInt64() const;   ///< get UInt64, throw an exception if fail
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		Int128 getInt128() const;   ///< get Int128, throw an exception if fail
 		UInt128 getUInt128() const; ///< get UInt128, throw an exception if fail
+		#endif
 
 		// float number
 		Float32 getFloat32() const;   ///< get Float32, throw an exception if fail
 		Float64 getFloat64() const;   ///< get Float64, throw an exception if fail
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		Float128 getFloat128() const; ///< get Float128, throw an exception if fail
+		#endif
 
 		// string
 		UTF8String getStr8() const;   ///< get UTF8String, throw an exception if fail
@@ -1463,13 +1555,17 @@ namespace CoreArray
 		void setUInt32(UInt32 val);   ///< set UInt32
 		void setInt64(Int64 val);     ///< set Int64
 		void setUInt64(UInt64 val);   ///< set UInt64
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		void setInt128(const Int128 &val);   ///< set Int128
 		void setUInt128(const UInt128 &val); ///< set UInt128
+		#endif
 
 		// float number
 		void setFloat32(Float32 val);   ///< set Float32
 		void setFloat64(Float64 val);   ///< set Float64
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		void setFloat128(const Float128 &val); ///< set Float128
+		#endif
 
 		// string
 		void setStr8(const UTF8String &val);   ///< set UTF8String
@@ -1507,22 +1603,28 @@ namespace CoreArray
 
 
 		// operator
-        inline operator Int8() { return getInt8(); };
-        inline operator UInt8() { return getUInt8(); };
-		inline operator Int16() { return getInt16(); };
-		inline operator UInt16() { return getUInt16(); };
-		inline operator Int32() { return getInt32(); };
-		inline operator UInt32() { return getUInt32(); };
-		inline operator Int64() { return getInt64(); };
-		inline operator UInt64() { return getUInt64(); };
-		inline operator Int128() { return getInt128(); };
-		inline operator UInt128() { return getUInt128(); };
-		inline operator Float32() { return getFloat32(); };
-		inline operator Float64() { return getFloat64(); };
-		inline operator Float128() { return getFloat128(); };
-		inline operator UTF8String() { return getStr8(); };
-		inline operator UTF16String() { return getStr16(); };
-		inline operator UTF32String() { return getStr32(); };
+        COREARRAY_FORCE_INLINE operator Int8() { return getInt8(); }
+        COREARRAY_FORCE_INLINE operator UInt8() { return getUInt8(); }
+		COREARRAY_FORCE_INLINE operator Int16() { return getInt16(); }
+		COREARRAY_FORCE_INLINE operator UInt16() { return getUInt16(); }
+		COREARRAY_FORCE_INLINE operator Int32() { return getInt32(); }
+		COREARRAY_FORCE_INLINE operator UInt32() { return getUInt32(); }
+		COREARRAY_FORCE_INLINE operator Int64() { return getInt64(); }
+		COREARRAY_FORCE_INLINE operator UInt64() { return getUInt64(); }
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
+		COREARRAY_FORCE_INLINE operator Int128() { return getInt128(); }
+		COREARRAY_FORCE_INLINE operator UInt128() { return getUInt128(); }
+		#endif
+
+		COREARRAY_FORCE_INLINE operator Float32() { return getFloat32(); }
+		COREARRAY_FORCE_INLINE operator Float64() { return getFloat64(); }
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
+		COREARRAY_FORCE_INLINE operator Float128() { return getFloat128(); }
+		#endif
+
+		COREARRAY_FORCE_INLINE operator UTF8String() { return getStr8(); }
+		COREARRAY_FORCE_INLINE operator UTF16String() { return getStr16(); }
+		COREARRAY_FORCE_INLINE operator UTF32String() { return getStr32(); }
 
 		/// an operator of assignment
 		TdsData & operator= (const TdsData &_Right);
@@ -1534,11 +1636,17 @@ namespace CoreArray
 		TdsData & operator= (const UInt32 val) { setUInt32(val); return *this; }
 		TdsData & operator= (const Int64 val) { setInt64(val); return *this; }
 		TdsData & operator= (const UInt64 val) { setUInt64(val); return *this; }
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		TdsData & operator= (const Int128 &val) { setInt128(val); return *this; }
 		TdsData & operator= (const UInt128 &val) { setUInt128(val); return *this; }
+		#endif
+
 		TdsData & operator= (const Float32 val) { setFloat32(val); return *this; }
 		TdsData & operator= (const Float64 val) { setFloat64(val); return *this; }
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		TdsData & operator= (const Float128 &val) { setFloat128(val); return *this; }
+		#endif
+
 		TdsData & operator= (const UTF8String &val) { setStr8(val); return *this; }
 		TdsData & operator= (const UTF16String &val) { setStr16(val); return *this; }
 		TdsData & operator= (const UTF32String &val) { setStr32(val); return *this; }
@@ -1578,12 +1686,11 @@ namespace CoreArray
 
 		void _Done();
 	};
-	#pragma pack(pop)
 
 	/// an operator, to read TdsData from a filter
-	CdFilter& operator>> (CdFilter &s, TdsData& out);
+	CdSerial& operator>> (CdSerial &s, TdsData& out);
 	/// an operator, to write TdsData to a filter
-	CdFilter& operator<< (CdFilter &s, TdsData &in);
+	CdSerial& operator<< (CdSerial &s, TdsData &in);
 
 
 	/// Exception for TdsData
@@ -1593,7 +1700,6 @@ namespace CoreArray
 		Err_dsData(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
 		Err_dsData(TdsData::TdsType fromType, TdsData::TdsType toType);
 	};
-};
+}
 
 #endif /* _dBase_H_ */
-
