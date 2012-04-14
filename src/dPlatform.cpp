@@ -1287,10 +1287,10 @@ UTF8String CoreArray::LastSysErrMsg()
 TSysHandle CoreArray::SysCreateFile(char const* const AFileName, UInt32 Mode)
 {
 	#if defined(COREARRAY_WINDOWS)
-	TSysHandle H;
-	H = CreateFile(AFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-	return (H != INVALID_HANDLE_VALUE) ? H : NULL;
+		TSysHandle H;
+		H = CreateFile(AFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+		return (H != INVALID_HANDLE_VALUE) ? H : NULL;
 	#elif defined(COREARRAY_UNIX)
 		TSysHandle H;
 		#ifdef O_LARGEFILE
@@ -1664,6 +1664,7 @@ int CoreArray::Mach::GetL2CacheMemory()
 	char line[200];
 	FILE *f = fopen ("/proc/cpuinfo", "r");
 	if (!f) return -1;
+	int rv_cache = 0;
 	// analyze
 	while (fgets(line, 200, f) != NULL)
 	{
@@ -1681,15 +1682,18 @@ int CoreArray::Mach::GetL2CacheMemory()
 		if ((s = strchr(value,'\n'))) *s='\0';
 
 		if (!strcasecmp(line, "cache size"))
-		{	// cache size ...
-			unsigned int x;
+		{
+			// cache size ...
+			int x;
 			if (sscanf(value, "%d", &x))
-				return x*1024;
+				rv_cache = x*1024;
 			else
-				return -1;
+				rv_cache = -1;
+			break;
 		}
 	}
 	fclose(f);
+	return rv_cache;
 
 #else
 	return -1;
@@ -2309,7 +2313,9 @@ double CoreArray::StrToFloatDef(char const* str, const double Default)
 }
 
 
-#if defined(COREARRAY_BIG_ENDIAN)
+#if defined(COREARRAY_LITTLE_ENDIAN)
+
+#elif defined(COREARRAY_BIG_ENDIAN)
 
 void CoreArray::COREARRAY_ENDIAN_CVT(void *x, size_t size)
 {
@@ -2341,10 +2347,14 @@ UInt64 CoreArray::COREARRAY_ENDIAN_CVT64(UInt64 x)
 	return COREARRAY_ENDIAN_CVT32(I0 << 32) | COREARRAY_ENDIAN_CVT32(I1);
 }
 
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 UInt128 CoreArray::COREARRAY_ENDIAN_CVT128(UInt128 x)
 {
 	COREARRAY_ENDIAN_CVT((void*)&x, 16);
 	return x;
 }
+#endif
 
+#else
+#  error "Unknown endianness"
 #endif

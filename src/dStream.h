@@ -118,30 +118,30 @@ namespace CoreArray
 		TdAllocator() { memset((void*)this, 0, sizeof(TdAllocator)); }
 		~TdAllocator() { if (_Done) { _Done(*this); _Done = NULL; } }
 
-		COREARRAY_FORCE_INLINE bool MemLevel() const { return (Level <= blChunkMemory); }
+		COREARRAY_INLINE bool MemLevel() const { return (Level <= blChunkMemory); }
 
-		COREARRAY_FORCE_INLINE void SetCapacity(const TdPtr64 Size) { _SetCapacity(*this, Size); }
+		COREARRAY_INLINE void SetCapacity(const TdPtr64 Size) { _SetCapacity(*this, Size); }
 
-		COREARRAY_FORCE_INLINE void Fill(const TdPtr64 I, const TdPtr64 Len, UInt8 val)
+		COREARRAY_INLINE void Fill(const TdPtr64 I, const TdPtr64 Len, UInt8 val)
 			{ _Fill(*this, I, Len, val); }
-		COREARRAY_FORCE_INLINE void Move(const TdPtr64 Source, const TdPtr64 Dest, const TdPtr64 Len)
+		COREARRAY_INLINE void Move(const TdPtr64 Source, const TdPtr64 Dest, const TdPtr64 Len)
 			{ _Move(*this, Source, Dest, Len); }
-		COREARRAY_FORCE_INLINE void Swap(const TdPtr64 I1, const TdPtr64 I2, const TdPtr64 Len)
+		COREARRAY_INLINE void Swap(const TdPtr64 I1, const TdPtr64 I2, const TdPtr64 Len)
         	{ _Swap(*this, I1, I2, Len); }
 
-		COREARRAY_FORCE_INLINE void Read(const TdPtr64 I, void *Buf, ssize_t Len)
+		COREARRAY_INLINE void Read(const TdPtr64 I, void *Buf, ssize_t Len)
 			{ _Read(*this, I, Buf, Len); }
-		COREARRAY_FORCE_INLINE UInt8 r8(const TdPtr64 I) { return _r8(*this, I); }
-		COREARRAY_FORCE_INLINE UInt16 r16(const TdPtr64 I) { return _r16(*this, I); }
-		COREARRAY_FORCE_INLINE UInt32 r32(const TdPtr64 I) { return _r32(*this, I); }
-		COREARRAY_FORCE_INLINE UInt64 r64(const TdPtr64 I) { return _r64(*this, I); }
+		COREARRAY_INLINE UInt8 r8(const TdPtr64 I) { return _r8(*this, I); }
+		COREARRAY_INLINE UInt16 r16(const TdPtr64 I) { return _r16(*this, I); }
+		COREARRAY_INLINE UInt32 r32(const TdPtr64 I) { return _r32(*this, I); }
+		COREARRAY_INLINE UInt64 r64(const TdPtr64 I) { return _r64(*this, I); }
 
-		COREARRAY_FORCE_INLINE void Write(const TdPtr64 I, void const* Buf, ssize_t Len)
+		COREARRAY_INLINE void Write(const TdPtr64 I, void const* Buf, ssize_t Len)
 			{ _Write(*this, I, Buf, Len); }
-		COREARRAY_FORCE_INLINE void w8(const TdPtr64 I, UInt8 val) { _w8(*this, I, val); }
-		COREARRAY_FORCE_INLINE void w16(const TdPtr64 I, UInt16 val) { _w16(*this, I, val); }
-		COREARRAY_FORCE_INLINE void w32(const TdPtr64 I, UInt32 val) { _w32(*this, I, val); }
-		COREARRAY_FORCE_INLINE void w64(const TdPtr64 I, UInt64 val) { _w64(*this, I, val); }
+		COREARRAY_INLINE void w8(const TdPtr64 I, UInt8 val) { _w8(*this, I, val); }
+		COREARRAY_INLINE void w16(const TdPtr64 I, UInt16 val) { _w16(*this, I, val); }
+		COREARRAY_INLINE void w32(const TdPtr64 I, UInt32 val) { _w32(*this, I, val); }
+		COREARRAY_INLINE void w64(const TdPtr64 I, UInt64 val) { _w64(*this, I, val); }
 	};
 
 	/// Exception for TdAllocator
@@ -190,7 +190,7 @@ namespace CoreArray
 		virtual TdPtr64 Seek(const TdPtr64 Offset, TdSysSeekOrg Origin);
 		virtual void SetSize(const TdPtr64 NewSize);
 
-		COREARRAY_FORCE_INLINE TSysHandle Handle() const { return fHandle; }
+		COREARRAY_INLINE TSysHandle Handle() const { return fHandle; }
 	protected:
 		TSysHandle fHandle;
 	};
@@ -205,7 +205,7 @@ namespace CoreArray
 		CdFileStream(const char * const AFileName, TdOpenMode Mode);
 		virtual ~CdFileStream();
 
-		COREARRAY_FORCE_INLINE const string& FileName() const { return fFileName; }
+		COREARRAY_INLINE const string& FileName() const { return fFileName; }
 	protected:
 		 string fFileName;
 		 CdFileStream(): CdHandleStream() {};
@@ -300,9 +300,9 @@ namespace CoreArray
 		CdBaseZStream(CdStream* vStream);
 		virtual ~CdBaseZStream();
 
-		COREARRAY_FORCE_INLINE CdStream *Stream() const { return fStream; }
-		COREARRAY_FORCE_INLINE TdPtr64 TotalIn() const { return fTotalIn; }
-		COREARRAY_FORCE_INLINE TdPtr64 TotalOut() const { return fTotalOut; }
+		COREARRAY_INLINE CdStream *Stream() const { return fStream; }
+		COREARRAY_INLINE TdPtr64 TotalIn() const { return fTotalIn; }
+		COREARRAY_INLINE TdPtr64 TotalOut() const { return fTotalOut; }
 	protected:
 		CdStream* fStream;
 		TdPtr64 fStreamPos, fStreamBase;
@@ -335,7 +335,7 @@ namespace CoreArray
 		void Close();
 
 		ssize_t Pending();
-    	COREARRAY_FORCE_INLINE bool HaveClosed() const { return fHaveClosed; }
+    	COREARRAY_INLINE bool HaveClosed() const { return fHaveClosed; }
 		TdCompressRemainder *PtrExtRec;
 
 	protected:
@@ -361,10 +361,10 @@ namespace CoreArray
 
 		void ClearPoints();
 
-		COREARRAY_FORCE_INLINE bool RandomAccess() const { return fRandomAccess; }
+		COREARRAY_INLINE bool RandomAccess() const { return fRandomAccess; }
 		void SetRandomAccess(bool Value);
 
-		COREARRAY_FORCE_INLINE ssize_t BlockSize() const { return fBlockSize; }
+		COREARRAY_INLINE ssize_t BlockSize() const { return fBlockSize; }
 		void SetBlockSize(ssize_t Value);
 
 	protected:
@@ -454,11 +454,11 @@ namespace CoreArray
 		bool ReadOnly() const;
 		int ListCount() const;
 
-		COREARRAY_FORCE_INLINE TdBlockID ID() const { return fID; }
-		COREARRAY_FORCE_INLINE TdPtr64 Capacity() const { return fBlockCapacity; }
-		COREARRAY_FORCE_INLINE TdPtr64 Size() const { return fBlockSize; }
-		COREARRAY_FORCE_INLINE CdBlockCollection &Collection() const { return fCollection; }
-		COREARRAY_FORCE_INLINE const TBlockInfo *List() const { return fList; }
+		COREARRAY_INLINE TdBlockID ID() const { return fID; }
+		COREARRAY_INLINE TdPtr64 Capacity() const { return fBlockCapacity; }
+		COREARRAY_INLINE TdPtr64 Size() const { return fBlockSize; }
+		COREARRAY_INLINE CdBlockCollection &Collection() const { return fCollection; }
+		COREARRAY_INLINE const TBlockInfo *List() const { return fList; }
 	protected:
 		CdBlockCollection &fCollection;
 		TdBlockID fID;
@@ -489,12 +489,12 @@ namespace CoreArray
 		CdBlockStream *operator[] (const TdBlockID &id); // always return an object
 		bool HaveID(TdBlockID id);
 
-		COREARRAY_FORCE_INLINE CdStream &Stream() const { return *fStream; };
-		COREARRAY_FORCE_INLINE CdObjClassMgr *ClassMgr() const { return fClassMgr; };
-		COREARRAY_FORCE_INLINE bool ReadOnly() const { return fReadOnly; };
-		COREARRAY_FORCE_INLINE const vector<CdBlockStream*> &BlockList() const
+		COREARRAY_INLINE CdStream &Stream() const { return *fStream; };
+		COREARRAY_INLINE CdObjClassMgr *ClassMgr() const { return fClassMgr; };
+		COREARRAY_INLINE bool ReadOnly() const { return fReadOnly; };
+		COREARRAY_INLINE const vector<CdBlockStream*> &BlockList() const
 			{ return fBlockList; }
-		COREARRAY_FORCE_INLINE const CdBlockStream::TBlockInfo *UnusedBlock() const
+		COREARRAY_INLINE const CdBlockStream::TBlockInfo *UnusedBlock() const
         	{ return fUnuse; }
 	protected:
 		CdStream *fStream;

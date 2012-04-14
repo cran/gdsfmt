@@ -2,8 +2,7 @@
 \alias{addfile.gdsn}
 \title{Add a GDS node with a file}
 \description{
-	To add a GDS file node of hierarchical structure, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Adds a GDS node with a file, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
@@ -13,8 +12,8 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", 
 \arguments{
 	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
 		"gdsn" -- the node of hierarchical structure;
-		"gdsclass" -- the root of hieracrchical structure.}
-	\item{name}{the variable name of the added node.}
+		"gdsclass" -- the root of hieracrchical structure}
+	\item{name}{the variable name of the added node}
 	\item{filename}{the file name of input stream.}
 	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max".}
 }
@@ -36,10 +35,12 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", 
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+\seealso{
+	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
 	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}},
-	\code{\link[gdsfmt]{getfile.gdsn}} }
+	\code{\link[gdsfmt]{getfile.gdsn}}
+}
 
 \examples{
 # save a .RData object

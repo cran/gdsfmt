@@ -2,7 +2,7 @@
 \alias{sync.gds}
 \title{Synchronize a GDS file}
 \description{
-	To write the data cached in memory to disk.
+	Writes the data cached in memory to disk.
 }
 
 \usage{
@@ -10,7 +10,7 @@ sync.gds(gds)
 }
 \arguments{
 	\item{gds}{An object of class \code{\link[gdsfmt]{gdsclass}}, returned by
-		\code{\link[gdsfmt]{createfn.gds}} or \code{\link[gdsfmt]{openfn.gds}}.}
+		\code{\link[gdsfmt]{createfn.gds}} or \code{\link[gdsfmt]{openfn.gds}}}
 }
 \details{
 	For better performance, Data in a GDS file are usually cached in memory. Keep in mind that
@@ -24,6 +24,8 @@ opened would be automatically closed.
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{openfn.gds}}}
+\seealso{
+	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{openfn.gds}}
+}
 
 \keyword{utilities}

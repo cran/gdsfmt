@@ -2,15 +2,15 @@
 \alias{delete.attr.gdsn}
 \title{Delete an attribute}
 \description{
-	To remove an attribute from a CoreArray GDS node.
+	Removes an attribute of a GDS node.
 }
 
 \usage{
 delete.attr.gdsn(node, name)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a node of hierarchical structure.}
-	\item{name}{the name of an attribute.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{name}{the name of an attribute}
 }
 \details{
 	If there is not an attribute with \code{name}, a warning will be given.
@@ -18,6 +18,8 @@ delete.attr.gdsn(node, name)
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{put.attr.gdsn}}, \code{\link[gdsfmt]{get.attr.gdsn}} }
+\seealso{
+	\code{\link[gdsfmt]{put.attr.gdsn}}, \code{\link[gdsfmt]{get.attr.gdsn}}
+}
 
 \keyword{utilities}

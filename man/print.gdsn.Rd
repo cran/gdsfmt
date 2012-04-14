@@ -2,17 +2,17 @@
 \alias{print.gdsn}
 \title{Show the information of class "gdsn"}
 \description{
-	To display an object of class "gdsn", a node of hierarchical structure in a CoreArray
-Genomic Data Structure (GDS) file.
+	Displays an object of class "gdsn", a GDS node in a CoreArray Genomic Data
+Structure (GDS) file.
 }
 
 \usage{
 \method{print}{gdsn}(x, expand = TRUE, ...)
 }
 \arguments{
-	\item{x}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structures.}
-	\item{expand}{whether print the child nodes.}
-	\item{...}{the arguments passed to or from other methods.}
+	\item{x}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{expand}{whether enumerate all of child nodes}
+	\item{...}{the arguments passed to or from other methods}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

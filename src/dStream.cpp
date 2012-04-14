@@ -1059,7 +1059,7 @@ static short ZStrategies[5] = {
 		Z_FIXED                 // zsFixed
 	};
 
-COREARRAY_FORCE_INLINE static int ZCheck(int Code)
+COREARRAY_INLINE static int ZCheck(int Code)
 {
 	if (Code < 0) throw EZLibError(Code);
 	return Code;
@@ -1428,7 +1428,7 @@ static void xClearList(CdBlockStream::TBlockInfo *Head)
 		CdBlockStream::TBlockInfo *q = p;
 		p = p->Next;
 		delete q;
-    }
+	}
 }
 
 CdBlockStream::TBlockInfo::TBlockInfo()
@@ -2057,4 +2057,3 @@ CdBlockStream *CdBlockCollection::operator[] (const TdBlockID &id)
 
 	return rv;
 }
-

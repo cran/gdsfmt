@@ -2,7 +2,7 @@
 \alias{lasterr.gds}
 \title{Return the last error}
 \description{
-	To get the last error of gdsfmt.
+	Gets the last error of gdsfmt.
 }
 
 \usage{

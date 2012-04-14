@@ -86,7 +86,7 @@ namespace CoreArray
 	/** \tparam bits  number of bits = abs(bits),
 	 *                signed integer if bits < 0; unsigned integer if bits > 0
 	 *  \sa  TdBit1, TdSBit2, etc
-	*/
+	**/
 	template<int bits> class CdBaseBit: public CdVector< BITS<bits> >
 	{
 	public:
@@ -656,7 +656,7 @@ namespace CoreArray
 				E = (offset+Len-1 < 7) ? (offset+Len-1) : 7;
 				for (; offset <= E; offset++, Len--)
 				{
-					B = B & CoreArray_MaskBit1ArrayNot[offset] |
+					B = (B & CoreArray_MaskBit1ArrayNot[offset]) |
 						(((ValCvt<UInt8, TOutside>(*p++)) & 0x01) << offset);
 				}
 				if ((E < 7) && vCompressed)
@@ -696,7 +696,7 @@ namespace CoreArray
 				B = (!Rec.AppendMode) ? alloc.r8(pPtr) : 0;
 				for (offset = 0; offset < Len; offset++)
 				{
-					B = B & CoreArray_MaskBit1ArrayNot[offset] |
+					B = (B & CoreArray_MaskBit1ArrayNot[offset]) |
 						((ValCvt<UInt8, TOutside>(*p++) & 0x01) << offset);
 				}
 				if (vCompressed)
@@ -714,7 +714,7 @@ namespace CoreArray
 			unsigned char i = ((UInt8)p) & 0x07;
 			UInt8 B = ValCvt<UInt8, TOutside>(*((TOutside*)InBuffer));
 			B = B & 0x01; p >>= 3;
-			B = Seq.fAllocator.r8(p) & CoreArray_MaskBit1ArrayNot[i] | (B << i);
+			B = (Seq.fAllocator.r8(p) & CoreArray_MaskBit1ArrayNot[i]) | (B << i);
 			Seq.fAllocator.w8(p, B);
 		}
 	};
@@ -928,8 +928,7 @@ namespace CoreArray
 			unsigned char i = ((UInt8)p) & 0x03;
 			UInt8 B = ValCvt<UInt8, TOutside>(*((TOutside*)InBuffer));
 			B = B & 0x03; p >>= 2;
-			B = Seq.fAllocator.r8(p) &
-				CoreArray_MaskBit2ArrayNot[i] | (B << (i << 1));
+			B = (Seq.fAllocator.r8(p) & CoreArray_MaskBit2ArrayNot[i]) | (B << (i << 1));
 			Seq.fAllocator.w8(p, B);
 		}
 	};
@@ -1107,7 +1106,7 @@ namespace CoreArray
 			unsigned char i = ((UInt8)p) & 0x01;
 			UInt8 B = ValCvt<UInt8, TOutside>(*((TOutside*)InBuffer));
 			B = B & 0x0F; p >>= 1;
-			B = Seq.fAllocator.r8(p) & CoreArray_MaskBit4ArrayNot[i] | (B << (i << 2));
+			B = (Seq.fAllocator.r8(p) & CoreArray_MaskBit4ArrayNot[i]) | (B << (i << 2));
 			Seq.fAllocator.w8(p, B);
 		}
 	};
@@ -1387,7 +1386,7 @@ namespace CoreArray
 	/// Fixed-length string container
 	/** \tparam T  should UTF8*, UTF16*, or UTF32*
 	 *  \sa  CdFStr8, CdFStr16, CdFStr32
-	*/
+	**/
 	template<typename T> class CdFixedStr: public CdVector<T>
 	{
 	public:
@@ -1417,7 +1416,7 @@ namespace CoreArray
 			this->Append(&val, 1, TdTraits<T>::SVType);
 		}
 
-		COREARRAY_FORCE_INLINE ssize_t MaxLength() const
+		COREARRAY_INLINE ssize_t MaxLength() const
 		{
 			return this->fElmSize / (TdTraits<T>::BitOf/8);
 		}

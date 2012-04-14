@@ -1,8 +1,8 @@
 \name{ls.gdsn}
 \alias{ls.gdsn}
-\title{Return the names of children nodes}
+\title{Return the names of child nodes}
 \description{
-	To get a list of names for the children nodes, in a CoreArray Genomic Data
+	Gets a list of names for its child nodes, in a CoreArray Genomic Data
 Structure (GDS) file.
 }
 
@@ -10,7 +10,7 @@ Structure (GDS) file.
 ls.gdsn(node)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
 }
 \value{
 	A vector of characters.
@@ -18,12 +18,12 @@ ls.gdsn(node)
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-  \code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}}}
+\seealso{
+	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}}
+}
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 f <- createfn.gds("test.gds")
 

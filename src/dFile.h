@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dFile.h: Functions and classes for CoreArray Generic Data Structure (GDS)
+// dFile.h: Functions and classes for CoreArray Genomic Data Structure (GDS)
 //
 // Copyright (C) 2012	Xiuwen Zheng
 //
@@ -30,7 +30,7 @@
  *	\author   Xiuwen Zheng
  *	\version  1.0
  *	\date     2007 - 2012
- *	\brief    Functions and classes for CoreArray Generic Data Structure (GDS)
+ *	\brief    Functions and classes for CoreArray Genomic Data Structure (GDS)
  *	\details
 **/
 
@@ -46,7 +46,7 @@ namespace CoreArray
 	class CdGDSObj;
 
 	/// Data pipe
-	class CdPipeMgrItem
+	class CdPipeMgrItem: public CdAbstractItem
 	{
 	public:
 		friend class CdStreamPipeMgr;
@@ -74,11 +74,11 @@ namespace CoreArray
 		virtual void ClosePipe(CBufdStream &buf) = 0;
 
     	void UpdateStreamSize();
-		COREARRAY_FORCE_INLINE TdPtr64 StreamTotalIn() const { return fStreamTotalIn; }
-		COREARRAY_FORCE_INLINE TdPtr64 StreamTotalOut() const { return fStreamTotalOut; }
+		COREARRAY_INLINE TdPtr64 StreamTotalIn() const { return fStreamTotalIn; }
+		COREARRAY_INLINE TdPtr64 StreamTotalOut() const { return fStreamTotalOut; }
 
-		COREARRAY_FORCE_INLINE CdGDSObj *Owner() { return fOwner; }
-		COREARRAY_FORCE_INLINE TdCompressRemainder &Remainder() { return fRemainder; }
+		COREARRAY_INLINE CdGDSObj *Owner() { return fOwner; }
+		COREARRAY_INLINE TdCompressRemainder &Remainder() { return fRemainder; }
 
 	protected:
     	CdGDSObj *fOwner;
@@ -97,7 +97,7 @@ namespace CoreArray
 
 
 	/// The manager of stream pipes
-	class CdStreamPipeMgr
+	class CdStreamPipeMgr: public CdAbstractManager
 	{
 	public:
 		CdStreamPipeMgr();
@@ -106,8 +106,9 @@ namespace CoreArray
 		void Register(CdPipeMgrItem *vNewPipe);
 		CdPipeMgrItem *Match(CdGDSObj &Obj, const char *Mode);
 
-		COREARRAY_FORCE_INLINE const std::vector<CdPipeMgrItem*> &RegList() const
+		COREARRAY_INLINE const std::vector<CdPipeMgrItem*> &RegList() const
 			{ return fRegList; }
+
 	protected:
 		std::vector<CdPipeMgrItem*> fRegList;
 	};
@@ -131,29 +132,29 @@ namespace CoreArray
 
     	void Assign(CdObjAttr &Source);
 		TdsData &Add(const UTF16String &Name);
-		COREARRAY_FORCE_INLINE TdsData &Add(const char *Name) { return Add(PChartoUTF16(Name)); }
+		COREARRAY_INLINE TdsData &Add(const char *Name) { return Add(PChartoUTF16(Name)); }
 
 		int IndexName(const UTF16String &Name);
-		COREARRAY_FORCE_INLINE int IndexName(const char *Name) { return IndexName(PChartoUTF16(Name)); }
+		COREARRAY_INLINE int IndexName(const char *Name) { return IndexName(PChartoUTF16(Name)); }
 
-		COREARRAY_FORCE_INLINE bool HasName(const UTF16String &Name) { return IndexName(Name)>=0; }
-		COREARRAY_FORCE_INLINE bool HasName(const char *Name) { return IndexName(Name)>=0; }
+		COREARRAY_INLINE bool HasName(const UTF16String &Name) { return IndexName(Name)>=0; }
+		COREARRAY_INLINE bool HasName(const char *Name) { return IndexName(Name)>=0; }
 
 		void Delete(const UTF16String &Name);
 		void Delete(int Index);
 		void Clear();
 
-		COREARRAY_FORCE_INLINE size_t Count() const { return fList.size(); }
+		COREARRAY_INLINE size_t Count() const { return fList.size(); }
         void Changed();
 
-		COREARRAY_FORCE_INLINE CdGDSObj &Owner() const { return fOwner; }
+		COREARRAY_INLINE CdGDSObj &Owner() const { return fOwner; }
 
 		TdsData & operator[](const UTF16String &Name);
-		COREARRAY_FORCE_INLINE TdsData & operator[](const char *Name)
+		COREARRAY_INLINE TdsData & operator[](const char *Name)
 			{ return (*this)[UTF8toUTF16(Name)]; }
 		TdsData & operator[](int Index);
 
-		COREARRAY_FORCE_INLINE UTF16String &Names(int Index) { return fList[Index]->name; }
+		COREARRAY_INLINE UTF16String &Names(int Index) { return fList[Index]->name; }
 		void SetName(const UTF16String &OldName, const UTF16String &NewName);
 		void SetName(int Index, const UTF16String &NewName);
 		void SetName(int Index, const char *NewName)
@@ -205,10 +206,10 @@ namespace CoreArray
 		virtual void Synchronize();
 
 		CdGDSFile *GDSFile();
-		COREARRAY_FORCE_INLINE CdObjAttr &Attribute() { return fAttr; }
-		COREARRAY_FORCE_INLINE CdBlockStream *GDSStream() const { return fGDSStream; }
-		COREARRAY_FORCE_INLINE CdGDSFolder *Folder() const { return fFolder; }
-		COREARRAY_FORCE_INLINE CdPipeMgrItem *PipeInfo() { return fPipeInfo; }
+		COREARRAY_INLINE CdObjAttr &Attribute() { return fAttr; }
+		COREARRAY_INLINE CdBlockStream *GDSStream() const { return fGDSStream; }
+		COREARRAY_INLINE CdGDSFolder *Folder() const { return fFolder; }
+		COREARRAY_INLINE CdPipeMgrItem *PipeInfo() { return fPipeInfo; }
 
 	protected:
 		CdObjAttr fAttr;
@@ -272,11 +273,11 @@ namespace CoreArray
 		CdGDSFolder &DirItem(const char *Name)
 			{ return DirItem(PChartoUTF16(Name)); }
 
-		COREARRAY_FORCE_INLINE CdGDSFolder &operator[] (int Index)
+		COREARRAY_INLINE CdGDSFolder &operator[] (int Index)
 			{ return DirItem(Index); }
-		COREARRAY_FORCE_INLINE CdGDSFolder &operator[] (const UTF16String &Name)
+		COREARRAY_INLINE CdGDSFolder &operator[] (const UTF16String &Name)
 			{ return DirItem(Name); }
-		COREARRAY_FORCE_INLINE CdGDSFolder &operator[] (const char *Name)
+		COREARRAY_INLINE CdGDSFolder &operator[] (const char *Name)
 			{ return DirItem(Name); }
 
 		CdGDSObj *ObjItem(int Index);
@@ -301,7 +302,7 @@ namespace CoreArray
 
 		bool HasChild(CdGDSObj *Obj, bool SubFolder = true);
 
-		COREARRAY_FORCE_INLINE size_t Count() const { return fList.size(); }
+		COREARRAY_INLINE size_t Count() const { return fList.size(); }
 
 	protected:
 		struct TItem
@@ -314,10 +315,10 @@ namespace CoreArray
 			TdPtr64 _pos;
 
 			TItem() { Obj = NULL; StreamID = 0; Flag = 0; _pos = 0; }
-			COREARRAY_FORCE_INLINE bool IsEmpty() const { return Flag & 0x01; }
-			COREARRAY_FORCE_INLINE void SetEmpty() { Flag |= 0x01; }
-			COREARRAY_FORCE_INLINE bool IsFolder() const { return Flag & 0x02; }
-			COREARRAY_FORCE_INLINE void SetFolder() { Flag |= 0x02; }
+			COREARRAY_INLINE bool IsEmpty() const { return Flag & 0x01; }
+			COREARRAY_INLINE void SetEmpty() { Flag |= 0x01; }
+			COREARRAY_INLINE bool IsFolder() const { return Flag & 0x02; }
+			COREARRAY_INLINE void SetFolder() { Flag |= 0x02; }
 		};
 		std::vector<TItem> fList;
 
@@ -353,8 +354,15 @@ namespace CoreArray
 		CdGDSStreamContainer(CdGDSFolder *vFolder = NULL);
 		virtual ~CdGDSStreamContainer();
 
+		/// Return a string specifying the class name in stream
 		virtual char const* dName();
+		/// Return a string specifying the class name
 		virtual char const* dTraitName();
+
+    	/// new a CdVector<T> object
+		virtual CdGDSObj *NewOne(void *Param = NULL);
+		/// Assignment
+		virtual void AssignOne(CdGDSObj &Source, void *Param = NULL);
 
 		void CopyFrom(CBufdStream &Source, TdPtr64 Count=-1);
 		void CopyFrom(CdStream &Source, TdPtr64 Count=-1);
@@ -363,10 +371,11 @@ namespace CoreArray
 		void CopyTo(CdStream &Dest, TdPtr64 Count=-1);
 
 		TdPtr64 GetSize();
-		COREARRAY_FORCE_INLINE CBufdStream *BufStream() { return fBufStream; }
+		COREARRAY_INLINE CBufdStream *BufStream() { return fBufStream; }
 
 		virtual void SetPackedMode(const char *Mode);
 		virtual void CloseWriter();
+
 	protected:
 		CBufdStream *fBufStream;
 		CdBlockStream *vAlloc_Stream;
@@ -402,7 +411,7 @@ namespace CoreArray
 		void SyncFile();
 		void CloseFile();
 
-		/// Clean up all unused resources
+		/// Clean up all fragments
 		void TidyUp();
 
 		bool Modified();
@@ -411,14 +420,14 @@ namespace CoreArray
 		TdPtr64 GetFileSize();
 
 		/// Return the file name of the CdGDSFile object
-		COREARRAY_FORCE_INLINE UTF16String &FileName() { return fFileName; }
+		COREARRAY_INLINE UTF16String &FileName() { return fFileName; }
 
-		COREARRAY_FORCE_INLINE CdLogRecord &Log() { return *fLog; }
-		COREARRAY_FORCE_INLINE const char *Prefix() const { return fPrefix; }
-		COREARRAY_FORCE_INLINE TdVersion Version() const { return fVersion; }
+		COREARRAY_INLINE CdLogRecord &Log() { return *fLog; }
+		COREARRAY_INLINE const char *Prefix() const { return fPrefix; }
+		COREARRAY_INLINE TdVersion Version() const { return fVersion; }
 
-		COREARRAY_FORCE_INLINE CdGDSFolder &Root() { return fRoot; }
-		COREARRAY_FORCE_INLINE bool ReadOnly() const { return fReadOnly; }
+		COREARRAY_INLINE CdGDSFolder &Root() { return fRoot; }
+		COREARRAY_INLINE bool ReadOnly() const { return fReadOnly; }
 	protected:
 		class CdGDSRoot: public CdGDSFolder
 		{

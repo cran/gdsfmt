@@ -832,8 +832,9 @@ void CdSequenceX::rData(Int32 const* Start, Int32 const* Length,
 	int vDim = DimCnt();
 
 	if (vDim > 0)
+	{
 		Rec.LastDim = *(Length + vDim - 1);
-	else {
+	} else {
 		Rec.LastDim = 1; Rec.Index = NULL; Start = Length = NULL;
 	}
 	if (Rec.LastDim > 0)
@@ -895,8 +896,9 @@ void CdSequenceX::rDataEx(Int32 const* Start, Int32 const* Length,
 	int vDim = DimCnt();
 
 	if (vDim > 0)
+	{
 		Rec.LastDim = *(Length + vDim - 1);
-	else {
+	} else {
 		Rec.LastDim = 1; Rec.Index = NULL; Start = Length = NULL;
 	}
 	if (Rec.LastDim > 0)
@@ -1195,9 +1197,11 @@ void CdSequenceX::SaveDirect(CdSerial &Writer)
 
 void CdSequenceX::xCheckRect(const Int32 *Start, const Int32 *Length) const
 {
+	if ((Start==NULL) || (Length==NULL))
+		throw ErrSequence(errCheckRect);
 	for (int i=0; i < DimCnt(); i++)
 	{
-		if (*Start < 0 || *Length < 0 || (*Start + *Length)>GetDLen(i))
+		if ((*Start < 0) || (*Length < 0) || ((*Start + *Length)>GetDLen(i)))
 			throw ErrSequence(errCheckRect);
 		++Start; ++Length;
 	}
@@ -1214,7 +1218,7 @@ void CdSequenceX::xAssignToDim(CdSequenceX &Dest) const
 
 // CdVectorX
 
-COREARRAY_FORCE_INLINE static TdIterator IteratorPtr(CdContainer *Handler, const TdPtr64 ptr)
+COREARRAY_INLINE static TdIterator IteratorPtr(CdContainer *Handler, const TdPtr64 ptr)
 {
 	TdIterator rv;
 	rv.Handler = Handler; rv.Ptr = ptr;

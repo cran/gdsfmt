@@ -1,8 +1,8 @@
 \name{append.gdsn}
 \alias{append.gdsn}
-\title{Append data to the specified variable}
+\title{Append data to a specified variable}
 \description{
-	To append data to the data field of a GDS node, in a CoreArray Genomic Data
+	Appends data to the data field of a GDS node, in a CoreArray Genomic Data
 Structure (GDS) file.
 }
 
@@ -10,14 +10,13 @@ Structure (GDS) file.
 append.gdsn(node, val, check = TRUE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
-	\item{val}{data to be appended.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{val}{data to be appended}
 	\item{check}{whether a warning is given, when appended data can not match
-		the capability of data field.}
+		the capability of data field}
 }
 \details{
-	\code{storage.mode(val)} should be "integer", "double", "character", or
-		"logical".
+	\code{storage.mode(val)} should be "integer", "double", "character", or "logical".
 }
 \value{
 	None.
@@ -25,8 +24,10 @@ append.gdsn(node, val, check = TRUE)
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
-  \code{\link[gdsfmt]{add.gdsn}} }
+\seealso{
+	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
+	\code{\link[gdsfmt]{add.gdsn}}
+}
 
 \examples{
 # cteate the GDS file "test.gds"

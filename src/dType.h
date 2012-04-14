@@ -161,8 +161,8 @@ namespace CoreArray
 		static const char * TraitName() { return "Int8"; }
 		static const char * StreamName() { return "dInt8"; }
 
-		COREARRAY_FORCE_INLINE static short Min() { return INT8_MIN; }
-		COREARRAY_FORCE_INLINE static short Max() { return INT8_MAX; }
+		COREARRAY_INLINE static short Min() { return INT8_MIN; }
+		COREARRAY_INLINE static short Max() { return INT8_MAX; }
 	};
 
 	template<> struct TdTraits<UInt8>
@@ -178,8 +178,8 @@ namespace CoreArray
 		static const char * TraitName() { return "UInt8"; }
 		static const char * StreamName() { return "dUInt8"; }
 
-		COREARRAY_FORCE_INLINE static unsigned short Min() { return 0; }
-		COREARRAY_FORCE_INLINE static unsigned short Max() { return UINT8_MAX; }
+		COREARRAY_INLINE static unsigned short Min() { return 0; }
+		COREARRAY_INLINE static unsigned short Max() { return UINT8_MAX; }
 	};
 
 	template<> struct TdTraits<Int16>
@@ -193,8 +193,8 @@ namespace CoreArray
 		static const char * TraitName() { return "Int16"; }
 		static const char * StreamName() { return "dInt16"; }
 
-		COREARRAY_FORCE_INLINE static Int16 Min() { return INT16_MIN; }
-		COREARRAY_FORCE_INLINE static Int16 Max() { return INT16_MAX; }
+		COREARRAY_INLINE static Int16 Min() { return INT16_MIN; }
+		COREARRAY_INLINE static Int16 Max() { return INT16_MAX; }
 	};
 
 	template<> struct TdTraits<UInt16>
@@ -208,8 +208,8 @@ namespace CoreArray
 		static const char * TraitName() { return "UInt16"; }
 		static const char * StreamName() { return "dUInt16"; }
 
-		COREARRAY_FORCE_INLINE static UInt16 Min() { return 0; }
-		COREARRAY_FORCE_INLINE static UInt16 Max() { return UINT16_MAX; }
+		COREARRAY_INLINE static UInt16 Min() { return 0; }
+		COREARRAY_INLINE static UInt16 Max() { return UINT16_MAX; }
 	};
 
 	template<> struct TdTraits<Int32>
@@ -223,8 +223,8 @@ namespace CoreArray
 		static const char * TraitName() { return "Int32"; }
 		static const char * StreamName() { return "dInt32"; }
 
-		COREARRAY_FORCE_INLINE static Int32 Min() { return INT32_MIN; }
-		COREARRAY_FORCE_INLINE static Int32 Max() { return INT32_MAX; }
+		COREARRAY_INLINE static Int32 Min() { return INT32_MIN; }
+		COREARRAY_INLINE static Int32 Max() { return INT32_MAX; }
 	};
 
 	template<> struct TdTraits<UInt32>
@@ -238,8 +238,8 @@ namespace CoreArray
 		static const char * TraitName() { return "UInt32"; }
 		static const char * StreamName() { return "dUInt32"; }
 
-		COREARRAY_FORCE_INLINE static UInt32 Min() { return 0; }
-		COREARRAY_FORCE_INLINE static UInt32 Max() { return UINT32_MAX; }
+		COREARRAY_INLINE static UInt32 Min() { return 0; }
+		COREARRAY_INLINE static UInt32 Max() { return UINT32_MAX; }
 	};
 
 	template<> struct TdTraits<Int64>
@@ -253,8 +253,8 @@ namespace CoreArray
 		static const char * TraitName() { return "Int64"; }
 		static const char * StreamName() { return "dInt64"; }
 
-		COREARRAY_FORCE_INLINE static Int64 Min() { return INT64_MIN; }
-		COREARRAY_FORCE_INLINE static Int64 Max() { return INT64_MAX; }
+		COREARRAY_INLINE static Int64 Min() { return INT64_MIN; }
+		COREARRAY_INLINE static Int64 Max() { return INT64_MAX; }
 	};
 
 	template<> struct TdTraits<UInt64>
@@ -268,8 +268,8 @@ namespace CoreArray
 		static const char * TraitName() { return "UInt64"; }
 		static const char * StreamName() { return "dUInt64"; }
 
-		COREARRAY_FORCE_INLINE static UInt64 Min() { return 0; }
-		COREARRAY_FORCE_INLINE static UInt64 Max() { return UINT64_MAX; }
+		COREARRAY_INLINE static UInt64 Min() { return 0; }
+		COREARRAY_INLINE static UInt64 Max() { return UINT64_MAX; }
 	};
 
 
@@ -395,7 +395,7 @@ namespace CoreArray
 
 
 	template<typename IntType, int bits>
-	COREARRAY_FORCE_INLINE IntType BITS_ifsign(IntType val)
+	COREARRAY_INLINE IntType BITS_ifsign(IntType val)
 	{
 		return (val & BITS<bits>::Flag) ? (val | BITS<bits>::NOTMask2) : val;
 	}
@@ -426,9 +426,9 @@ namespace CoreArray
 		}
 		static const char * TraitName() { return StreamName()+1; }
 
-		COREARRAY_FORCE_INLINE static Int64 Min()
+		COREARRAY_INLINE static Int64 Min()
 			{ return (bits > 0) ? 0 : ((-1ll) << (BITS<bits>::NumBit-1)); }
-		COREARRAY_FORCE_INLINE static Int64 Max()
+		COREARRAY_INLINE static Int64 Max()
 			{ return (bits > 0) ? BITS<bits>::Mask : (BITS<bits>::Mask ^ BITS<bits>::Flag); }
 	};
 
@@ -458,10 +458,10 @@ namespace CoreArray
 		static const char * TraitName() { return "Float32"; }
 		static const char * StreamName() { return "dFloat32"; }
 
-		COREARRAY_FORCE_INLINE static Float32 Min() { return FLT_MIN; }
-		COREARRAY_FORCE_INLINE static Float32 Max() { return FLT_MAX; }
-		COREARRAY_FORCE_INLINE static Float32 Epsilon() { return FLT_EPSILON; }
-		COREARRAY_FORCE_INLINE static int Digits() { return FLT_MANT_DIG; }
+		COREARRAY_INLINE static Float32 Min() { return FLT_MIN; }
+		COREARRAY_INLINE static Float32 Max() { return FLT_MAX; }
+		COREARRAY_INLINE static Float32 Epsilon() { return FLT_EPSILON; }
+		COREARRAY_INLINE static int Digits() { return FLT_MANT_DIG; }
 	};
 
 	template<> struct TdTraits<Float64>
@@ -475,10 +475,10 @@ namespace CoreArray
 		static const char * TraitName() { return "Float64"; }
 		static const char * StreamName() { return "dFloat64"; }
 
-		COREARRAY_FORCE_INLINE static Float64 Min() { return DBL_MIN; }
-		COREARRAY_FORCE_INLINE static Float64 Max() { return DBL_MAX; }
-		COREARRAY_FORCE_INLINE static Float64 Epsilon() { return DBL_EPSILON; }
-		COREARRAY_FORCE_INLINE static int Digits() { return DBL_MANT_DIG; }
+		COREARRAY_INLINE static Float64 Min() { return DBL_MIN; }
+		COREARRAY_INLINE static Float64 Max() { return DBL_MAX; }
+		COREARRAY_INLINE static Float64 Epsilon() { return DBL_EPSILON; }
+		COREARRAY_INLINE static int Digits() { return DBL_MANT_DIG; }
 	};
 
 	template<> struct TdTraits<LongFloat>
@@ -501,10 +501,10 @@ namespace CoreArray
 		}
 		static const char * TraitName() { return StreamName()+1; }
 
-		COREARRAY_FORCE_INLINE static LongFloat Min() { return LDBL_MIN; }
-		COREARRAY_FORCE_INLINE static LongFloat Max() { return LDBL_MAX; }
-		COREARRAY_FORCE_INLINE static LongFloat Epsilon() { return LDBL_EPSILON; }
-		COREARRAY_FORCE_INLINE static int Digits() { return LDBL_MANT_DIG; }
+		COREARRAY_INLINE static LongFloat Min() { return LDBL_MIN; }
+		COREARRAY_INLINE static LongFloat Max() { return LDBL_MAX; }
+		COREARRAY_INLINE static LongFloat Epsilon() { return LDBL_EPSILON; }
+		COREARRAY_INLINE static int Digits() { return LDBL_MANT_DIG; }
 	};
 
 
@@ -628,7 +628,7 @@ namespace CoreArray
 	/// Customized type
 	/** \tparam TYPE  any data type, e.g integer or float number
 	 *  \tparam SIZE  to specify the structure size, can be != sizeof(TYPE)
-	*/
+	**/
 	template<typename TYPE, ssize_t SIZE> struct TdNumber
 	{
 	public:

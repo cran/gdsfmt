@@ -2,15 +2,15 @@
 \alias{openfn.gds}
 \title{Open a GDS file}
 \description{
-	To open an existing file of CoreArray Genomic Data Structure (GDS) for reading or writing.
+	Opens an existing file of CoreArray Genomic Data Structure (GDS) for reading or writing.
 }
 
 \usage{
 openfn.gds(fn, readonly = TRUE)
 }
 \arguments{
-	\item{fn}{the file name of a GDS file to be opened.}
-	\item{readonly}{if TRUE (default), the file is opened read-only. Otherwise, writing to
+	\item{fn}{the file name of a GDS file to be opened}
+	\item{readonly}{if TRUE, the file is opened read-only; otherwise, writing to
 		the file is allowed.}
 }
 \details{
@@ -22,17 +22,19 @@ including hierachical structure, variable names, data field, etc.
 }
 \value{
 	Return an object of class \code{\link[gdsfmt]{gdsclass}}.
-	\item{filename}{the file name to be created.}
-	\item{id}{ID of GDS file, internal use.}
-	\item{root}{An object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure.}
+	\item{filename}{the file name}
+	\item{id}{ID of GDS file, internal use}
+	\item{root}{an object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure}
+	\item{readonly}{whether it is read-only or not}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}}
-\examples{
-library(gdsfmt)
+\seealso{
+	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}
+}
 
+\examples{
 # cteate the GDS file "test.gds"
 f <- createfn.gds("test.gds")
 # add a list to "test.gds"

@@ -199,7 +199,7 @@ void CParallelBase::AutoSetnThread()
 	if (fnThread < 1) fnThread = 1;
 }
 
-void CParallelBase::DoThreads(void (*Proc)(CdThread *, int, void*), void *param)
+void CParallelBase::DoThreads(CParallelBase::TProc Proc, void *param)
 {
 	if (!Proc) return;
 	CloseThreads();

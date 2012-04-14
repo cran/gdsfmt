@@ -2,39 +2,37 @@
 \alias{read.gdsn}
 \title{Read data field of a GDS node}
 \description{
-	To get data from a GDS node of hierarchical structure, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Gets data from a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
 read.gdsn(node, start, count)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
-	\item{start}{a vector of integers, starting from 1 for each dimension component.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{start}{a vector of integers, starting from 1 for each dimension component}
 	\item{count}{a vector of integers, the length of each dimnension. As a
 		special case, the value "-1" indicates that all entries along that
-		dimension should be written.}
+		dimension should be written}
 }
 \details{
     \code{start}, \code{count}: the values in data are taken to be those in the array
 with the leftmost subscript moving fastest.
 }
 \value{
-	Return an array, list, or data.frame.
+	Returns an array, list, or data.frame.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
-  \code{\link[gdsfmt]{add.gdsn}} }
+\seealso{
+	\code{\link[gdsfmt]{readex.gdsn}}, \code{\link[gdsfmt]{append.gdsn}},
+	\code{\link[gdsfmt]{write.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
+}
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
-L <- -2500:2499
 
 add.gdsn(f, "vector", val=1:128)
 add.gdsn(f, "list", val=list(X=1:10, Y=seq(1, 10, 0.25)))

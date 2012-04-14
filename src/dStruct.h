@@ -91,7 +91,7 @@ namespace CoreArray
 
 
 	/// Iterator for CoreArray array-oriented container
-	/** sizeof(TdIterator) = 32 */
+	/** sizeof(TdIterator) = 32 **/
 	struct TdIterator
 	{
         /// the handler of this iterator
@@ -144,7 +144,7 @@ namespace CoreArray
 	};
 
 
-	class CdBaseOp
+	class CdBaseOp: public CdAbstract
 	{
 	public:
 		CdBaseOp();
@@ -155,13 +155,13 @@ namespace CoreArray
 		virtual void BeginOp(CdContainer* dC) { Init(); }
 		virtual void EndOp(CdContainer* dC) {}
 
-		COREARRAY_FORCE_INLINE CBufdStream *Filter() const { return fFilter; }
+		COREARRAY_INLINE CBufdStream *Filter() const { return fFilter; }
 		void SetFilter(CBufdStream *Value);
 
-		COREARRAY_FORCE_INLINE Int32 Row() const { return fRow; }
-		COREARRAY_FORCE_INLINE Int32 Col() const { return fCol; }
-		COREARRAY_FORCE_INLINE Int32 RowCnt() const { return fRowCnt; }
-		COREARRAY_FORCE_INLINE Int32 ColCnt() const { return fColCnt; }
+		COREARRAY_INLINE Int32 Row() const { return fRow; }
+		COREARRAY_INLINE Int32 Col() const { return fCol; }
+		COREARRAY_INLINE Int32 RowCnt() const { return fRowCnt; }
+		COREARRAY_INLINE Int32 ColCnt() const { return fColCnt; }
 
 	protected:
 		Int32 fRow, fCol, fRowCnt, fColCnt;
@@ -192,7 +192,7 @@ namespace CoreArray
 		virtual ~CdBaseOpRead();
 
 		virtual CdBaseOpRead &Read(TdIterator &it) = 0;
-		COREARRAY_FORCE_INLINE TdOpStatus Status() const { return fStatus; }
+		COREARRAY_INLINE TdOpStatus Status() const { return fStatus; }
 
 	protected:
 		TdOpStatus fStatus;
@@ -281,7 +281,7 @@ namespace CoreArray
 
 
 	/// The root class for CoreArray container
-	/** This class provide basic functions for a container. */
+	/** This class provide basic functions for a container. **/
 	class CdContainer: public CdGDSObj
 	{
 	public:
@@ -345,7 +345,7 @@ namespace CoreArray
 		void SaveToText(const char *FileName, TdDefParamText *Param = NULL);
 
 		/// Return the mode of data storage
-		COREARRAY_FORCE_INLINE TdStoreMode StoreMode() const { return fStoreMode; }
+		COREARRAY_INLINE TdStoreMode StoreMode() const { return fStoreMode; }
 		/// Set the mode of data storage
 		virtual void SetLoadMode(TdStoreMode Mode);
 
@@ -444,12 +444,34 @@ namespace CoreArray
 
 		virtual TdIterator Iterator(Int32 const* DimIndex) = 0;
 
+		/// read array-oriented data
+		/** \param Start       the starting positions (from ZERO), it should not be NULL
+		 *  \param Length      the lengths of each dimension, it should not be NULL
+		 *  \param OutBuffer   the pointer to the output buffer
+		 *  \param OutSV       data type of output buffer
+		**/
 		virtual void rData(Int32 const* Start, Int32 const* Length,
 			void *OutBuffer, TSVType OutSV);
+
+		/// read array-oriented data from the selection
+		/** \param Start       the starting positions (from ZERO), it should not be NULL
+		 *  \param Length      the lengths of each dimension, it should not be NULL
+		 *  \param Selection   the array of selection
+		 *  \param OutBuffer   the pointer to the output buffer
+		 *  \param OutSV       data type of output buffer
+		**/
 		virtual void rDataEx(Int32 const* Start, Int32 const* Length,
 			CBOOL *Selection[], void *OutBuffer, TSVType OutSV);
+
+		/// write array-oriented data
+		/** \param Start       the starting positions (from ZERO), it should not be NULL
+		 *  \param Length      the lengths of each dimension, it should not be NULL
+		 *  \param InBuffer    the pointer to the input buffer
+		 *  \param InSV        data type of input buffer
+		**/
 		virtual void wData(Int32 const* Start, Int32 const* Length,
 			void const* InBuffer, TSVType InSV);
+
 		virtual void Append(void const* Buffer, ssize_t Cnt, TSVType InSV) = 0;
 		virtual void AppendIter(TdIterator &iter, ssize_t Cnt) = 0;
 
@@ -531,13 +553,13 @@ namespace CoreArray
 		virtual Int64 Count();
 		virtual void SetCount(const Int64 Value);
 		virtual Int64 CurrectCnt() const { return fCurrentCnt; }
-		COREARRAY_FORCE_INLINE TdAllocator &Allocator() { return fAllocator; }
+		COREARRAY_INLINE TdAllocator &Allocator() { return fAllocator; }
 		/// Return memory size in bytes used for storage
-		COREARRAY_FORCE_INLINE TdPtr64 MemSize() { return AllocNeed(true); }
+		COREARRAY_INLINE TdPtr64 MemSize() { return AllocNeed(true); }
         ///
-		COREARRAY_FORCE_INLINE TdPtr64 CapacityMem() { return fCapacityMem; }
+		COREARRAY_INLINE TdPtr64 CapacityMem() { return fCapacityMem; }
 		void SetCapacityMem(const TdPtr64 NewMem);
-		COREARRAY_FORCE_INLINE ssize_t ElmSize() const { return fElmSize; }
+		COREARRAY_INLINE ssize_t ElmSize() const { return fElmSize; }
 
 	protected:
 		struct TdDimItem
@@ -646,19 +668,19 @@ namespace CoreArray
 
 		template<typename T> struct TdIterToVal<T, COREARRAY_TR_INTEGER>
 		{
-			COREARRAY_FORCE_INLINE static T Get(TdIterator &it) { return (T)(it.toInt()); }
-			COREARRAY_FORCE_INLINE static void Set(TdIterator &it, const T v) { return it.IntTo(v); }
+			COREARRAY_INLINE static T Get(TdIterator &it) { return (T)(it.toInt()); }
+			COREARRAY_INLINE static void Set(TdIterator &it, const T v) { return it.IntTo(v); }
 		};
 		template<typename T> struct TdIterToVal<T, COREARRAY_TR_FLOAT>
 		{
-			COREARRAY_FORCE_INLINE static T Get(TdIterator &it) { return it.toFloat(); }
-			COREARRAY_FORCE_INLINE static void Set(TdIterator &it, const T v) { return it.FloatTo(v); }
+			COREARRAY_INLINE static T Get(TdIterator &it) { return it.toFloat(); }
+			COREARRAY_INLINE static void Set(TdIterator &it, const T v) { return it.FloatTo(v); }
 		};
 		template<typename T> struct TdIterToVal<T, COREARRAY_TR_STRING>
 		{
-			COREARRAY_FORCE_INLINE static T Get(TdIterator &it)
+			COREARRAY_INLINE static T Get(TdIterator &it)
 				{ return TValCvt<T, UTF16String>::Cvt(it.toStr()); }
-			COREARRAY_FORCE_INLINE static void Set(TdIterator &it, const T &v)
+			COREARRAY_INLINE static void Set(TdIterator &it, const T &v)
 				{ return it.StrTo(TValCvt<UTF16String, T>::Cvt(v)); }
 		};
 
@@ -868,10 +890,11 @@ namespace CoreArray
 		struct TdVectorData<TOutside, TInside, true, O, I>
 	{
 		// Read
-		COREARRAY_FORCE_INLINE static void rArray(TIterVDataExt &Rec)
+		COREARRAY_INLINE static void rArray(TIterVDataExt &Rec)
 		{
 			ssize_t Lx = Rec.LastDim * sizeof(TInside);
 			Rec.Seq->Allocator().Read(Rec.p64, (void*)Rec.pBuf, Lx);
+			COREARRAY_ENDIAN_ARRAY((TInside*)Rec.pBuf, Rec.LastDim);
 			Rec.pBuf += Lx;
 		}
 		COREARRAY_INLINE static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
@@ -882,27 +905,53 @@ namespace CoreArray
 				{
 					Internal::TdIterMove<sizeof(TInside)>::Read(Rec.pBuf,
 						Rec.Seq->fAllocator, Rec.p64);
+					COREARRAY_ENDIAN_ARRAY((TInside*)Rec.pBuf, 1);
 					Rec.pBuf += sizeof(TInside);
 				}
 				Rec.p64 += sizeof(TInside);
 			}
 		}
-		COREARRAY_FORCE_INLINE static void rItem(void *OutBuffer, const TdPtr64 p64, CdVectorX &Seq)
+		COREARRAY_INLINE static void rItem(void *OutBuffer, const TdPtr64 p64, CdVectorX &Seq)
 		{
 			Internal::TdIterMove<sizeof(TInside)>::Read(OutBuffer,
 				Seq.fAllocator, p64);
+			COREARRAY_ENDIAN_ARRAY((TInside*)OutBuffer, 1);
 		}
 
 		// Write
-		COREARRAY_FORCE_INLINE static void wArray(TIterVDataExt &Rec)
+		COREARRAY_INLINE static void wArray(TIterVDataExt &Rec)
 		{
+		#if defined(COREARRAY_LITTLE_ENDIAN)
 			ssize_t Lx = Rec.LastDim * sizeof(TInside);
 			Rec.Seq->Allocator().Write(Rec.p64, (void*)Rec.pBuf, Lx);
 			Rec.pBuf += Lx;
+		#else
+			char buf[ARRAY_BUF_LEN];
+			Int32 Len = Rec.LastDim;
+			TInside *s = (TInside*)Rec.pBuf;
+			while (Len > 0)
+			{
+				ssize_t L = ((size_t)Len >= (sizeof(buf)/sizeof(TInside))) ?
+					sizeof(buf)/sizeof(TInside) : Len;
+				ssize_t Lx = L * sizeof(TInside);
+				Len -= L;
+				memmove((void*)buf, (void*)s, Lx);
+				COREARRAY_ENDIAN_ARRAY((TInside*)buf, L);
+				s += L;
+				Rec.Seq->Allocator().Write(Rec.p64, (void*)buf, Lx);
+				Rec.p64 += Lx;
+			}
+			Rec.pBuf = (char*)s;
+		#endif
 		}
-		COREARRAY_FORCE_INLINE static void wItem(void const* InBuffer, const TdPtr64 p64, CdVectorX &Seq)
+		COREARRAY_INLINE static void wItem(void const* InBuffer, const TdPtr64 p64, CdVectorX &Seq)
 		{
+		#if defined(COREARRAY_LITTLE_ENDIAN)
 			Internal::TdIterMove<sizeof(TInside)>::Write(InBuffer, Seq.fAllocator, p64);
+		#else
+			TInside Buf = COREARRAY_ENDIAN_VAL(*((TInside*)InBuffer));
+			Internal::TdIterMove<sizeof(TInside)>::Write((void*)&Buf, Seq.fAllocator, p64);
+		#endif
 		}
 	};
 
@@ -925,6 +974,7 @@ namespace CoreArray
 				Rec.Seq->Allocator().Read(Rec.p64, (void*)buf, Lx);
 				Rec.p64 += Lx;
 				ValCvtArray<TOutside, TInside>(p, (TInside*)buf, L);
+				COREARRAY_ENDIAN_ARRAY(p, L);
 				p += L;
 			}
 			Rec.pBuf = (char*)p;
@@ -946,8 +996,14 @@ namespace CoreArray
 
 				TInside *pbuf = (TInside*)buf;
 				for (; L > 0; L--)
+				{
 					if (*Sel++)
-						*p++ = ValCvt<TOutside, TInside>(*pbuf++);
+					{
+						*p = ValCvt<TOutside, TInside>(*pbuf++);
+						COREARRAY_ENDIAN_ARRAY(p, 1);
+						p++;
+					}
+				}
 			}
 			Rec.pBuf = (char*)p;
 		}
@@ -957,6 +1013,7 @@ namespace CoreArray
 			char buf[sizeof(TInside)];
 			Seq.fAllocator.Read(p, (void*)buf, sizeof(TInside));
 			*((TOutside*)OutBuffer) = ValCvt<TOutside, TInside>(*((TInside*)buf));
+			COREARRAY_ENDIAN_ARRAY((TOutside*)OutBuffer, 1);
 		}
 
 		// Write
@@ -972,6 +1029,7 @@ namespace CoreArray
 				ssize_t Lx = L * sizeof(TInside);
 				Len -= L;
 				ValCvtArray<TInside, TOutside>((TInside*)buf, s, L);
+				COREARRAY_ENDIAN_ARRAY((TInside*)buf, L);
 				s += L;
 				Rec.Seq->Allocator().Write(Rec.p64, (void*)buf, Lx);
 				Rec.p64 += Lx;
@@ -981,15 +1039,15 @@ namespace CoreArray
 
 		COREARRAY_INLINE static void wItem(void const* InBuffer, const TdPtr64 p, CdVectorX &Seq)
 		{
-			char buf[sizeof(TInside)];
-			*((TInside*)buf) = ValCvt<TInside, TOutside>(*((TOutside*)InBuffer));
-			Seq.fAllocator.Write(p, (void*)buf, sizeof(TInside));
+			TInside buf = ValCvt<TInside, TOutside>(*((TOutside*)InBuffer));
+			COREARRAY_ENDIAN_ARRAY(&buf, 1);
+			Seq.fAllocator.Write(p, (void*)&buf, sizeof(TInside));
 		}
 	};
 
 
 	/// Array-oriented container, template class
-	/** \tparam T  data type, e.g. Int8, Int32 */
+	/** \tparam T  data type, e.g. Int8, Int32 **/
 	template<typename T> class CdVector: public CdVectorX
 	{
 	public:
@@ -999,7 +1057,7 @@ namespace CoreArray
 		typedef typename TdTraits<T>::TType ElmTypeEx;
 
 		/// Constructor
-		/** \param vDimCnt  number of dimensions, should be <= MaxSeqDim */
+		/** \param vDimCnt  number of dimensions, should be <= MaxSeqDim **/
 		CdVector(size_t vDimCnt = 0): CdVectorX(
 			(TdTraits<T>::BitOf/8) + ((TdTraits<T>::BitOf%8)?1:0),
 			vDimCnt, !TdTraits<T>::isClass) { };
@@ -1424,7 +1482,7 @@ namespace CoreArray
 		virtual bool DirectStream()
 			{ return !TdTraits<T>::isClass; };
 
-		COREARRAY_FORCE_INLINE void xSetUpdate()
+		COREARRAY_INLINE void xSetUpdate()
 		{
 			#ifndef COREARRAY_BORLANDC
 			fAllocator.Filter->OnFlush.Set<CdVector>(

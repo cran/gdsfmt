@@ -2,16 +2,15 @@
 \alias{rename.gdsn}
 \title{Rename a GDS node}
 \description{
-	To rename a GDS node of hierarchical structure, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Renames a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
 rename.gdsn(node, newname)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
-	\item{newname}{the new name of a specified node.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{newname}{the new name of a specified node}
 }
 \details{
 	CoreArray hierarchical structure does not allow duplicate names in the same path.
@@ -22,12 +21,12 @@ rename.gdsn(node, newname)
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-  \code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}}}
+\seealso{
+	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}}
+}
 
 \examples{
-library(gdsfmt)
-
 # cteate the GDS file "test.gds"
 f <- createfn.gds("test.gds")
 n <- add.gdsn(f, "old.name", val=1:10)

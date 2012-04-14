@@ -2,7 +2,7 @@
 \alias{getfile.gdsn}
 \title{Output a file from a stream container}
 \description{
-	To get a file from a stream container, in a CoreArray Genomic Data Structure (GDS) file.
+	Gets a file from a stream container, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
@@ -11,20 +11,21 @@ getfile.gdsn(node, out.filename)
 \arguments{
 	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
 		"gdsn" -- the node of hierarchical structure;
-		"gdsclass" -- the root of hieracrchical structure.}
-	\item{out.filename}{the file name of output stream.}
+		"gdsclass" -- the root of hieracrchical structure}
+	\item{out.filename}{the file name of output stream}
 }
-
 \value{
 	None.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+\seealso{
+	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
 	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}},
-	\code{\link[gdsfmt]{addfile.gdsn}} }
+	\code{\link[gdsfmt]{addfile.gdsn}}
+}
 
 \examples{
 # save a .RData object

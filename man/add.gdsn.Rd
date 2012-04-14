@@ -2,8 +2,7 @@
 \alias{add.gdsn}
 \title{Add a GDS node}
 \description{
-	To add a GDS node of hierarchical structure, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Adds a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
@@ -14,9 +13,9 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 \arguments{
 	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
 		"gdsn" -- the node of hierarchical structure;
-		"gdsclass" -- the root of hieracrchical structure.}
-	\item{name}{the variable name of the added node.}
-	\item{val}{R value: vector, list, data.frame}
+		"gdsclass" -- the root of hieracrchical structure}
+	\item{name}{the variable name of the added node}
+	\item{val}{the R value can be \code{vector}, \code{list}, \code{data.frame}}
 	\item{storage}{to specify data type: integer (
 		signed integer:
 			"int8", "int16", "int24", "int32", "int64",
@@ -34,11 +33,11 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 			"bit25", "bit26", "bit27", "bit28", "bit29", "bit30", "bit31", "bit32" );
 			float ("float32", "float64"), string ("string", "wstring", "dwstring").
 			Or "integer" (="int32"), "double" (="float64"), "character" (="string"),
-			"logical", "list", "factor", "folder".}
+			"logical", "list", "factor", "folder"}
 	\item{valdim}{the dimension attribute for the array to be created, which is a
-		vector of length one or more giving the maximal indices in each dimension.}
-	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max".}
-	\item{closezip}{if allowed to compress data, return to read mode after compression.}
+		vector of length one or more giving the maximal indices in each dimension}
+	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max"}
+	\item{closezip}{if a compression method is specified, get into read mode after compression}
 }
 
 \details{
@@ -78,9 +77,11 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
+\seealso{
+	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}} }
+	\code{\link[gdsfmt]{name.gdsn}}
+}
 
 \examples{
 # cteate the GDS file "test.gds"

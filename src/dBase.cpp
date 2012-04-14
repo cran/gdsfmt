@@ -82,7 +82,8 @@ namespace CoreArray
 		virtual TdPtr64 Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
 		{
 			TdPtr64 rv;
-			switch (Origin) {
+			switch (Origin)
+			{
 				case soBeginning:
 					if ((Offset<0) || (Offset>fLength))
 						throw Err_dStream(esTrimInvalidPos);
@@ -91,6 +92,7 @@ namespace CoreArray
 					else fStream->SetPosition(Offset);
 					vPos = Offset;
 					return vPos;
+
 				case soCurrent:
 					rv = vPos + Offset;
 					if ((rv<0) || (rv>fLength))
@@ -100,6 +102,7 @@ namespace CoreArray
 					else fStream->SetPosition(rv);
 					vPos = rv;
 					return rv;
+
 				case soEnd:
 					if ((Offset>0) || (Offset<-fLength))
 						throw Err_dStream(esTrimInvalidPos);
@@ -112,6 +115,7 @@ namespace CoreArray
 					}
 					vPos = rv;
 					return rv;
+
 				default:
 					return -1;
 			}
@@ -132,10 +136,11 @@ namespace CoreArray
 			return true;
 		}
 
-		COREARRAY_FORCE_INLINE const CdStream* Stream() const { return fStream; }
-		COREARRAY_FORCE_INLINE bool Offset() const { return fOffset; }
-		COREARRAY_FORCE_INLINE TdPtr64 Start() const { return fStart; }
-		COREARRAY_FORCE_INLINE TdPtr64 Length() const { return fLength; }
+		COREARRAY_INLINE const CdStream* Stream() const { return fStream; }
+		COREARRAY_INLINE bool Offset() const { return fOffset; }
+		COREARRAY_INLINE TdPtr64 Start() const { return fStart; }
+		COREARRAY_INLINE TdPtr64 Length() const { return fLength; }
+
 	protected:
 		TdPtr64 vPos, fStart, fLength;
 		CdStream* fStream;
@@ -154,14 +159,14 @@ namespace CoreArray
 			struct TValCvt<DestT, TShortRec, trT, COREARRAY_TR_UNKNOWN>
 		{
 			static DestT Cvt(const TShortRec &val)
-				{ throw Err_dFilter("Error!"); };
+				{ throw Err_dFilter("Error!"); }
 		};
 
 		template<typename DestT, int trT>
 			struct TValCvt<DestT, EmptyT, trT, COREARRAY_TR_UNKNOWN>
 		{
 			static DestT Cvt(const EmptyT &val)
-				{ throw Err_dFilter("Error!"); };
+				{ throw Err_dFilter("Error!"); }
 		};
 	}
 }
@@ -832,7 +837,8 @@ int CBufdStream::rByteL()
 		p += (ssize_t)fPosition - (ssize_t)vBufStart;
 		fPosition++;
 		return *p;
-	} else return -1;
+	} else
+		return -1;
 }
 
 int CBufdStream::Peek()
@@ -1259,8 +1265,9 @@ void CBufdStream::PushPipe(CdStreamPipe* APipe)
 
 void CBufdStream::PopPipe()
 {
-    int L = vPipeItems.size();
-	if (L > 0) {
+	int L = vPipeItems.size();
+	if (L > 0)
+	{
 		{
 			auto_ptr<CdStreamPipe> FC(vPipeItems[L-1]);
 			vPipeItems.pop_back();

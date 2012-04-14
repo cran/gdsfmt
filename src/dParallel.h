@@ -32,6 +32,8 @@
  *	\date     2009 - 2012
  *	\brief    Functions for parallel computing
  *	\details
+ *  \todo     To improve the support of reading a GDS file in parallel
+ *  \todo     To support parallel reading and writing a GDS file simultaneously
 **/
 
 #ifndef _dParallel_H_
@@ -55,9 +57,9 @@ namespace CoreArray
 		/// The mode of percent increasement
 		enum TPercentMode {
 			tp01 = 0,	//< The increasement is 1%
-			tp10,		//< The increasement is 10%
-			tp25,		//< The increasement is 25%
-			tp50		//< The increasement is 50%
+			tp10 = 1,	//< The increasement is 10%
+			tp25 = 2,	//< The increasement is 25%
+			tp50 = 3	//< The increasement is 50%
 		};
 
 		/// The associated information
@@ -65,19 +67,20 @@ namespace CoreArray
 
 		/// Constructor
 		CdBaseProgression(TPercentMode permode = tp01);
+		virtual ~CdBaseProgression() {}
 
 		void Init(Int64 TotalCnt);
 		bool Forward(Int64 step = 1);
 		virtual void ShowProgress();
 
 		/// Return the current mode of increasement
-		COREARRAY_FORCE_INLINE TPercentMode Mode() const { return fMode; }
+		COREARRAY_INLINE TPercentMode Mode() const { return fMode; }
 		/// Set the current mode of increasement
 		void SetMode(TPercentMode mode);
         /// Return the current percentile
-		COREARRAY_FORCE_INLINE int Percent() const { return fPercent; }
+		COREARRAY_INLINE int Percent() const { return fPercent; }
 		/// Return the total number
-		COREARRAY_FORCE_INLINE Int64 Total() const { return fTotal; }
+		COREARRAY_INLINE Int64 Total() const { return fTotal; }
 	protected:
 		TPercentMode fMode;
 		Int64 fTotal, vProg[101], vCurrent, *vptrProg;
@@ -166,16 +169,17 @@ namespace CoreArray
 			/// Close all threads
 			void CloseThreads();
 			/// Return the total number of thread used
-			COREARRAY_FORCE_INLINE int nThread() const { return fnThread; }
+			COREARRAY_INLINE int nThread() const { return fnThread; }
 			/// Reset the number of thread used
 			void SetnThread(int _nThread);
 			/// Automatically determine the number of threads used
 			void AutoSetnThread();
 
-			COREARRAY_FORCE_INLINE CdThreadMutex &Mutex() { return fMutex; }
+			COREARRAY_INLINE CdThreadMutex &Mutex() { return fMutex; }
 
 			/// Create nThread threads (including the main thread), and Proc is called by each thread
-			void DoThreads(void (*Proc)(CdThread *, int, void*), void *param);
+			typedef void (*TProc)(CdThread *Thread, int, void *);
+			void DoThreads(TProc Proc, void *param);
 
 			/// Create nThread threads (including the main thread), and Proc is called by each
 			//  thread closure or delegate for C++
@@ -212,7 +216,7 @@ namespace CoreArray
 				CloseThreads();
 			}
 
-			COREARRAY_FORCE_INLINE CdBaseProgression *Progress() const { return fProgress; }
+			COREARRAY_INLINE CdBaseProgression *Progress() const { return fProgress; }
 			void SetProgress(CdBaseProgression *Val);
 			void SetConsoleProgress(CdBaseProgression::TPercentMode mode = CdBaseProgression::tp01);
 

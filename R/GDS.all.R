@@ -26,10 +26,13 @@
 # If not, see <http://www.gnu.org/licenses/>.
 
 
-#############################################################
+##################################################################################
 # File Operations
-#############################################################
+##################################################################################
 
+#############################################################
+# To create a new CoreArray Genomic Data Structure (GDS) file
+#
 createfn.gds <- function(fn)
 {
 	r <- .C("gdsCreateGDS", filename=as.character(fn), id=integer(1),
@@ -40,11 +43,16 @@ createfn.gds <- function(fn)
 		return(invisible(NULL))
 	} else {
 		class(r$root) <- "gdsn"
+		r$readonly <- FALSE
 		class(r) <- "gdsclass"
 		return(r)
 	}
 }
 
+
+#############################################################
+# To open an existing file
+#
 openfn.gds <- function(fn, readonly=TRUE)
 {
 	r <- .C("gdsOpenGDS", filename=as.character(fn[1]), id=integer(1),
@@ -56,11 +64,16 @@ openfn.gds <- function(fn, readonly=TRUE)
 		return(invisible(NULL))
 	} else {
 		class(r$root) <- "gdsn"
+		r$readonly <- readonly
 		class(r) <- "gdsclass"
 		return(r)
 	}
 }
 
+
+#############################################################
+# To close an open CoreArray Genomic Data Structure (GDS) file
+#
 closefn.gds <- function(gds)
 {
 	stopifnot(class(gds)=="gdsclass")
@@ -70,6 +83,10 @@ closefn.gds <- function(gds)
 	return(invisible(NULL))
 }
 
+
+#############################################################
+# To write the data cached in memory to disk
+#
 sync.gds <- function(gds)
 {
 	stopifnot(class(gds)=="gdsclass")
@@ -80,20 +97,46 @@ sync.gds <- function(gds)
 }
 
 
-
 #############################################################
+# To clean up fragments of a GDS file
+#
+cleanup.gds <- function(fn, verbose=TRUE)
+{
+	stopifnot(is.character(fn))
+
+	r <- .C("gdsTidyUp", fn, as.logical(verbose), err=integer(1),
+		NAOK=TRUE, PACKAGE="gdsfmt")
+	if (r$err != 0) stop(lasterr.gds())
+
+	return(invisible(NULL))
+}
+
+
+
+
+
+
+##################################################################################
 # File Structure Operations
-#############################################################
+##################################################################################
 
+#############################################################
+# To get the number of child nodes for a specified node
+#
 cnt.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
-	r <- .C("gdsNodeChildCnt", as.integer(node), cnt=as.integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	r <- .C("gdsNodeChildCnt", as.integer(node), cnt=as.integer(1), NAOK=TRUE,
+		PACKAGE="gdsfmt")
 	if (r$cnt < 0)
 		stop(lasterr.gds())
 	return(r$cnt)
 }
 
+
+#############################################################
+# To get the variable name of a node
+#
 name.gdsn <- function(node, fullname=FALSE)
 {
 	stopifnot(class(node)=="gdsn")
@@ -105,6 +148,10 @@ name.gdsn <- function(node, fullname=FALSE)
 	} else { return(r$name) }
 }
 
+
+#############################################################
+# To rename a GDS node
+#
 rename.gdsn <- function(node, newname)
 {
 	stopifnot(class(node)=="gdsn")
@@ -115,6 +162,10 @@ rename.gdsn <- function(node, newname)
 	return(node)
 }
 
+
+#############################################################
+# To get a list of names for the child nodes
+#
 ls.gdsn <- function(node)
 {
 	if (class(node)=="gdsclass")
@@ -131,6 +182,10 @@ ls.gdsn <- function(node)
 		return(r$names)
 }
 
+
+#############################################################
+# To get a specified node
+#
 index.gdsn <- function(node, index, silent=FALSE)
 {
 	if (class(node)=="gdsclass")
@@ -158,27 +213,35 @@ index.gdsn <- function(node, index, silent=FALSE)
 	return(rv)
 }
 
+
+#############################################################
+# To get the descritpion of a specified node
+#
 objdesp.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
 	cnt <- cnt.gdsn(node)
 	r <- .C("gdsNodeObjDesp", as.integer(node), desp=character(1), name=character(1),
-		sv=integer(1), dimcnt=integer(1), dimeach=integer(1024), cp=character(1),
-		cpratio=double(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-	if (r$err != 0)
+		sv=integer(1), arr=logical(1), dimcnt=integer(1), dimeach=integer(1024),
+		cp=character(1), cpratio=double(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	if (r$err == 0)
 	{
-		stop(lasterr.gds())
-		return(invisible(NULL))
-	} else {
 		if (r$dimcnt > 0)
 			d <- rev(r$dimeach[1:r$dimcnt])
 		else
 			d <- NULL
-		return( list(desp=r$desp, name=r$name, svtype=r$sv, dim=d, compress=r$cp,
-			cpratio=r$cpratio) )
+		rv <- list(desp = r$desp, name = r$name, svtype = r$sv, is.array = r$arr,
+			dim = d, compress = r$cp, cpratio = r$cpratio)
+	} else {
+		stop(lasterr.gds())
 	}
+	return(rv)
 }
 
+
+#############################################################
+# To add a GDS node
+#
 add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NULL,
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"),
 	closezip=FALSE)
@@ -263,6 +326,10 @@ add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NUL
 	}
 }
 
+
+#############################################################
+# To add a GDS node with a file
+#
 addfile.gdsn <- function(node, name, filename,
 	compress=c("ZIP", "ZIP.fast", "ZIP.default", "ZIP.max", ""))
 {
@@ -282,6 +349,10 @@ addfile.gdsn <- function(node, name, filename,
 	return(rv)
 }
 
+
+#############################################################
+# To delete a specified node
+#
 delete.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
@@ -294,10 +365,15 @@ delete.gdsn <- function(node)
 
 
 
-#############################################################
-# Attribute
-#############################################################
 
+
+##################################################################################
+# Attribute
+##################################################################################
+
+#############################################################
+# To add an attribute to a GDS node
+#
 put.attr.gdsn <- function(node, name, val=NULL)
 {
 	stopifnot(class(node)=="gdsn")
@@ -317,15 +393,24 @@ put.attr.gdsn <- function(node, name, val=NULL)
 		stop("'attribute' needs a name!")
 }
 
+
+#############################################################
+# To get the attributes of a CoreArray GDS node
+#
 get.attr.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
-	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), err=integer(1),
+		NAOK=TRUE, PACKAGE="gdsfmt")
+	if (r$err != 0) stop(lasterr.gds())
+
 	if (r$Cnt > 0)
 	{
 		rv <- vector("list", r$Cnt)
-		r1 <- .C("gdsAttrType", as.integer(node), rtype=integer(r$Cnt),
+		r1 <- .C("gdsAttrType", as.integer(node), rtype=integer(r$Cnt), err=integer(1),
 			NAOK=TRUE, PACKAGE="gdsfmt")
+		if (r1$err != 0) stop(lasterr.gds())
+
 		rn <- character(r$Cnt)
 		for (i in 1:r$Cnt)
 		{
@@ -346,6 +431,10 @@ get.attr.gdsn <- function(node)
 	return(rv)
 }
 
+
+#############################################################
+# To remove an attribute from a CoreArray GDS node
+#
 delete.attr.gdsn <- function(node, name)
 {
 	stopifnot(class(node)=="gdsn")
@@ -358,10 +447,15 @@ delete.attr.gdsn <- function(node, name)
 
 
 
-#############################################################
-# Data Operations
-#############################################################
 
+
+##################################################################################
+# Data Operations
+##################################################################################
+
+#############################################################
+# To modify the data compression mode of data field
+#
 compression.gdsn <- function(node,
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max") )
 {
@@ -373,6 +467,10 @@ compression.gdsn <- function(node,
 	return(node)
 }
 
+
+#############################################################
+# Get into read mode of compression
+#
 readmode.gdsn <- function(node)
 {
 	stopifnot(class(node)=="gdsn")
@@ -383,6 +481,10 @@ readmode.gdsn <- function(node)
 	return(node)
 }
 
+
+#############################################################
+# To set the new dimension of the data field for a GDS node
+#
 setdim.gdsn <- function(node, valdim)
 {
 	stopifnot(class(node)=="gdsn")
@@ -393,6 +495,10 @@ setdim.gdsn <- function(node, valdim)
 	return(node)
 }
 
+
+#############################################################
+# Append data to a specified variable
+#
 append.gdsn <- function(node, val, check=TRUE)
 {
 	stopifnot(class(node)=="gdsn")
@@ -427,6 +533,10 @@ append.gdsn <- function(node, val, check=TRUE)
 	return(invisible(NULL))
 }
 
+
+#############################################################
+# Read data field of a GDS node
+#
 read.gdsn <- function(node, start, count)
 {
 	stopifnot(class(node)=="gdsn")
@@ -474,7 +584,8 @@ read.gdsn <- function(node, start, count)
 
 			stopifnot(length(start)==length(count))
 
-			rfactor <- FALSE
+			rvattr <- get.attr.gdsn(node)
+			rfactor <- ("R.factor" %in% names(rvattr))
 
 			r <- .C("gdsxObjDesp", as.integer(node), cnt=as.integer(length(start)),
 				rstart=rev(as.integer(start)), rcount=rev(as.integer(count)),
@@ -515,6 +626,224 @@ read.gdsn <- function(node, start, count)
 	return(invisible(NULL))
 }
 
+
+#############################################################
+# Read data field of a GDS node
+#
+readex.gdsn <- function(node, sel=NULL)
+{
+	stopifnot(class(node)=="gdsn")
+	stopifnot(is.null(sel) | is.logical(sel) | is.list(sel))
+
+	if (!is.null(sel))
+	{
+		if (is.vector(sel) & !is.list(sel))
+			sel <- list(d1=sel)
+		DimSel <- sapply(sel, function(x) {
+				if (!is.logical(x)) stop("The element of `sel' should be a logical variable.")
+				length(x)
+			})
+
+		# check
+		n <- objdesp.gdsn(node)
+		if (length(n$dim) != length(DimSel))
+			stop("The dimension of selection is not correct.")
+		if (any(n$dim != DimSel))
+			stop("The dimension of selection is not correct.")
+
+		rvattr <- get.attr.gdsn(node)
+		rfactor <- ("R.factor" %in% names(rvattr))
+		DimCnt <- sapply(sel, function(x) sum(x, na.rm=TRUE))
+		totalcnt <- prod(DimCnt)
+
+		# check
+		rd <- .C("gdsxObjType", as.integer(node), rtype=integer(1), err=integer(1),
+			NAOK=TRUE, PACKAGE="gdsfmt")
+		if (rd$err != 0) stop(lasterr.gds())
+
+		# no selection
+		if (totalcnt <= 0)
+			return(switch(rd$rtype, integer(0), double(0), character(0), logical(0)))
+
+		# reading
+		r <- .C("gdsObjReadExData", as.integer(node),
+			as.logical(unlist(sel)), as.integer(rd$rtype),
+			data=switch(rd$rtype+1, integer(0), integer(totalcnt), double(totalcnt),
+				character(totalcnt), logical(totalcnt)),
+			err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+
+		if (rfactor)
+		{
+			s <- r$data
+			r$data <- factor(s)
+			r$data[s==""] <- NA
+		}
+
+		if (r$err == 0)
+		{
+			if (length(DimCnt) <= 1)
+				return(r$data)
+			else
+				return(array(r$data, dim=DimCnt))
+		} else {
+			stop(lasterr.gds())
+		}
+	} else {
+		return(read.gdsn(node))
+	}
+}
+
+
+#############################################################
+# Apply functions over array margins of a GDS node
+#
+apply.gdsn <- function(node, margin=2, row.sel=NULL, col.sel=NULL,
+	row.buf.size=128, FUN, ...)
+{
+	# check
+	stopifnot(class(node)=="gdsn")
+	stopifnot(margin %in% c(1, 2))
+	stopifnot(is.null(row.sel) | is.logical(row.sel))
+	stopifnot(is.null(col.sel) | is.logical(col.sel))
+
+	desp <- objdesp.gdsn(node)
+	if (!desp$is.array)
+		stop("`node' should be array-type.")
+	if (length(desp$dim) != 2)
+		stop("`node' should be a matrix")
+	if (is.logical(row.sel))
+	{
+		if (length(row.sel) != desp$dim[1])
+			stop("Invalid length of `row.sel'.")
+		if (sum(row.sel, na.rm=TRUE) <= 0)
+			return(NULL)
+	}
+	if (is.logical(col.sel))
+	{
+		if (length(col.sel) != desp$dim[2])
+			stop("Invalid length of `col.sel'.")
+		if (sum(col.sel, na.rm=TRUE) <= 0)
+			return(NULL)
+	}
+
+	# initialize ...
+	rd <- .C("gdsxObjType", as.integer(node), rtype=integer(1), err=integer(1),
+		NAOK=TRUE, PACKAGE="gdsfmt")
+	if (rd$err != 0) stop(lasterr.gds())
+	FUN <- match.fun(FUN)
+
+	# for-loop
+	if (margin == 1)
+	{
+		# for each row
+
+		if (is.logical(row.sel))
+		{
+			rowidx <- which(row.sel)
+			totalcnt <- length(rowidx)
+		} else {
+			rowidx <- seq_len(desp$dim[1])
+			totalcnt <- desp$dim[1]
+		}
+		if (is.logical(col.sel))
+		{
+			eachcnt <- sum(col.sel, na.rm=TRUE)
+		} else {
+			eachcnt <- desp$dim[2]
+			col.sel <- rep(TRUE, eachcnt)
+		}
+
+		ans <- vector(mode="list", length=totalcnt)
+		rsel <- .C("gdsLongBool2CBOOL", col.sel, CBOOL=integer(length(col.sel)),
+			length(col.sel), NAOK=TRUE, PACKAGE="gdsfmt")
+
+		# for-loop
+		idx <- 1
+		while (idx <= length(rowidx))
+		{
+			cnt <- length(rowidx) - idx + 1
+			if (cnt > row.buf.size) cnt = row.buf.size
+
+			r <- .C("gdsApplyRow", as.integer(node), as.integer(idx),
+				as.integer(rowidx), as.integer(cnt), rsel$CBOOL, as.integer(rd$rtype),
+				data=switch(rd$rtype+1, integer(0),
+					matrix(as.integer(0), nrow=cnt, ncol=eachcnt),
+					matrix(as.double(0), nrow=cnt, ncol=eachcnt),
+					matrix(as.character(0), nrow=cnt, ncol=eachcnt),
+					matrix(as.logical(0), nrow=cnt, ncol=eachcnt)),
+				err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+			if (r$err != 0) stop(lasterr.gds())
+
+			# call
+			for (i in seq.int(idx, idx+cnt-1))
+				ans[[i]] <- FUN(r$data[i-idx+1, ], ...)
+
+			idx <- idx + cnt
+		}
+	} else {
+		# for each column
+
+		if (is.logical(col.sel))
+		{
+			colidx <- which(col.sel)
+			totalcnt <- length(colidx)
+		} else {
+			colidx <- seq_len(desp$dim[2])
+			totalcnt <- desp$dim[2]
+		}
+		if (is.logical(row.sel))
+		{
+			eachcnt <- sum(row.sel, na.rm=TRUE)
+		} else {
+			eachcnt <- desp$dim[1]
+		}
+
+		ans <- vector(mode="list", length=totalcnt)
+		idx <- 1
+
+		# for-loop
+		if (is.logical(row.sel))
+		{
+			rsel <- .C("gdsLongBool2CBOOL", row.sel, CBOOL=integer(length(row.sel)),
+				length(row.sel), NAOK=TRUE, PACKAGE="gdsfmt")
+			for (col in colidx)
+			{
+				r <- .C("gdsApplyColEx", as.integer(node), as.integer(col), 
+					rsel$CBOOL, as.integer(rd$rtype),
+					data=switch(rd$rtype+1, integer(0), integer(eachcnt), double(eachcnt),
+						character(eachcnt), logical(eachcnt)),
+					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+				if (r$err != 0) stop(lasterr.gds())
+				# call
+				ans[[idx]] <- FUN(r$data, ...)
+				idx <- idx + 1
+			}
+		} else {
+			for (col in colidx)
+			{
+				r <- .C("gdsApplyCol", as.integer(node), as.integer(col), as.integer(rd$rtype),
+					data=switch(rd$rtype+1, integer(0), integer(eachcnt), double(eachcnt),
+						character(eachcnt), logical(eachcnt)),
+					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+				if (r$err != 0) stop(lasterr.gds())
+				# call
+				ans[[idx]] <- FUN(r$data, ...)
+				idx <- idx + 1
+			}
+		}
+	}
+
+	# return
+	if (length(ans) > 0)
+		simplify2array(ans, higher=TRUE)
+	else
+		ans
+}
+
+
+#############################################################
+# Write data to a GDS node
+#
 write.gdsn <- function(node, val, start, count)
 {
 	stopifnot(class(node)=="gdsn")
@@ -572,6 +901,10 @@ write.gdsn <- function(node, val, start, count)
 	return(invisible(NULL))
 }
 
+
+#############################################################
+# To get a file from a stream container
+#
 getfile.gdsn <- function(node, out.filename)
 {
 	stopifnot(class(node)=="gdsn")
@@ -588,10 +921,13 @@ getfile.gdsn <- function(node, out.filename)
 
 
 
-#############################################################
+##################################################################################
 # Error function
-#############################################################
+##################################################################################
 
+#############################################################
+# Return the last error
+#
 lasterr.gds <- function()
 {
 	r <- .C("gdsLastErrGDS", s=character(1), NAOK=TRUE, PACKAGE="gdsfmt")
@@ -600,9 +936,11 @@ lasterr.gds <- function()
 
 
 
-#############################################################
+
+
+##################################################################################
 # R Generic functions
-#############################################################
+##################################################################################
 
 print.gdsclass <- function(x, ...)
 {
@@ -697,9 +1035,9 @@ print.gdsn <- function(x, expand=TRUE, ...)
 
 
 
-#############################################################
-# R library functions
-#############################################################
+##################################################################################
+# R internal functions
+##################################################################################
 
 .onAttach <- function(lib, pkg)
 {

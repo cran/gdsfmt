@@ -310,7 +310,7 @@ namespace CoreArray
 		size_t Cvt(const char * &inbuf, size_t &inbytesleft,
 			char* &outbuf, size_t &outbytesleft);
 
-		COREARRAY_FORCE_INLINE iconv_t Handle() const { return fHandle; }
+		COREARRAY_INLINE iconv_t Handle() const { return fHandle; }
 //		static std::vector<std::string> List();
 	protected:
 		iconv_t fHandle;
@@ -441,7 +441,7 @@ namespace CoreArray
 		void Lock();
 		void Unlock();
 		bool TryLock();
-		COREARRAY_FORCE_INLINE TdMutex &Mutex() { return mutex; }
+		COREARRAY_INLINE TdMutex &Mutex() { return mutex; }
 	private:
 		TdMutex mutex;
 	};
@@ -544,10 +544,10 @@ namespace CoreArray
 		int EndThread();
 		void Terminate();
 
-		COREARRAY_FORCE_INLINE bool Terminated() const { return terminated; }
-		COREARRAY_FORCE_INLINE TStruct &Thread() { return thread; }
-		COREARRAY_FORCE_INLINE int &ExitCode() { return fExitCode; }
-        COREARRAY_FORCE_INLINE std::string &ErrorInfo() { return fErrorInfo; }
+		COREARRAY_INLINE bool Terminated() const { return terminated; }
+		COREARRAY_INLINE TStruct &Thread() { return thread; }
+		COREARRAY_INLINE int &ExitCode() { return fExitCode; }
+        COREARRAY_INLINE std::string &ErrorInfo() { return fErrorInfo; }
 
 	protected:
 		TStruct thread;
@@ -556,6 +556,7 @@ namespace CoreArray
 		bool terminated;
 		Internal::TdThreadData vData;
 		void _BeginThread(); // need vData
+
 	private:
 		Internal::CdThBasic *vPrivate;
 		void Done();
@@ -567,7 +568,7 @@ namespace CoreArray
 	{
 		void (Tx::*proc)(CdThread *);
 		Tx * obj;
-		COREARRAY_FORCE_INLINE void Proc(CdThread *thread) { (obj->*proc)(thread); }
+		COREARRAY_INLINE void Proc(CdThread *thread) { (obj->*proc)(thread); }
 	};
 
 
@@ -620,7 +621,7 @@ namespace CoreArray
 
 		}
 
-		COREARRAY_FORCE_INLINE size_t MaxThreads() const { return fMaxThreads; }
+		COREARRAY_INLINE size_t MaxThreads() const { return fMaxThreads; }
 		void SetMaxThreads(size_t NewMaxThreads);
 	protected:
         CdThreadMutex fPoolMutex;
@@ -921,7 +922,7 @@ namespace CoreArray
 	/// Conversion from SourceT to DestT
 	/** \tparam  DestT    type of destination
 	 *  \tparam  SourceT  type of source
-	*/
+	**/
 	template<typename DestT, typename SourceT>
 	COREARRAY_FORCE_INLINE DestT ValCvt(const SourceT &val)
 		{ return Internal::TValCvt<DestT, SourceT>::Cvt(val); }
@@ -929,7 +930,7 @@ namespace CoreArray
 	/// Conversion from SourceT to DestT
 	/** \tparam  DestT    type of destination
 	 *  \tparam  SourceT  type of source
-	*/
+	**/
 	template<typename DestT, typename SourceT>
 	COREARRAY_FORCE_INLINE void ValCvtArray(DestT *p, SourceT *s, ssize_t L)
 		{ Internal::TValCvt<DestT, SourceT>::Array(p, s, L); }
@@ -944,6 +945,8 @@ namespace CoreArray
 		#define COREARRAY_ENDIAN_CVT32(x)      x
 		#define COREARRAY_ENDIAN_CVT64(x)      x
 		#define COREARRAY_ENDIAN_CVT128(x)     x
+		#define COREARRAY_ENDIAN_VAL(x)        x
+		#define COREARRAY_ENDIAN_ARRAY(x, size)
 
 	#elif defined(COREARRAY_BIG_ENDIAN)
 
@@ -951,7 +954,91 @@ namespace CoreArray
 		UInt16 COREARRAY_ENDIAN_CVT16(UInt16 x);
 		UInt32 COREARRAY_ENDIAN_CVT32(UInt32 x);
 		UInt64 COREARRAY_ENDIAN_CVT64(UInt64 x);
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
 		UInt128 COREARRAY_ENDIAN_CVT128(UInt128 x);
+		#endif
+
+
+		namespace Internal
+		{
+			// Endianness Conversion
+			template<typename TYPE> struct TEndianValCvt
+			{
+				COREARRAY_FORCE_INLINE static TYPE Cvt(const TYPE &val) { return val; }
+				COREARRAY_FORCE_INLINE static void Array(TYPE *p, ssize_t L) { }
+			};
+
+			template<> struct TEndianValCvt<Int16>
+			{
+				COREARRAY_FORCE_INLINE static Int16 Cvt(Int16 val)
+					{ return COREARRAY_ENDIAN_CVT16(val); }
+				COREARRAY_FORCE_INLINE static void Array(Int16 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT16(*p); }
+			};
+			template<> struct TEndianValCvt<UInt16>
+			{
+				COREARRAY_FORCE_INLINE static UInt16 Cvt(UInt16 val)
+					{ return COREARRAY_ENDIAN_CVT16(val); }
+				COREARRAY_FORCE_INLINE static void Array(UInt16 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT16(*p); }
+			};
+
+			template<> struct TEndianValCvt<Int32>
+			{
+				COREARRAY_FORCE_INLINE static Int32 Cvt(Int32 val)
+					{ return COREARRAY_ENDIAN_CVT32(val); }
+				COREARRAY_FORCE_INLINE static void Array(Int32 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT32(*p); }
+			};
+			template<> struct TEndianValCvt<UInt32>
+			{
+				COREARRAY_FORCE_INLINE static UInt32 Cvt(UInt32 val)
+					{ return COREARRAY_ENDIAN_CVT32(val); }
+				COREARRAY_FORCE_INLINE static void Array(UInt32 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT32(*p); }
+			};
+
+			template<> struct TEndianValCvt<Int64>
+			{
+				COREARRAY_FORCE_INLINE static Int64 Cvt(Int64 val)
+					{ return COREARRAY_ENDIAN_CVT64(val); }
+				COREARRAY_FORCE_INLINE static void Array(Int64 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT64(*p); }
+			};
+			template<> struct TEndianValCvt<UInt64>
+			{
+				COREARRAY_FORCE_INLINE static UInt64 Cvt(UInt64 val)
+					{ return COREARRAY_ENDIAN_CVT64(val); }
+				COREARRAY_FORCE_INLINE static void Array(UInt64 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT64(*p); }
+			};
+
+		#ifndef COREARRAY_NO_EXTENDED_TYPES
+			template<> struct TEndianValCvt<Int128>
+			{
+				COREARRAY_FORCE_INLINE static Int128 Cvt(const Int128 &val)
+					{ return COREARRAY_ENDIAN_CVT128(val); }
+				COREARRAY_FORCE_INLINE static void Array(Int128 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT128(*p); }
+			};
+			template<> struct TEndianValCvt<UInt128>
+			{
+				COREARRAY_FORCE_INLINE static UInt128 Cvt(const UInt128 &val)
+					{ return COREARRAY_ENDIAN_CVT128(val); }
+				COREARRAY_FORCE_INLINE static void Array(UInt128 *p, ssize_t L)
+					{ for (; L > 0; L--, p++) *p = COREARRAY_ENDIAN_CVT128(*p); }
+			};
+		#endif
+		}
+
+
+		template<typename TYPE>
+		COREARRAY_FORCE_INLINE TYPE COREARRAY_ENDIAN_VAL(const TYPE &val)
+			{ return Internal::TEndianValCvt<TYPE>::Cvt(val); }
+
+		template<typename TYPE>
+		COREARRAY_FORCE_INLINE void COREARRAY_ENDIAN_ARRAY(TYPE *p, ssize_t L)
+			{ return Internal::TEndianValCvt<TYPE>::Array(p, L); }
 
 	#else
 	#  error "Unknown endianness"

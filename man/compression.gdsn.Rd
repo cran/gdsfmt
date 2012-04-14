@@ -2,7 +2,7 @@
 \alias{compression.gdsn}
 \title{Modify compression mode}
 \description{
-	To modify the data compression mode of data field in a CoreArray Genomic Data
+	Modifies the data compression mode of data field, in a CoreArray Genomic Data
 Structure (GDS) file.
 }
 
@@ -10,8 +10,8 @@ Structure (GDS) file.
 compression.gdsn(node, compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"))
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
-	\item{compress}{specify the compression method.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{compress}{specify the compression method}
 }
 \details{
 	Z compression algorithm can be used to deflate the data stored in the GDS file.
@@ -24,6 +24,8 @@ correspond to different compression levels.
 
 \references{ \url{http://sourceforge.net/projects/corearray/}, \url{http://zlib.net/} }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{\code{\link[gdsfmt]{readmode.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}}
+\seealso{
+	\code{\link[gdsfmt]{readmode.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
+}
 
 \keyword{utilities}

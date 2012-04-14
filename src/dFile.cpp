@@ -6,7 +6,7 @@
 // _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 // ===========================================================
 //
-// dFile.cpp: Functions and classes for CoreArray Generic Data Structure (GDS)
+// dFile.cpp: Functions and classes for CoreArray Genomic Data Structure (GDS)
 //
 // Copyright (C) 2012	Xiuwen Zheng
 //
@@ -33,10 +33,11 @@
 #endif
 
 
-// CdStreamPipeMgr
-
 namespace CoreArray
 {
+	// CdStreamPipeMgr
+
+	/// The pipe for reading data from a ZIP stream
 	class CdZIPReadPipe: public CdStreamPipe
 	{
 	protected:
@@ -44,9 +45,10 @@ namespace CoreArray
 		{
 			fStream = Filter->Stream();
 			if (dynamic_cast<CdSerial*>(Filter))
+			{
 				fPStream = new CdZIPInflate(dynamic_cast<CdSerial*>(Filter)->
 					BlockStream());
-			else
+			} else
 				fPStream = new CdZIPInflate(Filter->Stream());
 			return fPStream;
 		}
@@ -55,12 +57,14 @@ namespace CoreArray
 			fPStream->Release();
 			return fStream;
 		}
+
 	private:
 		CdStream* fStream;
 		CdZIPInflate* fPStream;
 	};
 
 
+	/// The pipe for writing data to a ZIP stream
 	class CdZIPWritePipe: public CdStreamPipe
 	{
 	public:
@@ -68,9 +72,9 @@ namespace CoreArray
 			TdCompressRemainder &vRemainder): fRemainder(vRemainder)
 			{ fLevel = vLevel; }
 
-		COREARRAY_FORCE_INLINE CdZIPDeflate::TZLevel Level() const { return fLevel; };
-		COREARRAY_FORCE_INLINE CdStream* Stream() const { return fStream; };
-		COREARRAY_FORCE_INLINE CdStream* StreamZIP() const { return fPStream; };
+		COREARRAY_INLINE CdZIPDeflate::TZLevel Level() const { return fLevel; };
+		COREARRAY_INLINE CdStream* Stream() const { return fStream; };
+		COREARRAY_INLINE CdStream* StreamZIP() const { return fPStream; };
 
 	protected:
 		virtual CdStream* InitPipe(CBufdStream *Filter)
@@ -85,6 +89,7 @@ namespace CoreArray
 			fPStream->Release();
 			return fStream;
 		}
+
 	private:
 		CdStream *fStream;
 		CdZIPDeflate *fPStream;
@@ -126,6 +131,7 @@ namespace CoreArray
 			if (dynamic_cast<CdZIPDeflate*>(buf.Stream()))
             	static_cast<CdZIPDeflate*>(buf.Stream())->Close();
         }
+
 	protected:
 		virtual CdPipeMgrItem *Match(const char *Mode)
 		{
@@ -193,6 +199,7 @@ namespace CoreArray
 			UInt8 I = vLevel;
 			Writer["PIPE_LEVEL"] << I;
 		}
+
 	private:
 		CdZIPDeflate::TZLevel vLevel;
 		TdPtr64 fSizeInfo_Ptr;
@@ -459,6 +466,7 @@ void CdObjAttr::xValidateName(const UTF16String &name)
         throw ErrGDSObj("Invalid name: ZERO length.");
 }
 
+
 // CdGDSObj
 
 static const char *erNoNameExist = "No name exists!";
@@ -496,9 +504,11 @@ UTF16String CdGDSObj::Name() const
 	{
 		vector<CdGDSFolder::TItem>::const_iterator it;
 		for (it = fFolder->fList.begin(); it != fFolder->fList.end(); it++)
+		{
 			if (it->Obj == this)
 				return it->Name;
-	};
+		}
+	}
 	throw ErrGDSObj(erNoNameExist);
 }
 
@@ -536,7 +546,7 @@ void CdGDSObj::SetName(const UTF16String &NewName)
 				return;
 			}
 		}
-	};
+	}
 	throw ErrGDSObj(erNoNameExist);
 }
 
@@ -664,6 +674,7 @@ void CdGDSObj::_GDSObjInitProc(CdObjClassMgr &Sender, CdObject *dObj, void *Data
 	if (dynamic_cast<CdGDSObj*>(dObj))
 		static_cast<CdGDSObj*>(dObj)->fGDSStream = (CdBlockStream*)Data;
 }
+
 
 // CdGDSFolder
 
@@ -795,11 +806,13 @@ void CdGDSFolder::DeleteObj(CdGDSObj *val)
 	vector<CdGDSFolder::TItem>::iterator it;
 	int Index = 0;
 	for (it = fList.begin(); it != fList.end(); it++, Index++)
+	{
 		if (it->Obj == val)
 		{
 			DeleteObj(Index);
 			return;
 		}
+	}
 	throw ErrGDSObj();
 }
 
@@ -854,11 +867,13 @@ CdGDSObj * CdGDSFolder::ObjItemEx(const UTF16String &Name)
 {
 	vector<CdGDSFolder::TItem>::iterator it;
 	for (it = fList.begin(); it != fList.end(); it++)
+	{
 		if (it->Name == Name)
 		{
 			_LoadItem(*it);
 			return it->Obj;
 		}
+	}
 	return NULL;
 }
 
@@ -1092,12 +1107,12 @@ void CdGDSFolder::_UpdateAll()
 	vector<CdGDSFolder::TItem>::iterator it;
 	for (it = fList.begin(); it != fList.end(); it++)
 	{
-		if (it->Obj) {
+		if (it->Obj)
+		{
 			if (dynamic_cast<CdGDSFolder*>(it->Obj))
 				static_cast<CdGDSFolder*>(it->Obj)->_UpdateAll();
 			else
-				if (it->Obj->fChanged)
-					it->Obj->SaveToBlockStream();
+				if (it->Obj->fChanged) it->Obj->SaveToBlockStream();
 		}
 	}
 }
@@ -1109,6 +1124,7 @@ vector<CdGDSFolder::TItem>::iterator CdGDSFolder::_FindObj(CdGDSObj *Obj)
 		if (it->Obj == Obj) return it;
 	return fList.end();
 }
+
 
 // CdGDSNull
 
@@ -1158,6 +1174,26 @@ char const* CdGDSStreamContainer::dName()
 char const* CdGDSStreamContainer::dTraitName()
 {
 	return "Stream";
+}
+
+CdGDSObj *CdGDSStreamContainer::NewOne(void *Param)
+{
+	CdGDSStreamContainer *rv = new CdGDSStreamContainer;
+	if (fPipeInfo)
+		rv->fPipeInfo = fPipeInfo->NewOne();
+	return rv;
+}
+
+void CdGDSStreamContainer::AssignOne(CdGDSObj &Source, void *Param)
+{
+	CdGDSObj::AssignOne(Source, Param);
+	if (dynamic_cast<CdGDSStreamContainer*>(&Source))
+	{
+		CdGDSStreamContainer &S = *static_cast<CdGDSStreamContainer*>(&Source);
+		S.CloseWriter();
+		S.CopyTo(*BufStream());
+		CloseWriter();
+	}
 }
 
 void CdGDSStreamContainer::LoadAfter(CdSerial &Reader, TdVersion Version)
@@ -1319,7 +1355,7 @@ void CdGDSStreamContainer::CopyFrom(CBufdStream &Source, TdPtr64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (TdPtr64)sizeof(Buffer))? (ssize_t)sizeof(Buffer) : Count;
+		N = (Count >= (TdPtr64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
 		Source.Read((void*)Buffer, N);
 		fBufStream->Write((void*)Buffer, N);
 		Count -= N;
@@ -1338,7 +1374,7 @@ void CdGDSStreamContainer::CopyFrom(CdStream &Source, TdPtr64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (TdPtr64)sizeof(Buffer))? (ssize_t)sizeof(Buffer) : Count;
+		N = (Count >= (TdPtr64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
 		Source.ReadBuffer((void*)Buffer, N);
 		fBufStream->Write((void*)Buffer, N);
 		Count -= N;
@@ -1358,7 +1394,7 @@ void CdGDSStreamContainer::CopyTo(CBufdStream &Dest, TdPtr64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (TdPtr64)sizeof(Buffer))? (ssize_t)sizeof(Buffer) : Count;
+		N = (Count >= (TdPtr64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
 		fBufStream->Read((void*)Buffer, N);
 		Dest.Write((void*)Buffer, N);
 		Count -= N;
@@ -1624,4 +1660,3 @@ TdPtr64 CdGDSFile::GetFileSize()
 {
     return fStreamSize;
 }
-

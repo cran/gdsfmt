@@ -34,27 +34,34 @@
 
 namespace CoreArray
 {
+	#ifdef COREARRAY_SUNPROCC
+		// silly compiler
+		#define PREFIX	extern
+	#else
+		#define PREFIX
+	#endif
+
 	// Bit Array
 
-	extern const UInt8 CoreArray_MaskBit1Array[8] =
+	PREFIX const UInt8 CoreArray_MaskBit1Array[8] =
 		{ 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
-	extern const UInt8 CoreArray_MaskBit1ArrayNot[8] =
+	PREFIX const UInt8 CoreArray_MaskBit1ArrayNot[8] =
 		{ 0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F };
 
-	extern const UInt8 CoreArray_MaskBit2Array[4] =
+	PREFIX const UInt8 CoreArray_MaskBit2Array[4] =
 		{ 0x03, 0x0C, 0x30, 0xC0 };
-	extern const UInt8 CoreArray_MaskBit2ArrayNot[4] =
+	PREFIX const UInt8 CoreArray_MaskBit2ArrayNot[4] =
 		{ 0xFC, 0xF3, 0xCF, 0x3F };
 
-	extern const UInt8 CoreArray_MaskBit4Array[2] =
+	PREFIX const UInt8 CoreArray_MaskBit4Array[2] =
 		{ 0x0F, 0xF0 };
-	extern const UInt8 CoreArray_MaskBit4ArrayNot[2] =
+	PREFIX const UInt8 CoreArray_MaskBit4ArrayNot[2] =
 		{ 0xF0, 0x0F };
 
 
 	// Class Names
 
-	extern const char *BitStreamNames[32] =
+	PREFIX const char *BitStreamNames[32] =
 	{
 		"dBit1", "dBit2", "dBit3", "dBit4", "dBit5", "dBit6", "dBit7", "dBit8",
 		"dBit9", "dBit10", "dBit11", "dBit12", "dBit13", "dBit14", "dBit15",
@@ -63,7 +70,7 @@ namespace CoreArray
 		"dBit30", "dBit31", "dBit32"
 	};
 
-	extern const char *SBitStreamNames[32] =
+	PREFIX const char *SBitStreamNames[32] =
 	{
 		"dSBit1", "dSBit2", "dSBit3", "dSBit4", "dSBit5", "dSBit6", "dSBit7", "dSBit8",
 		"dSBit9", "dSBit10", "dSBit11", "dSBit12", "dSBit13", "dSBit14", "dSBit15",
@@ -72,11 +79,9 @@ namespace CoreArray
 		"dSBit30", "dSBit31", "dSBit32"
 	};
 
-	#ifdef COREARRAY_SUNPROCC
-		extern bool CoreArray_ifRegClass = false;
-	#else
-		static bool CoreArray_ifRegClass = false;
-	#endif
+	PREFIX bool CoreArray_ifRegClass = false;
+
+	#undef PREFIX
 }
 
 
@@ -312,7 +317,7 @@ void CoreArray::bitBinShl(void *Buf, size_t NByte, UInt8 NShl)
 	}
 }
 
-COREARRAY_FORCE_INLINE static UInt8 xb(UInt8 v)
+COREARRAY_INLINE static UInt8 xb(UInt8 v)
 {
 	return v & 0x07;
 }

@@ -2,17 +2,17 @@
 \alias{gdsfmt-package}
 \alias{gdsfmt}
 \docType{package}
-\title{ CoreArray Genomic Data Structure (GDS) R Interface }
+\title{CoreArray Genomic Data Structure (GDS) R Interface}
 \description{
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
-by Xiuwen Zheng from 2007.
+from 2007.
 }
 \details{
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.7\cr
-	Date: \tab 2012-03-16\cr
+	Version: \tab 0.9.8\cr
+	Date: \tab 2012-04-14\cr
 	License: \tab LGPL version 3\cr
 }
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
@@ -25,8 +25,15 @@ support efficient data management in parallel for numerical genomic data, we dev
 Data Structure (GDS) file format. \code{gdsfmt} provides fundamental functions to support accessing
 data in parallel, and allows future R packages to call these functions.
 }
-\references{\url{http://corearray.sourceforge.net}}
+\references{
+	\url{http://corearray.sourceforge.net}
+
+	X. Zheng, D. Levine, J. Shen, C. Laurie, B. Weir.
+	A high-performance computing package for relatedness and principal component analysis in GWAS.
+	Poster, International Congress of Human Genetics (ICHG), Montreal, QC Canada, Oct 11 - 15, 2011
+}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+
 \examples{
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
@@ -35,6 +42,7 @@ L <- -2500:2499
 # commom types
 add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP", closezip=TRUE)
 add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50))
+add.gdsn(f, "mat", val=matrix(1:(10*6), nrow=10))
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))
 add.gdsn(f, "logical", val=rep(c(TRUE, FALSE, NA), 50))
 add.gdsn(f, "factor", val=as.factor(c(letters, NA, "AA", "CC")))
@@ -54,6 +62,13 @@ f
 
 read.gdsn(index.gdsn(f, "list"))
 read.gdsn(index.gdsn(f, "data.frame"))
+read.gdsn(index.gdsn(f, "mat"))
+
+# Apply functions over columns of matrix
+tmp <- apply.gdsn(index.gdsn(f, "mat"), margin=2, FUN=function(x) print(x))
+tmp <- apply.gdsn(index.gdsn(f, "mat"), margin=2,
+	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+	FUN=function(x) print(x))
 
 closefn.gds(f)
 }

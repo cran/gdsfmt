@@ -2,18 +2,17 @@
 \alias{write.gdsn}
 \title{Write data to a GDS node}
 \description{
-	To write data to a GDS node of hierarchical structure, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Writes data to a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
 write.gdsn(node, val, start, count)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the node of hierarchical structure.}
-	\item{val}{the data to be written.}
-	\item{start}{a vector of integers, starting from 1 for each dimension.}
-	\item{count}{a vector of integers, the length of each dimnension.}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{val}{the data to be written}
+	\item{start}{a vector of integers, starting from 1 for each dimension}
+	\item{count}{a vector of integers, the length of each dimnension}
 }
 \details{
 	\code{start}, \code{count}: The values in data are taken to be those in the array with
@@ -29,12 +28,12 @@ the data field.
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
-\seealso{ \code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{read.gdsn}},
-  \code{\link[gdsfmt]{add.gdsn}} }
+\seealso{
+	\code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{read.gdsn}},
+	\code{\link[gdsfmt]{add.gdsn}}
+}
 
 \examples{
-library(gdsfmt)
-
 (f <- createfn.gds("test.gds"))
 L <- -2500:2499
 

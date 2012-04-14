@@ -1345,16 +1345,15 @@ extern "C"
 	}
 
 
-
-
 	static CParallelBase _ParallelBase;
 
+	/// parallel computing
 	COREARRAY_DLLEXPORT bool plc_DoBaseThread(void (*Proc)(CdThread *, int, void*),
 		void *param, int nThread)
 	{
 		CORETRY
 			_ParallelBase.SetnThread(nThread);
-			_ParallelBase.DoThreads(Proc, param);
+			_ParallelBase.DoThreads((CParallelBase::TProc)Proc, param);
 			return true;
 		CORECATCH(false);
 	}

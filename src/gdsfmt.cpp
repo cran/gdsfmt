@@ -25,11 +25,13 @@
 // License along with CoreArray.
 // If not, see <http://www.gnu.org/licenses/>.
 
+#include <CoreDEF.h>
 #include <dType.h>
 #include <dSeq.h>
 
 #include <R.h>
-#include <cstring>
+#include <Rinternals.h>
+#include <string.h>
 #include <map>
 #include <string>
 #include <memory>
@@ -37,6 +39,7 @@
 
 using namespace std;
 using namespace CoreArray;
+
 
 #define LongBool int
 
@@ -51,20 +54,37 @@ using namespace CoreArray;
 #endif
 
 
+#define CORETRY			try {
+#define CORECATCH(cmd)	} \
+	catch (exception &E) { \
+		Init.LastError = E.what(); \
+		cmd; \
+	} \
+	catch (const char *E) { \
+		Init.LastError = E; \
+		cmd; \
+	}
 
+
+
+/// the object for initialization
 class TInit
 {
 public:
+	/// the maximum number of supported GDS files
 	const static int MaxFiles = 256;
+	/// the buffer of GDS files
 	CdGDSFile *Files[MaxFiles];
+	/// the last error message
 	string LastError;
 
 	struct strCmp {
 		bool operator()( const char* s1, const char* s2 ) const
 			{ return strcmp( s1, s2 ) < 0; }
 	};
-	map<const char *, const char *, strCmp> ClassMap;
+	map<const char*, const char*, strCmp> ClassMap;
 
+	/// constructor
 	TInit()
 	{
 		// initialize the local variables
@@ -178,6 +198,7 @@ public:
 		ClassMap["factor"] = TdTraits<CoreArray::UTF8*>::StreamName();;
 	}
 
+	/// destructor
 	~TInit()
 	{
 		for (int i=0; i < MaxFiles; i++)
@@ -192,6 +213,7 @@ public:
 		}
 	}
 
+	/// get an empty GDS file and its index
 	CdGDSFile *GetEmptyFile(int *Index)
 	{
 		// register classess
@@ -214,6 +236,7 @@ public:
 		throw ErrSequence("You have opened 256 gds files, not allow one more!");
 	}
 
+	/// get a specified GDS file
 	CdGDSFile *GetFile(int Index)
 	{
 		if ((Index<0) || (Index>=MaxFiles))
@@ -228,8 +251,10 @@ private:
 	bool InitClassFlag;
 };
 
+
 static TInit Init;
 
+/// error exception
 class ErrGDSFmt: public ErrCoreArray
 {
 public:
@@ -239,18 +264,21 @@ public:
 };
 
 
+
 // for RType, don't change the values
-const static int rtNULL			= 0;
-const static int rtInt			= 1;
-const static int rtFloat		= 2;
-const static int rtString		= 3;
-const static int rtLogical		= 4;
+const static int rtNULL			= 0;	//< NULL type
+const static int rtInt			= 1;	//< integer
+const static int rtFloat		= 2;	//< floating point number
+const static int rtString		= 3;	//< character
+const static int rtLogical		= 4;	//< logical variable
+
 
 // error information
 static const char *erNotFolder = "It is not a folder!";
 static const char *erNotFile = "It is not a stream container!";
 
 
+/// assign a R string to rstr
 inline static void RStrAgn(const char *Text, char **rstr)
 {
 	*rstr = R_alloc(strlen(Text)+1, 1);
@@ -259,11 +287,13 @@ inline static void RStrAgn(const char *Text, char **rstr)
 	strcpy(*rstr, Text);
 }
 
+/// return a string
 inline static const char * RStr(const char *Name)
 {
 	return (Name) ? Name : "";
 }
 
+/// copy to Buf with reduced one
 static void CopyDec(int *Value, int Cnt, int *Buf)
 {
 	if (Value != NULL)
@@ -281,6 +311,7 @@ static void CopyDec(int *Value, int Cnt, int *Buf)
 	}
 }
 
+/// copy to Count and checking
 static void CopyCnt(int *Count, int *DLen, int *Start, int Cnt)
 {
 	for (int k=1; k <= Cnt; k++)
@@ -299,6 +330,7 @@ static void CopyCnt(int *Count, int *DLen, int *Start, int Cnt)
 	}
 }
 
+/// get the total count
 inline static Int64 TotalCount(int *Count, int Cnt)
 {
 	Int64 rv = 1;
@@ -311,21 +343,28 @@ inline static Int64 TotalCount(int *Count, int Cnt)
 
 extern "C"
 {
-// File Operations
 
+// *****************************************************************************
+// File Operations
+// *****************************************************************************
+
+/// create a GDS file
+/** \param FileName    [in] the file name
+ *  \param gds         [out] the internal file index
+ *  \param Root        [out] the root of GDS file
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsCreateGDS(char **FileName, int *gds, CdGDSFolder **Root,
 	LongBool *err)
 {
 	CdGDSFile *f = NULL;
-	try {
+
+	CORETRY
 		f = Init.GetEmptyFile(gds);
 		f->SaveAsFile(*FileName);
 		*Root = &f->Root();
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
+	CORECATCH(
 		if ((f!=NULL) && !f->Log().List().empty())
 		{
 			Init.LastError.append(sLineBreak);
@@ -337,64 +376,73 @@ DLLEXPORT void gdsCreateGDS(char **FileName, int *gds, CdGDSFolder **Root,
 			}
 		}
 		if (f) delete f;
-		*err = true; *gds = -1; *Root = NULL;
-	}
+		*err = true; *gds = -1; *Root = NULL
+	)
 }
 
+/// open a existing GDS file
+/** \param FileName    [in] the file name
+ *  \param gds         [out] the internal file index
+ *  \param Root        [out] the root of GDS file
+ *  \param ReadOnly    [in] whether open the file in read-only mode
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsOpenGDS(char **FileName, int *gds, CdGDSFolder **Root,
 	LongBool *ReadOnly, LongBool *err)
 {
 	CdGDSFile *f = NULL;
-	try {
+
+	CORETRY
 		f = Init.GetEmptyFile(gds);
 		f->LoadFile(*FileName, *ReadOnly);
 		*Root = &f->Root();
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		if ((f!=NULL) && !f->Log().List().empty()) {
+	CORECATCH(
+		if ((f!=NULL) && !f->Log().List().empty())
+		{
 			Init.LastError.append(sLineBreak);
 			Init.LastError.append("Log:");
-			for (size_t i=0; i < f->Log().List().size(); i++) {
+			for (size_t i=0; i < f->Log().List().size(); i++)
+			{
 				Init.LastError.append(sLineBreak);
 				Init.LastError.append(f->Log().List()[i].Msg);
 			}
 		}
 		if (f) delete f;
-		*err = true; *gds = -1; *Root = NULL;
-	}
+		*err = true; *gds = -1; *Root = NULL
+	)
 }
 
+/// close the existing GDS file
+/** \param gds         [in] the internal file index
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsCloseGDS(int *gds, LongBool *err)
 {
-	try {
+	CORETRY
 		CdGDSFile *f = Init.GetFile(*gds);
 		Init.Files[*gds] = NULL;
 		delete f;
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// synchronize a GDS file
+/** \param gds         [in] the internal file index
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsSyncGDS(int *gds, LongBool *err)
 {
-	try {
+	CORETRY
 		Init.GetFile(*gds)->SyncFile();
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// detect whether a file has been opened
+/** \param gds         [in] the internal file index
+ *  \param out_valid   [out] return 1 if the file is valid, otherwise 0
+**/
 DLLEXPORT void gdsFileValid(int *gds, int *out_valid)
 {
 	if ((0 <= *gds) && (*gds < Init.MaxFiles))
@@ -405,12 +453,46 @@ DLLEXPORT void gdsFileValid(int *gds, int *out_valid)
 	}
 }
 
+/// clean up fragments of a GDS file
+/** \param FileName    [in] the file name
+ *  \param verbose     [in] if TRUE, show information
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsTidyUp(char **FileName, LongBool *verbose, LongBool *err)
+{
+	CORETRY
+		CdGDSFile file(*FileName, CdGDSFile::dmOpenReadWrite);
+		if (*verbose)
+		{
+			Rprintf("Clean up the fragments of GDS file:\n");
+			Rprintf("\topen the file '%s' (size: %s).\n", *FileName,
+				IntToStr(file.GetFileSize()).c_str());
+			Rprintf("\tsave it to '%s.tmp'.\n", *FileName);
+		}
+		file.TidyUp();
+		if (*verbose)
+		{
+			Rprintf("\trename '%s.tmp' (size: %s).\n", *FileName,
+				IntToStr(file.GetFileSize()).c_str());
+		}
+		*err = false;
+	CORECATCH(*err = true)
+}
 
+
+
+
+// *****************************************************************************
 // File Structure Operations
+// *****************************************************************************
 
+/// detect whether a node is valid
+/** \param Node        [in] a specified GDS node
+ *  \param out_valid   [out] return 1 if the file is valid, otherwise 0
+**/
 DLLEXPORT void gdsNodeValid(CdGDSObj **Node, int *out_valid)
 {
-	try {
+	CORETRY
 		*out_valid = 0;
 		if (*Node != NULL)
 		{
@@ -427,18 +509,11 @@ DLLEXPORT void gdsNodeValid(CdGDSObj **Node, int *out_valid)
 				}
 			}
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*out_valid = 0;
-	}
-	catch (...)
-	{
-		*out_valid = 0;
-	}
+	CORECATCH(*out_valid = 0)
 }
 
+/// detect whether a node is valid (internal use)
+/** \param Node        [in] a specified GDS node **/
 static void _NodeValid(CdGDSObj *Node)
 {
 	try {
@@ -466,9 +541,13 @@ static void _NodeValid(CdGDSObj *Node)
 	}
 }
 
+/// get the number of child nodes
+/** \param Node        [in] a specified GDS node
+ *  \param Count       [out] return the number of child nodes
+**/
 DLLEXPORT void gdsNodeChildCnt(CdGDSObj **Node, int *Count)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -476,18 +555,19 @@ DLLEXPORT void gdsNodeChildCnt(CdGDSObj **Node, int *Count)
 			*Count = static_cast<CdGDSFolder*>(*Node)->Count();
 		else
 			*Count = 0;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*Count = -1;
-	}
+	CORECATCH(*Count = -1)
 }
 
+/// get the number of a specified node
+/** \param Node        [in] a specified GDS node
+ *  \param Name        [out] output the name
+ *  \param Full        [in] if TRUE, return the name with full path
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeName(CdGDSObj **Node, char **Name, LongBool *Full,
 	LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -495,18 +575,19 @@ DLLEXPORT void gdsNodeName(CdGDSObj **Node, char **Name, LongBool *Full,
 			RStrAgn(UTF16toUTF8((*Node)->FullName()).c_str(), Name);
 		else
 			RStrAgn(UTF16toUTF8((*Node)->Name()).c_str(), Name);
+
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// enumerate the names of its child nodes
+/** \param Node        [in] a specified GDS node
+ *  \param Names       [out] output the names
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeEnumName(CdGDSObj **Node, char **Names, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -521,17 +602,17 @@ DLLEXPORT void gdsNodeEnumName(CdGDSObj **Node, char **Names, LongBool *err)
 			*err = false;
 		} else
 			throw ErrGDSFmt(erNotFolder);
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// enumerate all of child nodes
+/** \param Node        [in] a specified GDS node
+ *  \param Ptr         [out] output child nodes
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeEnumPtr(CdGDSObj **Node, void **Ptr, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -548,18 +629,19 @@ DLLEXPORT void gdsNodeEnumPtr(CdGDSObj **Node, void **Ptr, LongBool *err)
 			*err = false;
 		} else
 			throw ErrGDSFmt(erNotFolder);
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// get the node with index or indices
+/** \param Node        [in] a specified GDS node
+ *  \param Index       [in] the index or indices of a specified node
+ *  \param Cnt         [in] the length of Index
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeIndex(CdGDSObj **Node, int *Index, int *Cnt,
 	LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -569,24 +651,28 @@ DLLEXPORT void gdsNodeIndex(CdGDSObj **Node, int *Index, int *Cnt,
 				throw ErrGDSFmt(erNotFolder);
 			CdGDSFolder &Dir = *static_cast<CdGDSFolder*>(*Node);
 			if ((*Index < 1) || (*Index > (int)Dir.Count()))
+			{
 				throw ErrGDSFile("Child Index[%d], out of range 1..%d!",
 					*Index, Dir.Count());
+			}
 			*Node = Dir.ObjItem(*Index-1);
 			Index++;
 		}
+
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*Node = NULL; *err = true;
-	}
+	CORECATCH(*Node = NULL; *err = true)
 }
 
+/// get the node with specified path and name
+/** \param Node        [in] a specified GDS node
+ *  \param Name        [in] the path and name of a specified node
+ *  \param Cnt         [in] the length of Index
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeIndexEx(CdGDSObj **Node, char **Name, int *Cnt,
 	LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -599,40 +685,55 @@ DLLEXPORT void gdsNodeIndexEx(CdGDSObj **Node, char **Name, int *Cnt,
 			Name++;
 		}
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*Node = NULL; *err = true;
-	}
+	CORECATCH(*Node = NULL; *err = true)
 }
 
+/// get the description of a specified node
+/** \param Node        [in] a specified GDS node
+ *  \param Desp        [out] the description
+ *  \param Name        [out] the name of a specified node
+ *  \param SVType      [out] data type [rtNULL, rtInt, rtFloat, rtString, rtLogical]
+ *  \param isarray     [out] indicates whether it is array-type
+ *  \param DimCnt      [out] the number of dimension
+ *  \param DimEach     [out] the size(s) of dimension
+ *  \param PackMode    [out] compression mode
+ *  \param PackRatio   [out] the ratio of compression
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SVType,
-	int *DimCnt, int *DimEach, char **PackMode, double *PackRatio, LongBool *err)
+	LongBool *isarray, int *DimCnt, int *DimEach, char **PackMode, double *PackRatio,
+	LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
+		// the name of node
 		RStrAgn(UTF16toUTF8((*Node)->Name()).c_str(), Name);
-		RStrAgn((*Node)->dName(), Desp);
+		// the description
+		RStrAgn((*Node)->dTraitName(), Desp);
 
+		*isarray = FALSE;
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
 			*SVType = Obj->SVType();
 			*DimCnt = Obj->DimCnt(); Obj->GetDimLen(DimEach);
+			*isarray = TRUE;
 
 			if (Obj->PipeInfo())
 			{
 				RStrAgn(Obj->PipeInfo()->Coder(), PackMode);
 				if (Obj->PipeInfo()->StreamTotalIn() > 0)
+				{
 					*PackRatio = (double)Obj->PipeInfo()->StreamTotalOut() /
 						Obj->PipeInfo()->StreamTotalIn();
-				else
+				} else {
 					*PackRatio = NaN;
-			} else
+				}
+			} else {
 				*PackRatio = NaN;
+			}
 		} else if (dynamic_cast<CdGDSStreamContainer*>(*Node))
 		{
 			CdGDSStreamContainer *Obj = static_cast<CdGDSStreamContainer*>(*Node);
@@ -647,8 +748,9 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SV
 				{
 					*PackRatio = (double)Obj->PipeInfo()->StreamTotalOut() /
 						Obj->PipeInfo()->StreamTotalIn();
-				} else
+				} else {
 					*PackRatio = NaN;
+				}
 			} else {
 				DimEach[0] = Obj->GetSize();;
 				*PackRatio = NaN;
@@ -657,21 +759,29 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SV
 			*DimCnt = 0; *PackRatio = NaN;
 			*SVType = svCustom;
 		}
+
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// add a new node
+/** \param Node        [in] a specified GDS node
+ *  \param NodeName    [in] the name of a new node
+ *  \param Storage     [in] the mode of storage
+ *  \param Compress    [in] the method of compression
+ *  \param DimCnt      [in] the number of dimension
+ *  \param Dim         [in] the size(s) of dimension
+ *  \param MaxLen      [in] if the data is character format, specify the maximum nchar
+ *  \param CompleteData  [in] if compressing data and TRUE, get into read mode after adding
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 	char **Compress, int *DimCnt, int *Dim, int *MaxLen, LongBool *CompleteData,
 	LongBool *err)
 {
 	CdSequenceX *vObj = NULL;
-	try {
+
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -734,18 +844,20 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
         }
 
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// add a new node with a specified file
+/** \param Node        [in] a specified GDS node
+ *  \param NodeName    [in] the name of a new node
+ *  \param FileName    [in] the name of input file
+ *  \param Compress    [in] the method of compression
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsAddFile(CdGDSObj **Node, char **NodeName, char **FileName,
 	char **Compress, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -763,17 +875,17 @@ DLLEXPORT void gdsAddFile(CdGDSObj **Node, char **NodeName, char **FileName,
 		vObj->CloseWriter();
 
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// get the file from a file node
+/** \param Node        [in] a specified GDS node
+ *  \param OutFileName [in] the name for output file
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsGetFile(CdGDSObj **Node, char **OutFileName, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 		// the pointer to the file
@@ -786,17 +898,16 @@ DLLEXPORT void gdsGetFile(CdGDSObj **Node, char **OutFileName, LongBool *err)
 		Obj->CopyTo(*file.get());
 
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// delete a node
+/** \param Node        [in] a specified GDS node
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsDeleteNode(CdGDSObj **Node, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -808,74 +919,93 @@ DLLEXPORT void gdsDeleteNode(CdGDSObj **Node, LongBool *err)
 			Init.LastError = "Can not delete the root.";
 			*err = true;
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// rename a node
+/** \param Node        [in] a specified GDS node
+ *  \param NewName     [in] the new name
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsRenameNode(CdGDSObj **Node, char **NewName, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
-
 		(*Node)->SetName(*NewName);
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+		*err = false;
+	CORECATCH(*err = true)
 }
 
-// Attribute Operations
 
-DLLEXPORT void gdsAttrCnt(CdGDSObj **Node, int *Cnt)
+
+
+
+// *****************************************************************************
+// Attribute Operations
+// *****************************************************************************
+
+/// get the number of attributes
+/** \param Node        [in] a specified GDS node
+ *  \param Cnt         [out] output the number of attributes
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsAttrCnt(CdGDSObj **Node, int *Cnt, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
-
 		*Cnt = (*Node)->Attribute().Count();
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-	}
+		*err = false;
+	CORECATCH(*err = true)
 }
 
-DLLEXPORT void gdsAttrType(CdGDSObj **Node, int *PType)
+/// get the types of attributes
+/** \param Node        [in] a specified GDS node
+ *  \param PType       [out] output the types of attributes
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsAttrType(CdGDSObj **Node, int *PType, LongBool *err)
 {
-	for (int i = 0; i < (int)(*Node)->Attribute().Count(); i++)
-	{
-		TdsData &p = (*Node)->Attribute()[i];
-		if (p.isInt())
-			*PType = rtInt;
-		else if (p.isFloat())
-			*PType = rtFloat;
-		else if (p.isStr())
-			*PType = rtString;
-		else if (p.isBool())
-			*PType = rtLogical;
-		else
-			*PType = rtNULL;
-		PType++;
-	}
+	CORETRY
+		for (int i = 0; i < (int)(*Node)->Attribute().Count(); i++)
+		{
+			TdsData &p = (*Node)->Attribute()[i];
+			if (p.isInt())
+				*PType = rtInt;
+			else if (p.isFloat())
+				*PType = rtFloat;
+			else if (p.isStr())
+				*PType = rtString;
+			else if (p.isBool())
+				*PType = rtLogical;
+			else
+				*PType = rtNULL;
+			PType++;
+		}
+		*err = false;
+	CORECATCH(*err = true)
 }
 
+/// get the value of attribute
+/** \param Node        [in] a specified GDS node
+ *  \param Index       [in] the index of attribute (from ONE)
+ *  \param RType       [out] output the type of attribute
+ *  \param Ptr         [in] the pointer to data field
+ *  \param Name        [out] output the name of attribute
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsGetAttr(CdGDSObj **Node, int *Index, int *RType, void *Ptr,
 	char **Name, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
 		RStrAgn(UTF16toUTF8((*Node)->Attribute().Names(*Index-1)).c_str(), Name);
 		TdsData &p = (*Node)->Attribute()[*Index-1];
-		switch (*RType) {
+		switch (*RType)
+		{
 			case rtInt:
 				*static_cast<int*>(Ptr) = p.getInt32(); break;
 			case rtFloat:
@@ -885,19 +1015,22 @@ DLLEXPORT void gdsGetAttr(CdGDSObj **Node, int *Index, int *RType, void *Ptr,
 			case rtLogical:
 				*static_cast<LongBool*>(Ptr) = p.getBool(); break;
 		}
+
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// set an attribute
+/** \param Node        [in] a specified GDS node
+ *  \param Name        [in] the name of attribute
+ *  \param RType       [in] the type of attribute
+ *  \param Ptr         [in] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
 	void *Ptr, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -906,7 +1039,8 @@ DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
 			p = &((*Node)->Attribute()[*Name]);
 		else
 			p = &((*Node)->Attribute().Add(*Name));
-		switch (*RType) {
+		switch (*RType)
+		{
 			case rtInt:
             	p->setInt32(*static_cast<int*>(Ptr)); break;
 			case rtFloat:
@@ -916,38 +1050,41 @@ DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
 			case rtLogical:
 				p->setBool(*static_cast<int*>(Ptr)); break;
 		}
+
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// delete an attribute
+/** \param Node        [in] a specified GDS node
+ *  \param Name        [in] the name of attribute
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsDeleteAttr(CdGDSObj **Node, char **Name, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
-
 		(*Node)->Attribute().Delete(UTF8toUTF16(*Name));
 		*err = false;
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
-// Data Operations
 
+
+
+
+// *****************************************************************************
+// Data Operations
+// *****************************************************************************
+
+/// set error
 inline static void ErrNode(CdGDSObj *Obj)
 {
 	Init.LastError = Obj ? "Not supported data type!" : "No dataset!";
 }
 
+/// convert RType to SVType
 inline static TSVType RtoSV(int RType)
 {
 	switch (RType) {
@@ -955,18 +1092,25 @@ inline static TSVType RtoSV(int RType)
 		case 2: return svFloat64;
 		case 3: return svStrUTF8;
 		case 4: return svInt32;
-		default:
-			throw ErrGDSFmt("Invalid RType %d", RType);
+		default: throw ErrGDSFmt("Invalid RType %d", RType);
 	}
 }
 
+/// append data to a node
+/** \param Node        [in] a specified GDS node
+ *  \param RType       [in] the data type
+ *  \param Ptr         [in] the pointer to data field
+ *  \param TotalCnt    [in] the total number of appended data
+ *  \param CntWarn     [out] if TRUE, 
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjAppend(CdGDSObj **Node, int *RType, void *Ptr,
 	int *TotalCnt, LongBool *CntWarn, LongBool *err)
 {
 	if (*TotalCnt <= 0)
 		{ *err = false; return; }
 
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1006,18 +1150,23 @@ DLLEXPORT void gdsObjAppend(CdGDSObj **Node, int *RType, void *Ptr,
 			*err = true;
 			ErrNode(*Node);
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+
+	CORECATCH(*err = true)
 }
 
+/// get the description
+/** \param Node        [in] a specified GDS node
+ *  \param DimCnt      [in] the number of dimension
+ *  \param Start       [in] the starting positions
+ *  \param Count       [in] the count
+ *  \param TotalCnt    [out] output the total number of data
+ *  \param RType       [out] the data type
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsxObjDesp(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *TotalCnt, int *RType, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1059,14 +1208,47 @@ DLLEXPORT void gdsxObjDesp(CdGDSObj **Node, int *DimCnt, int *Start,
 			*err = true;
 			ErrNode(*Node);
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+
+	CORECATCH(*err = true)
 }
 
+/// get the type of data
+/** \param Node        [in] a specified GDS node
+ *  \param RType       [out] the data type
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsxObjType(CdGDSObj **Node, int *RType, LongBool *err)
+{
+	CORETRY
+		// check
+		_NodeValid(*Node);
+
+		if (dynamic_cast<CdSequenceX*>(*Node))
+		{
+			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
+			if (COREARRAY_SVINT(Obj->SVType()))
+			{
+				*RType = ((*Node)->Attribute().HasName("R.logical")) ?
+					rtLogical : rtInt;
+			} else if (COREARRAY_SVFLOAT(Obj->SVType()))
+				*RType = rtFloat;
+			else if (COREARRAY_SVSTR(Obj->SVType()))
+				*RType = rtString;
+			else
+				*RType = rtNULL;
+
+			*err = false;
+
+		} else {
+			*err = true;
+			ErrNode(*Node);
+		}
+
+	CORECATCH(*err = true)
+}
+
+
+/// read string
 static void rIterStr(TIterDataExt &Rec)
 {
 	char **p = (char**)Rec.pBuf;
@@ -1079,10 +1261,19 @@ static void rIterStr(TIterDataExt &Rec)
 	Rec.pBuf = (char*)p;
 }
 
+/// read data from a node
+/** \param Node        [in] a specified GDS node
+ *  \param DimCnt      [in] the number of dimension
+ *  \param Start       [in] the starting positions
+ *  \param Count       [in] the count
+ *  \param RType       [in] the data type
+ *  \param Ptr         [out] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *RType, void *Ptr, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1118,23 +1309,249 @@ DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 					Rec.Seq = Obj;
 					if (Rec.LastDim > 0)
 						Internal::SeqIterRect(DStart, Count, *DimCnt, Rec, rIterStr);
-				} else
+				} else {
 					RStrAgn(UTF16toUTF8(Obj->Iterator(NULL).toStr()).c_str(),
 						static_cast<char**>(Ptr));
+				}
 			}
 			*err = false;
 		} else {
 			*err = true;
 			ErrNode(*Node);
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+
+	CORECATCH(*err = true)
 }
 
+
+/// read string from the selection
+static void rIterStrEx(TIterDataExt &Rec, CBOOL *Selection)
+{
+	char **p = (char**)Rec.pBuf;
+	TdIterator it = Rec.Seq->Iterator(Rec.Index);
+	for (int k=1; k <= Rec.LastDim; k++)
+	{
+		if (*Selection++)
+		{
+			RStrAgn(UTF16toUTF8(it.toStr()).c_str(), p);
+			p++;
+		}
+		++it;
+	}
+	Rec.pBuf = (char*)p;
+}
+
+/// read data from a node with a selection
+/** \param Node        [in] a specified GDS node
+ *  \param Selection   [in] the logical variable of selection
+ *  \param RType       [in] the data type
+ *  \param Ptr         [out] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsObjReadExData(CdGDSObj **Node, LongBool *Selection,
+	int *RType, void *Ptr, LongBool *err)
+{
+	CORETRY
+		// check
+		_NodeValid(*Node);
+
+		if (dynamic_cast<CdSequenceX*>(*Node))
+		{
+			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
+			CdSequenceX::TSeqDimBuf DStart, DLen;
+
+			memset(&DStart, 0, sizeof(DStart));
+			Obj->GetDimLen(DLen);
+			int DCnt = Obj->DimCnt();
+			
+			vector< vector<CBOOL> > Select;
+			vector< CBOOL* > SelPtr;
+			Select.resize(DCnt);
+			for (int i=DCnt-1; i >= 0; i--)
+			{
+				Select[i].resize(DLen[i]);
+				for (int k=0; k < DLen[i]; k++, Selection++)
+					Select[i][k] = (*Selection == TRUE);
+			}
+			SelPtr.resize(DCnt);
+			for (int i=0; i < DCnt; i++) SelPtr[i] = &(Select[i][0]);
+
+			TSVType SV = RtoSV(*RType);
+			if (!COREARRAY_SVSTR(SV))
+			{
+				Obj->rDataEx(DStart, DLen, &(SelPtr[0]), Ptr, SV);
+			} else {
+				if (DCnt > 0)
+				{
+					TIterDataExt Rec;
+					Rec.pBuf = (char*)Ptr;
+					Rec.LastDim = DLen[DCnt-1];
+					Rec.Seq = Obj;
+					if (Rec.LastDim > 0)
+						Internal::SeqIterRectEx(DStart, DLen, &(SelPtr[0]), DCnt, Rec, rIterStrEx);
+				} else {
+					RStrAgn(UTF16toUTF8(Obj->Iterator(NULL).toStr()).c_str(),
+						static_cast<char**>(Ptr));
+				}
+			}
+			*err = false;
+		} else {
+			*err = true;
+			ErrNode(*Node);
+		}
+
+	CORECATCH(*err = true)
+}
+
+
+// *************************************************************************
+// apply.gdsn
+//
+
+/// convert LongBool to CBOOL
+/** \param from        [in] input logical vector
+ *  \param to          [out] output CBOOL vector
+ *  \param cnt         [in] the length of vector
+**/
+DLLEXPORT void gdsLongBool2CBOOL(LongBool *from, CBOOL *to, int *cnt)
+{
+	for (int i=0; i < *cnt; i++, from++, to++)
+		*to = (*from == TRUE);
+}
+
+/// read data from a node for "apply.gdsn"
+/** \param Node        [in] a specified GDS node
+ *  \param Col         [in] the column index (starting from ONE)
+ *  \param RType       [in] the data type
+ *  \param Ptr         [out] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsApplyCol(CdGDSObj **Node, int *Col, int *RType, void *Ptr, LongBool *err)
+{
+	CORETRY
+		// check
+		_NodeValid(*Node);
+		if (!dynamic_cast<CdSequenceX*>(*Node))
+			ErrNode(*Node);
+
+		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
+		CdSequenceX::TSeqDimBuf DStart, Count;
+		DStart[0] = *Col - 1; DStart[1] = 0;
+		Obj->GetDimLen(Count);
+		Count[0] = 1;
+
+		TSVType SV = RtoSV(*RType);
+		if (!COREARRAY_SVSTR(SV))
+		{
+			Obj->rData(DStart, Count, Ptr, SV);
+		} else {
+			TIterDataExt Rec;
+			Rec.pBuf = (char*)Ptr;
+			Rec.LastDim = Count[1];
+			Rec.Seq = Obj;
+			if (Rec.LastDim > 0)
+				Internal::SeqIterRect(DStart, Count, 2, Rec, rIterStr);
+		}
+		*err = false;
+
+	CORECATCH(*err = true)
+}
+
+/// read data from a node for "apply.gdsn"
+/** \param Node        [in] a specified GDS node
+ *  \param Col         [in] the column index (starting from ONE)
+ *  \param RType       [in] the data type
+ *  \param Ptr         [out] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsApplyColEx(CdGDSObj **Node, int *Col, CBOOL *Selection,
+	int *RType, void *Ptr, LongBool *err)
+{
+	CORETRY
+		// check
+		_NodeValid(*Node);
+		if (!dynamic_cast<CdSequenceX*>(*Node))
+			ErrNode(*Node);
+
+		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
+		CdSequenceX::TSeqDimBuf DStart, Count;
+		DStart[0] = *Col - 1; DStart[1] = 0;
+		Obj->GetDimLen(Count);
+		Count[0] = 1;
+
+		CBOOL ColFlag = true;
+		CBOOL *SelPtr[2] = { &ColFlag, Selection };
+
+		TSVType SV = RtoSV(*RType);
+		if (!COREARRAY_SVSTR(SV))
+		{
+			Obj->rDataEx(DStart, Count, SelPtr, Ptr, SV);
+		} else {
+			TIterDataExt Rec;
+			Rec.pBuf = (char*)Ptr;
+			Rec.LastDim = Count[1];
+			Rec.Seq = Obj;
+			if (Rec.LastDim > 0)
+				Internal::SeqIterRectEx(DStart, Count, SelPtr, 2, Rec, rIterStrEx);
+		}
+		*err = false;
+
+	CORECATCH(*err = true)
+}
+
+/// read data from a node for "apply.gdsn"
+/** \param Node        [in] a specified GDS node
+ *  \param Row         [in] the row index (starting from ONE), used for RowIdx
+ *  \param RowIdx      [in] the matching indices of rows
+ *  \param rCnt        [in] the count of rows
+ *  \param ColSel      [in] the selection of columns
+ *  \param RType       [in] the data type
+ *  \param Ptr         [out] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gdsApplyRow(CdGDSObj **Node, int *Row, int *RowIdx, int *rCnt,
+	CBOOL *ColSel, int *RType, void *Ptr, LongBool *err)
+{
+	CORETRY
+		// check
+		_NodeValid(*Node);
+		if (!dynamic_cast<CdSequenceX*>(*Node))
+			ErrNode(*Node);
+
+		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
+		CdSequenceX::TSeqDimBuf DStart, Count;
+		Obj->GetDimLen(Count);
+
+		const int nRow = RowIdx[*Row + *rCnt - 2] - RowIdx[*Row - 1] + 1;
+		vector<CBOOL> RowFlag(nRow, false);
+		for (int i=0; i < *rCnt; i++)
+			RowFlag[RowIdx[*Row + i - 1] - RowIdx[*Row - 1]] = true;
+		CBOOL *SelPtr[2] = { ColSel, &(RowFlag[0]) };
+
+		DStart[0] = 0; DStart[1] = RowIdx[*Row - 1] - 1;
+		Count[1] = nRow;
+
+		TSVType SV = RtoSV(*RType);
+		if (!COREARRAY_SVSTR(SV))
+		{
+			Obj->rDataEx(DStart, Count, SelPtr, Ptr, SV);
+		} else {
+			TIterDataExt Rec;
+			Rec.pBuf = (char*)Ptr;
+			Rec.LastDim = Count[1];
+			Rec.Seq = Obj;
+			if (Rec.LastDim > 0)
+				Internal::SeqIterRectEx(DStart, Count, SelPtr, 2, Rec, rIterStrEx);
+		}
+		*err = false;
+
+	CORECATCH(*err = true)
+}
+
+
+
+
+/// write string
 static void wIterStr(TIterDataExt &Rec)
 {
 	char **p = (char**)Rec.pBuf;
@@ -1147,10 +1564,18 @@ static void wIterStr(TIterDataExt &Rec)
 	Rec.pBuf = (char*)p;
 }
 
+/// write data to a node
+/** \param Node        [in] a specified GDS node
+ *  \param DimCnt      [in] the number of dimension
+ *  \param Dim         [in] the sizes of dimension
+ *  \param RType       [in] the data type
+ *  \param Ptr         [in] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjWriteAll(CdGDSObj **Node, int *DimCnt, int *Dim,
 	int *RType, void *Ptr, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1204,18 +1629,22 @@ DLLEXPORT void gdsObjWriteAll(CdGDSObj **Node, int *DimCnt, int *Dim,
                 }
 			}
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// write data to a node
+/** \param Node        [in] a specified GDS node
+ *  \param DimCnt      [in] the number of dimension
+ *  \param Start       [in] the starting positions
+ *  \param Count       [in] the count
+ *  \param RType       [in] the data type
+ *  \param Ptr         [in] the pointer to data field
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjWriteData(CdGDSObj **Node, int *DimCnt, int *Start,
 	int *Count, int *RType, void *Ptr, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1261,18 +1690,19 @@ DLLEXPORT void gdsObjWriteData(CdGDSObj **Node, int *DimCnt, int *Start,
 			*err = true;
 			ErrNode(*Node);
         }
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// set the dimension of data to a node
+/** \param Node        [in] a specified GDS node
+ *  \param DimCnt      [in] the number of dimension
+ *  \param DLen        [in] the new sizes of dimension
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjSetDim(CdGDSObj **Node, int *DimCnt, int *DLen,
 	LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1296,17 +1726,17 @@ DLLEXPORT void gdsObjSetDim(CdGDSObj **Node, int *DimCnt, int *DLen,
 			*err = true;
 			ErrNode(*Node);
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// set a new compression mode
+/** \param Node        [in] a specified GDS node
+ *  \param Compress    [in] the compression mode
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjCompress(CdGDSObj **Node, char **Compress, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1318,17 +1748,16 @@ DLLEXPORT void gdsObjCompress(CdGDSObj **Node, char **Compress, LongBool *err)
 			*err = true;
 			ErrNode(*Node);
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
+/// get into read mode of compression
+/** \param Node        [in] a specified GDS node
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
 DLLEXPORT void gdsObjPackClose(CdGDSObj **Node, LongBool *err)
 {
-	try {
+	CORETRY
 		// check
 		_NodeValid(*Node);
 
@@ -1341,15 +1770,12 @@ DLLEXPORT void gdsObjPackClose(CdGDSObj **Node, LongBool *err)
 			ErrNode(*Node);
 			*err = true;
 		}
-	}
-	catch (exception &E)
-	{
-		Init.LastError = E.what();
-		*err = true;
-	}
+	CORECATCH(*err = true)
 }
 
-// Error function
+/// get the last error message
+/** \param Msg        [out] output the last error message
+**/
 DLLEXPORT void gdsLastErrGDS(char **Msg)
 {
 	RStrAgn(Init.LastError.c_str(), Msg);

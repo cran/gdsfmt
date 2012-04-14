@@ -53,7 +53,7 @@ namespace CoreArray
 	/** You can use COREARRAY_VERSION in $if expressions to test the runtime
 	 *  library version level independently of the compiler version level.
 	 *  For example:  {$if COREARRAY_VERSION >= 0x0100} ... {$endif}
-	 */
+	**/
 	#define COREARRAY_VERSION        0x0100
 
 	/// A string of CoreArray library version
@@ -77,7 +77,7 @@ namespace CoreArray
 	/// Class or file version
 	/** The first byte is major version ID, and the second byte is
 	 *  minor version ID.
-	 */
+	**/
 	typedef UInt16 TdVersion;
 
 	/// Type ID used in CdSerial
@@ -135,8 +135,9 @@ namespace CoreArray
 	#define COREARRAY_VALID_TYPEID(x) ((osUnknown<(x)) && ((x)<=osStreamPos))
 
 
-	// CdObject
+	// predefined classes
 
+	class CdAbstract;
 	class CdObject;
 	class CdSerial;
 	class CdObjClassMgr;
@@ -144,18 +145,21 @@ namespace CoreArray
 	namespace Internal
 	{
 		/// Access CdObject::LoadStruct
-		void CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader,
-			TdVersion Version);
+		void CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader, TdVersion Version);
 		/// Access CdObject::SaveStruct
-		void CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer,
-			bool IncludeName);
+		void CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer, bool IncludeName);
 	}
+
+
+	/// The abstract root class for all CoreArray classes
+	class CdAbstract {};
+
 
 	/// The root class for CoreArray object
 	/** CdObject contains a sub-system of stream, which allows to load and
 	 *  save its data to a stream.
-	 */
-	class CdObject
+	**/
+	class CdObject: public CdAbstract
 	{
 	public:
 		/// Access CdObject::LoadStruct
@@ -200,16 +204,23 @@ namespace CoreArray
 	};
 
 
+	/// The abstract root of class manager 
+	class CdAbstractManager: public CdAbstract {};
+
+	/// The abstract root class of item for CdAbstractManager
+	class CdAbstractItem: public CdAbstract {};
+
+
 	/// A notification object
 	template<class TSender=CdObject> struct TdOnNotify
 	{
 	public:
-		COREARRAY_FORCE_INLINE TdOnNotify() { Clear(); }
-		COREARRAY_FORCE_INLINE operator bool() const { return (Event!=NULL); }
-		COREARRAY_FORCE_INLINE void Clear() { Obj = NULL; Event = NULL; }
-		COREARRAY_FORCE_INLINE void Notify(TSender *Sender)
+		COREARRAY_INLINE TdOnNotify() { Clear(); }
+		COREARRAY_INLINE operator bool() const { return (Event!=NULL); }
+		COREARRAY_INLINE void Clear() { Obj = NULL; Event = NULL; }
+		COREARRAY_INLINE void Notify(TSender *Sender)
 			{ if (this) if (Event) (Obj->*Event)(Sender); }
-		template<class T> COREARRAY_FORCE_INLINE TdOnNotify &Set( T *const vObj,
+		template<class T> COREARRAY_INLINE TdOnNotify &Set( T *const vObj,
 				void (T::*vEvent)(TSender*) )
 			{ Obj = (CdObject*)vObj; Event = (TdOnDo)vEvent; return *this; }
 
@@ -253,7 +264,7 @@ namespace CoreArray
 		ssize_t Release();
 
 		/// Return the count
-		COREARRAY_FORCE_INLINE ssize_t Reference() const { return fReference; }
+		COREARRAY_INLINE ssize_t Reference() const { return fReference; }
 
 	private:
 		ssize_t fReference;
@@ -270,13 +281,13 @@ namespace CoreArray
 	template<class T> struct TdAutoRef
 	{
 	public:
-		COREARRAY_FORCE_INLINE TdAutoRef() { fobj = NULL; }
-		COREARRAY_FORCE_INLINE TdAutoRef(T *vObj) { (fobj = vObj)->AddRef(); }
-		COREARRAY_FORCE_INLINE ~TdAutoRef() { fobj->Release(); }
+		COREARRAY_INLINE TdAutoRef() { fobj = NULL; }
+		COREARRAY_INLINE TdAutoRef(T *vObj) { (fobj = vObj)->AddRef(); }
+		COREARRAY_INLINE ~TdAutoRef() { fobj->Release(); }
 
-		COREARRAY_FORCE_INLINE T * get()
+		COREARRAY_INLINE T * get()
 			{ return fobj; }
-		COREARRAY_FORCE_INLINE T* operator=(T *_Right)
+		COREARRAY_INLINE T* operator=(T *_Right)
 		{
 			if (_Right != fobj)
 			{
@@ -285,17 +296,17 @@ namespace CoreArray
 			}
 			return _Right;
 		}
-		COREARRAY_FORCE_INLINE T &operator*() const
+		COREARRAY_INLINE T &operator*() const
 			{ return *fobj; }
-		COREARRAY_FORCE_INLINE T *operator->() const
+		COREARRAY_INLINE T *operator->() const
 			{ return fobj; }
-		COREARRAY_FORCE_INLINE bool operator==(const T *_Right)
+		COREARRAY_INLINE bool operator==(const T *_Right)
 			{ return fobj==_Right; }
-		COREARRAY_FORCE_INLINE bool operator==(const TdAutoRef<T> &_Right)
+		COREARRAY_INLINE bool operator==(const TdAutoRef<T> &_Right)
 			{ return fobj==_Right.fobj; }
-		COREARRAY_FORCE_INLINE bool operator!=(const T *_Right)
+		COREARRAY_INLINE bool operator!=(const T *_Right)
 			{ return fobj!=_Right; }
-		COREARRAY_FORCE_INLINE bool operator!=(const TdAutoRef<T> &_Right)
+		COREARRAY_INLINE bool operator!=(const TdAutoRef<T> &_Right)
 			{ return fobj!=_Right.fobj; }
 	private:
 		T *fobj;
@@ -318,23 +329,23 @@ namespace CoreArray
 
 	class CdObjMsg;
 
-	/// A broadcast object
+	/// A broadcast structure
 	struct TdOnBroadcast
 	{
 	public:
-		COREARRAY_FORCE_INLINE TdOnBroadcast() { Obj = NULL; Event = NULL; }
+		COREARRAY_INLINE TdOnBroadcast() { Obj = NULL; Event = NULL; }
 
-		COREARRAY_FORCE_INLINE void Clear() { Obj = NULL; Event = NULL; }
-		template<class T> COREARRAY_FORCE_INLINE TdOnBroadcast &Set(T *const vObj,
+		COREARRAY_INLINE void Clear() { Obj = NULL; Event = NULL; }
+		template<class T> COREARRAY_INLINE TdOnBroadcast &Set(T *const vObj,
 				void (T::*vEvent)(CdObjMsg*, Int32, void*))
 			{ Obj = (CdObjMsg*)vObj; Event = (TdOnDo)vEvent; return *this; }
 
 		void Notify(CdObjMsg *Sender, Int32 MsgCode, void *Param);
 
-		COREARRAY_FORCE_INLINE operator bool() const { return (Event!=NULL); }
-		COREARRAY_FORCE_INLINE bool operator== (const TdOnBroadcast &v) const
+		COREARRAY_INLINE operator bool() const { return (Event!=NULL); }
+		COREARRAY_INLINE bool operator== (const TdOnBroadcast &v) const
 			{ return ((Obj==v.Obj) && (Event==v.Event)); }
-		COREARRAY_FORCE_INLINE bool operator!= (const TdOnBroadcast &v) const
+		COREARRAY_INLINE bool operator!= (const TdOnBroadcast &v) const
 			{ return ((Obj!=v.Obj) || (Event!=v.Event)); }
 	private:
 		typedef void (CdObjMsg::*TdOnDo)(CdObjMsg *, Int32, void *);
@@ -379,27 +390,28 @@ namespace CoreArray
 		void BeginMsg();
 		/// End to block all messages
 		/** If any message has been blocked after calling ::BeginMsg(), then
-         *  a NULL message (calling ::Notify(0, NULL)) will be sent out. */
+         *  a NULL message (calling ::Notify(0, NULL)) will be sent out.
+        **/
 		void EndMsg();
 
 		/// Broadcast a message
 		void Notify(Int32 MsgCode, void *Param = NULL);
 
 		/// Broadcast a message of Int32 value
-		COREARRAY_FORCE_INLINE void Notify32(Int32 MsgCode, const Int32 Value)
+		COREARRAY_INLINE void Notify32(Int32 MsgCode, const Int32 Value)
 			{ Notify(MsgCode, (void*)&Value); }
 		/// Broadcast a message of Int64 value
-		COREARRAY_FORCE_INLINE void Notify64(Int32 MsgCode, const Int64 Value)
+		COREARRAY_INLINE void Notify64(Int32 MsgCode, const Int64 Value)
 			{ Notify(MsgCode, (void*)&Value); }
 		/// Broadcast a message of an array of Int32 value
-		COREARRAY_FORCE_INLINE void Notify32(Int32 MsgCode, Int32 const *Param)
+		COREARRAY_INLINE void Notify32(Int32 MsgCode, Int32 const *Param)
 			{ Notify(MsgCode, (void*)Param); }
 		/// Broadcast a message of an array of Int64 value
-		COREARRAY_FORCE_INLINE void Notify64(Int32 MsgCode, Int64 const *Param)
+		COREARRAY_INLINE void Notify64(Int32 MsgCode, Int64 const *Param)
 			{ Notify(MsgCode, (void*)Param); }
 
     	/// Return a vector of message receivers
-		COREARRAY_FORCE_INLINE const std::vector<TdOnBroadcast> &MsgList() const
+		COREARRAY_INLINE const std::vector<TdOnBroadcast> &MsgList() const
 			{ return fMsgList; }
 	protected:
 		/// Determine messages to be sent (if return true), or blocked
@@ -457,7 +469,7 @@ namespace CoreArray
 		void Add(Int32 vType, const char *fmt, ...);
 
 		/// Return a vector of TdItem (record item)
-		COREARRAY_FORCE_INLINE std::vector<TdItem> &List() { return fList; }
+		COREARRAY_INLINE std::vector<TdItem> &List() { return fList; }
 	protected:
 		std::vector<TdItem> fList;
 
@@ -474,7 +486,7 @@ namespace CoreArray
 
 
 	/// The root class of CoreArray stream
-	/** CdStream provides basic functions of stream.  */
+	/** CdStream provides basic functions of stream. **/
 	class CdStream: public CdRef
 	{
 	public:
@@ -500,10 +512,10 @@ namespace CoreArray
 		TdPtr64 CopyFrom(CdStream &Source, TdPtr64 Count=-1);
 
 		/// Return the current position
-		COREARRAY_FORCE_INLINE TdPtr64 Position()
+		COREARRAY_INLINE TdPtr64 Position()
 			{ return Seek(0, soCurrent); }
 		/// Reset the current position
-		COREARRAY_FORCE_INLINE void SetPosition(const TdPtr64 pos)
+		COREARRAY_INLINE void SetPosition(const TdPtr64 pos)
 			{ Seek(pos, soBeginning); }
 
 		/// Read an unsigned integer of 8 bits
@@ -677,7 +689,7 @@ namespace CoreArray
 	class CBufdStream;
 
 	/// The root class of stream pipe
-	class CdStreamPipe
+	class CdStreamPipe: public CdAbstractItem
 	{
 	public:
     	CdStreamPipe() {}
@@ -704,7 +716,7 @@ namespace CoreArray
 		/// Constructor
 		/** \param vStream    an stream (it can be NULL)
 		 *  \param vBufSize   buffer size
-		*/
+		**/
 		CBufdStream(CdStream* vStream, ssize_t vBufSize = DefaultBufSize);
 		/// Destructor
 		virtual ~CBufdStream();
@@ -817,14 +829,14 @@ namespace CoreArray
 		void PushPipe(CdStreamPipe* APipe);
 		void PopPipe();
 
-		COREARRAY_FORCE_INLINE TdPtr64 &Position() { return fPosition; }
-		COREARRAY_FORCE_INLINE void SetPosition(const TdPtr64 pos) { fPosition = pos; }
+		COREARRAY_INLINE TdPtr64 &Position() { return fPosition; }
+		COREARRAY_INLINE void SetPosition(const TdPtr64 pos) { fPosition = pos; }
 
-		COREARRAY_FORCE_INLINE CdStream *Stream() const { return fStream; }
+		COREARRAY_INLINE CdStream *Stream() const { return fStream; }
 		void SetStream(CdStream* Value);
-		COREARRAY_FORCE_INLINE CdStream *BaseStream() const { return fBaseStream; }
+		COREARRAY_INLINE CdStream *BaseStream() const { return fBaseStream; }
 
-		COREARRAY_FORCE_INLINE ssize_t BufSize() const { return fBufSize; }
+		COREARRAY_INLINE ssize_t BufSize() const { return fBufSize; }
 		void SetBufSize(const ssize_t NewBufSize);
 		virtual TdPtr64 GetSize();
 		virtual void SetSize(const TdPtr64 Value);
@@ -997,7 +1009,7 @@ namespace CoreArray
 	 *  The term "serialization" means the reversible deconstruction of a set of
 	 *  C++ data structures to a sequence of bytes, and then reconstituting an
 	 *  equivalent structure in another program context.
-	*/
+	**/
 	class CdSerial: public CBufdStream
 	{
 	public:
@@ -1008,7 +1020,7 @@ namespace CoreArray
 		/** \param vStream    an stream (it can be NULL)
 		 *  \param vBufSize   buffer size
 		 *  \param vClassMgr  specify the class manager, if NULL then use the default manager
-		*/
+		**/
 		CdSerial(CdStream* vStream, ssize_t vBufSize=DefaultBufSize,
 			CdObjClassMgr* vClassMgr=NULL);
 		/// Destructor
@@ -1052,7 +1064,7 @@ namespace CoreArray
 		void SetRelPos(const TdPtr64 Value);
 
 		/// Log record
-		COREARRAY_FORCE_INLINE CdLogRecord &Log() { return *fLog; }
+		COREARRAY_INLINE CdLogRecord &Log() { return *fLog; }
 		/// Set log record
         void SetLog(CdLogRecord &vLog);
 
@@ -1060,7 +1072,7 @@ namespace CoreArray
 		TdVar &operator[] (const char *vName);
 
 		/// Return class manager
-		COREARRAY_FORCE_INLINE CdObjClassMgr * ClassMgr() const { return fClassMgr; }
+		COREARRAY_INLINE CdObjClassMgr * ClassMgr() const { return fClassMgr; }
 
 	protected:
 
@@ -1068,7 +1080,7 @@ namespace CoreArray
 		/** \param Kind    type id
 		 *  \param Name    variable name
 		 *  \param OutBuf  pointer to the value
-		*/
+		**/
 		bool rValue(TdTypeID Kind, char const* Name, void *OutBuf);
 
 		/// Read a variable with Name
@@ -1076,7 +1088,7 @@ namespace CoreArray
 		 *  \param Name    variable name
 		 *  \param OutBuf  pointer to the value
 		 *  \param BufLen  buffer length; if the length of type is fixed, it can be ignored
-		*/
+		**/
 		bool rValue(TdTypeID Kind, char const* Name, void *OutBuf, ssize_t BufLen);
 
 		/// Write a variable of Name
@@ -1084,7 +1096,7 @@ namespace CoreArray
 		 *  \param Name    variable name
 		 *  \param InBuf   pointer to the value
 		 *  \param BufLen  buffer length; if the length of type is fixed, it can be ignored
-		*/
+		**/
 		void wValue(TdTypeID Kind, const char *Name, const void *InBuf=NULL, ssize_t BufLen=-1);
 
 		/// The basic class of variable in a block
@@ -1094,6 +1106,9 @@ namespace CoreArray
 			TdTypeID Kind;    ///< type ID for this variable
 			TdPtr64 Start;    ///< the start position in a stream for this variable
 			UTF8String Name;  ///< variable name
+
+			CBaseVar() {}
+			virtual ~CBaseVar() {}
 
 			virtual Int64 Int() = 0;
 			virtual LongFloat Float() = 0;
@@ -1134,7 +1149,7 @@ namespace CoreArray
 			 *  \param  ID      type ID
 			 *  \param  pos     the start position
 			 *  \param  Name    the variable name
-			*/
+			**/
 			template<typename TYPE> TYPE & AddVar(CdSerial &Filter,
 				TdTypeID ID, TdPtr64 pos, const std::string &Name)
 			{
@@ -1153,7 +1168,7 @@ namespace CoreArray
 			/// Add a new variable
 			/** \param  Filter  a filter, usually it is the caller
 			 *  \param  rec     a pointer to a CBaseVar object
-			*/
+			**/
 			void _AddVarItem(CdSerial &Filter, CBaseVar *rec);
 		};
 
@@ -1171,73 +1186,73 @@ namespace CoreArray
 
 			TdVar() { fFilter = NULL; fName = NULL; }
 
-			COREARRAY_FORCE_INLINE CdSerial *Filter() { return fFilter; }
-			COREARRAY_FORCE_INLINE const char *Name() { return fName; }
+			COREARRAY_INLINE CdSerial *Filter() { return fFilter; }
+			COREARRAY_INLINE const char *Name() { return fName; }
 
 			// operator - Read
 			// integer
-			COREARRAY_FORCE_INLINE bool operator >> (Int8 &val)
+			COREARRAY_INLINE bool operator >> (Int8 &val)
 				{ return fFilter->rValue(osInt8, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UInt8 &val)
+			COREARRAY_INLINE bool operator >> (UInt8 &val)
 				{ return fFilter->rValue(osUInt8, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (Int16 &val)
+			COREARRAY_INLINE bool operator >> (Int16 &val)
 				{ return fFilter->rValue(osInt16, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UInt16 &val)
+			COREARRAY_INLINE bool operator >> (UInt16 &val)
 				{ return fFilter->rValue(osUInt16, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (Int32 &val)
+			COREARRAY_INLINE bool operator >> (Int32 &val)
 				{ return fFilter->rValue(osInt32, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UInt32 &val)
+			COREARRAY_INLINE bool operator >> (UInt32 &val)
 				{ return fFilter->rValue(osUInt32, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (Int64 &val)
+			COREARRAY_INLINE bool operator >> (Int64 &val)
 				{ return fFilter->rValue(osInt64, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UInt64 &val)
+			COREARRAY_INLINE bool operator >> (UInt64 &val)
 				{ return fFilter->rValue(osUInt64, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE bool operator >> (Int128 &val)
+			COREARRAY_INLINE bool operator >> (Int128 &val)
 				{ return fFilter->rValue(osInt128, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UInt128 &val)
+			COREARRAY_INLINE bool operator >> (UInt128 &val)
 				{ return fFilter->rValue(osUInt128, fName, &val); }
 			#endif
-			COREARRAY_FORCE_INLINE bool rPack(UInt16 &val)
+			COREARRAY_INLINE bool rPack(UInt16 &val)
 				{ return fFilter->rValue(os16Packed, fName, &val); }
-			COREARRAY_FORCE_INLINE bool rPack(UInt32 &val)
+			COREARRAY_INLINE bool rPack(UInt32 &val)
 				{ return fFilter->rValue(os32Packed, fName, &val); }
-			COREARRAY_FORCE_INLINE bool rPack(UInt64 &val)
+			COREARRAY_INLINE bool rPack(UInt64 &val)
 				{ return fFilter->rValue(os64Packed, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE bool rPack(UInt128 &val)
+			COREARRAY_INLINE bool rPack(UInt128 &val)
 				{ return fFilter->rValue(os128Packed, fName, &val); }
 			#endif
 
 			// float number
-			COREARRAY_FORCE_INLINE bool operator >> (Float32 &val)
+			COREARRAY_INLINE bool operator >> (Float32 &val)
 				{ return fFilter->rValue(osFloat32, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (Float64 &val)
+			COREARRAY_INLINE bool operator >> (Float64 &val)
 				{ return fFilter->rValue(osFloat64, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE bool operator >> (Float128 &val)
+			COREARRAY_INLINE bool operator >> (Float128 &val)
 				{ return fFilter->rValue(osFloat128, fName, &val); }
 			#endif
 
 			// string
-			COREARRAY_FORCE_INLINE bool operator >> (UTF8String &val)
+			COREARRAY_INLINE bool operator >> (UTF8String &val)
 				{ return fFilter->rValue(osStrUTF8, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UTF16String &val)
+			COREARRAY_INLINE bool operator >> (UTF16String &val)
 				{ return fFilter->rValue(osStrUTF16, fName, &val); }
-			COREARRAY_FORCE_INLINE bool operator >> (UTF32String &val)
+			COREARRAY_INLINE bool operator >> (UTF32String &val)
 				{ return fFilter->rValue(osStrUTF32, fName, &val); }
 			// others
-			COREARRAY_FORCE_INLINE bool operator >> (TdPosType &val)
+			COREARRAY_INLINE bool operator >> (TdPosType &val)
 				{ return fFilter->rValue(osStreamPos, fName, &val); }
 
-			COREARRAY_FORCE_INLINE bool rShortBuffer(void* Buf, ssize_t BufLen)
+			COREARRAY_INLINE bool rShortBuffer(void* Buf, ssize_t BufLen)
 				{ return fFilter->rValue(osShortRec, fName, Buf, BufLen); }
 			bool rShortBuf(Int32 *pval, size_t ValCnt);
 			bool rShortBuf(Int64 *pval, size_t ValCnt);
 
-			COREARRAY_FORCE_INLINE bool rBuffer()
+			COREARRAY_INLINE bool rBuffer()
 				{ return fFilter->rValue(osRecord, fName, NULL); }
-			COREARRAY_FORCE_INLINE bool rBuffer(void* Buf, ssize_t BufLen)
+			COREARRAY_INLINE bool rBuffer(void* Buf, ssize_t BufLen)
 				{ return fFilter->rValue(osRecord, fName, Buf); }
 			bool rBuf(Int32 *pval, size_t ValCnt);
 			bool rBuf(Int64 *pval, size_t ValCnt);
@@ -1245,74 +1260,74 @@ namespace CoreArray
 
 			// operator - Write
 			// integer
-			COREARRAY_FORCE_INLINE void operator << (const Int8 val)
+			COREARRAY_INLINE void operator << (const Int8 val)
 				{ fFilter->wValue(osInt8, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const UInt8 val)
+			COREARRAY_INLINE void operator << (const UInt8 val)
 				{ fFilter->wValue(osUInt8, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const Int16 val)
+			COREARRAY_INLINE void operator << (const Int16 val)
 				{ fFilter->wValue(osInt16, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const UInt16 val)
+			COREARRAY_INLINE void operator << (const UInt16 val)
 				{ fFilter->wValue(osUInt16, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const Int32 val)
+			COREARRAY_INLINE void operator << (const Int32 val)
 				{ fFilter->wValue(osInt32, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const UInt32 val)
+			COREARRAY_INLINE void operator << (const UInt32 val)
 				{ fFilter->wValue(osUInt32, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const Int64 val)
+			COREARRAY_INLINE void operator << (const Int64 val)
 				{ fFilter->wValue(osInt64, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const UInt64 val)
+			COREARRAY_INLINE void operator << (const UInt64 val)
 				{ fFilter->wValue(osUInt64, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE void operator << (const Int128 &val)
+			COREARRAY_INLINE void operator << (const Int128 &val)
 				{ fFilter->wValue(osInt128, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const UInt128 &val)
+			COREARRAY_INLINE void operator << (const UInt128 &val)
 				{ fFilter->wValue(osUInt128, fName, &val); }
 			#endif
-			COREARRAY_FORCE_INLINE void wPack(const UInt16 val)
+			COREARRAY_INLINE void wPack(const UInt16 val)
 				{ fFilter->wValue(os16Packed, fName, &val); }
-			COREARRAY_FORCE_INLINE void wPack(const UInt32 val)
+			COREARRAY_INLINE void wPack(const UInt32 val)
 				{ fFilter->wValue(os32Packed, fName, &val); }
-			COREARRAY_FORCE_INLINE void wPack(const UInt64 val)
+			COREARRAY_INLINE void wPack(const UInt64 val)
 				{ fFilter->wValue(os64Packed, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE void wPack(const UInt128 &val)
+			COREARRAY_INLINE void wPack(const UInt128 &val)
 				{ fFilter->wValue(os128Packed, fName, &val); }
 			#endif
 
 			// float number
-			COREARRAY_FORCE_INLINE void operator << (const Float32 val)
+			COREARRAY_INLINE void operator << (const Float32 val)
 				{ fFilter->wValue(osFloat32, fName, &val); }
-			COREARRAY_FORCE_INLINE void operator << (const Float64 val)
+			COREARRAY_INLINE void operator << (const Float64 val)
 				{ fFilter->wValue(osFloat64, fName, &val); }
 			#ifndef COREARRAY_NO_EXTENDED_TYPES
-			COREARRAY_FORCE_INLINE void operator << (const Float128 &val)
+			COREARRAY_INLINE void operator << (const Float128 &val)
 				{ fFilter->wValue(osFloat128, fName, &val); }
 			#endif
 
 			// string
-			COREARRAY_FORCE_INLINE void operator << (const UTF8String &val)
+			COREARRAY_INLINE void operator << (const UTF8String &val)
 				{ fFilter->wValue(osStrUTF8, fName, val.c_str()); }
-			COREARRAY_FORCE_INLINE void operator << (const UTF8 *val)
+			COREARRAY_INLINE void operator << (const UTF8 *val)
 				{ fFilter->wValue(osStrUTF8, fName, val); }
-			COREARRAY_FORCE_INLINE void operator << (const UTF16String &val)
+			COREARRAY_INLINE void operator << (const UTF16String &val)
 				{ fFilter->wValue(osStrUTF16, fName, val.c_str()); }
-			COREARRAY_FORCE_INLINE void operator << (const UTF16 *val)
+			COREARRAY_INLINE void operator << (const UTF16 *val)
 				{ fFilter->wValue(osStrUTF16, fName, val); }
-			COREARRAY_FORCE_INLINE void operator << (const UTF32String &val)
+			COREARRAY_INLINE void operator << (const UTF32String &val)
 				{ fFilter->wValue(osStrUTF32, fName, val.c_str()); }
-			COREARRAY_FORCE_INLINE void operator << (const UTF32 *val)
+			COREARRAY_INLINE void operator << (const UTF32 *val)
 				{ fFilter->wValue(osStrUTF32, fName, val); }
 			// others
-			COREARRAY_FORCE_INLINE void operator << (const TdPosType &val)
+			COREARRAY_INLINE void operator << (const TdPosType &val)
 				{ fFilter->wValue(osStreamPos, fName, &val); }
 
-			COREARRAY_FORCE_INLINE void wShortBuffer(const void* Buf, ssize_t BufLen)
+			COREARRAY_INLINE void wShortBuffer(const void* Buf, ssize_t BufLen)
 				{ fFilter->wValue(osShortRec, fName, Buf); }
 			void wShortBuf(const Int32 *pval, size_t ValCnt);
 			void wShortBuf(const Int64 *pval, size_t ValCnt);
 
-			COREARRAY_FORCE_INLINE void wBuffer()
+			COREARRAY_INLINE void wBuffer()
 				{ fFilter->wValue(osRecord, fName, NULL); }
-			COREARRAY_FORCE_INLINE void wBuffer(const void* Buf, ssize_t BufLen)
+			COREARRAY_INLINE void wBuffer(const void* Buf, ssize_t BufLen)
 				{ fFilter->wValue(osRecord, fName, Buf); }
 			void wBuf(const Int32 *pval, size_t ValCnt);
 			void wBuf(const Int64 *pval, size_t ValCnt);
@@ -1330,7 +1345,7 @@ namespace CoreArray
 	// CdObjClassMgr
 
 	/// CoreArray class manager
-	class CdObjClassMgr
+	class CdObjClassMgr: public CdAbstractManager
 	{
 	public:
 		typedef CdObjRef* (*TdOnObjCreate)();
@@ -1368,7 +1383,7 @@ namespace CoreArray
 		 *  \param OnCreate   a function of creator
 		 *  \param vCType     the type of class
 		 *  \param Desp       the description
-		*/
+		**/
 		void AddClass(const char *ClassName, TdOnObjCreate OnCreate,
 			ClassType vCType, const char *Desp="");
 		/// Unregister a class
@@ -1382,12 +1397,12 @@ namespace CoreArray
 		/** \param Reader  a filter
 		 *  \param OnInit  a function of initialization of the object
 		 *  \param Data    be passed to OnInit
-		*/
+		**/
 		virtual CdObjRef* toObj(CdSerial &Reader, TdInit OnInit=NULL,
 			void *Data=NULL);
 
 		const _ClassStruct &ClassStruct(const char *ClassName) const;
-			COREARRAY_FORCE_INLINE const std::map<const char *, _ClassStruct, _strCmp> &
+			COREARRAY_INLINE const std::map<const char *, _ClassStruct, _strCmp> &
 			ClassMap() const { return fClassMap; }
 	protected:
 		std::map<const char *, _ClassStruct, _strCmp> fClassMap;
@@ -1498,7 +1513,7 @@ namespace CoreArray
 		~TdsData();
 
 		/// Return type ID
-		COREARRAY_FORCE_INLINE TdsType Type() const { return dsType; }
+		COREARRAY_INLINE TdsType Type() const { return dsType; }
 
 		/// Type ID of TdsData to a name
 		static const char *dvtNames(int index);
@@ -1598,33 +1613,33 @@ namespace CoreArray
 		 *  return  1, if *this > D;
 		 *  return  0, if *this == D;
          *  return -1, if *this < D
-		*/
+		**/
 		int Compare(const TdsData &D, bool NALast = true);
 
 
 		// operator
-        COREARRAY_FORCE_INLINE operator Int8() { return getInt8(); }
-        COREARRAY_FORCE_INLINE operator UInt8() { return getUInt8(); }
-		COREARRAY_FORCE_INLINE operator Int16() { return getInt16(); }
-		COREARRAY_FORCE_INLINE operator UInt16() { return getUInt16(); }
-		COREARRAY_FORCE_INLINE operator Int32() { return getInt32(); }
-		COREARRAY_FORCE_INLINE operator UInt32() { return getUInt32(); }
-		COREARRAY_FORCE_INLINE operator Int64() { return getInt64(); }
-		COREARRAY_FORCE_INLINE operator UInt64() { return getUInt64(); }
+        COREARRAY_INLINE operator Int8() { return getInt8(); }
+        COREARRAY_INLINE operator UInt8() { return getUInt8(); }
+		COREARRAY_INLINE operator Int16() { return getInt16(); }
+		COREARRAY_INLINE operator UInt16() { return getUInt16(); }
+		COREARRAY_INLINE operator Int32() { return getInt32(); }
+		COREARRAY_INLINE operator UInt32() { return getUInt32(); }
+		COREARRAY_INLINE operator Int64() { return getInt64(); }
+		COREARRAY_INLINE operator UInt64() { return getUInt64(); }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		COREARRAY_FORCE_INLINE operator Int128() { return getInt128(); }
-		COREARRAY_FORCE_INLINE operator UInt128() { return getUInt128(); }
+		COREARRAY_INLINE operator Int128() { return getInt128(); }
+		COREARRAY_INLINE operator UInt128() { return getUInt128(); }
 		#endif
 
-		COREARRAY_FORCE_INLINE operator Float32() { return getFloat32(); }
-		COREARRAY_FORCE_INLINE operator Float64() { return getFloat64(); }
+		COREARRAY_INLINE operator Float32() { return getFloat32(); }
+		COREARRAY_INLINE operator Float64() { return getFloat64(); }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		COREARRAY_FORCE_INLINE operator Float128() { return getFloat128(); }
+		COREARRAY_INLINE operator Float128() { return getFloat128(); }
 		#endif
 
-		COREARRAY_FORCE_INLINE operator UTF8String() { return getStr8(); }
-		COREARRAY_FORCE_INLINE operator UTF16String() { return getStr16(); }
-		COREARRAY_FORCE_INLINE operator UTF32String() { return getStr32(); }
+		COREARRAY_INLINE operator UTF8String() { return getStr8(); }
+		COREARRAY_INLINE operator UTF16String() { return getStr16(); }
+		COREARRAY_INLINE operator UTF32String() { return getStr32(); }
 
 		/// an operator of assignment
 		TdsData & operator= (const TdsData &_Right);
