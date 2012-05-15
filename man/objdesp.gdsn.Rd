@@ -23,6 +23,7 @@ objdesp.gdsn(node)
 	\item{dim}{the dimension of data field}
 	\item{compress}{the compression method: "", "ZIP", etc}
 	\item{cpratio}{data compression ratio, "NaN" indicates no compression}
+	\item{maxlen}{if \code{svtype = 14, 15 or 16}, it is the maximum length of characters}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
@@ -38,9 +39,12 @@ objdesp.gdsn(node)
 f <- createfn.gds("test.gds")
 
 # add a vector to "test.gds"
-node <- add.gdsn(f, name="vector", val=1:10000, compress="ZIP")
+node1 <- add.gdsn(f, name="vector1", val=1:10000, compress="ZIP")
+objdesp.gdsn(node1)
 
-objdesp.gdsn(node)
+# add a character to "test.gds"
+node2 <- add.gdsn(f, name="vector2", val=c("A", "BC", "DEF"), compress="ZIP")
+objdesp.gdsn(node2)
 
 closefn.gds(f)
 }

@@ -11,8 +11,8 @@ from 2007.
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.8\cr
-	Date: \tab 2012-04-14\cr
+	Version: \tab 0.9.9\cr
+	Date: \tab 2012-05-15\cr
 	License: \tab LGPL version 3\cr
 }
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed

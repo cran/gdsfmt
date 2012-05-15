@@ -1387,8 +1387,8 @@ TdPtr64 CdSerial::rBeginStruct()
 	CVarList &p = fFilterRec.front();
 	p.Start = fPosition;
 	p.VarCount = -1; // Indicate no name space
-	p.Length = 0;
-	Read((void*)&p.Length, TdPosType::size);
+	TdPosType tmp; (*this) >> tmp;
+	p.Length = tmp.get();
 	if (p.Length < TdPosType::size)
 		throw Err_dFilter(esInvalidStructLength);
 	return p.Length - TdPosType::size;
@@ -1399,8 +1399,8 @@ TdPtr64 CdSerial::rBeginNameSpace()
 	fFilterRec.push_front(CVarList());
 	CVarList &p = fFilterRec.front();
 	p.Start = fPosition;
-	p.Length = 0;
-	Read((void*)&p.Length, TdPosType::size);
+	TdPosType tmp; (*this) >> tmp;
+	p.Length = tmp.get();
 	if (p.Length < TdPosType::size)
 		throw Err_dFilter(esInvalidStructLength);
 	p.VarCount = rUInt16();

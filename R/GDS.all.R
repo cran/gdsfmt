@@ -191,6 +191,7 @@ index.gdsn <- function(node, index, silent=FALSE)
 	if (class(node)=="gdsclass")
 		node <- node$root
 	stopifnot(class(node)=="gdsn")
+	stopifnot(is.character(index) | is.numeric(index))
 	if (missing(index))
 		return(node)
 	cnt <- cnt.gdsn(node)
@@ -223,7 +224,8 @@ objdesp.gdsn <- function(node)
 	cnt <- cnt.gdsn(node)
 	r <- .C("gdsNodeObjDesp", as.integer(node), desp=character(1), name=character(1),
 		sv=integer(1), arr=logical(1), dimcnt=integer(1), dimeach=integer(1024),
-		cp=character(1), cpratio=double(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+		maxlen=integer(1), cp=character(1), cpratio=double(1), err=integer(1),
+		NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err == 0)
 	{
 		if (r$dimcnt > 0)
@@ -232,6 +234,8 @@ objdesp.gdsn <- function(node)
 			d <- NULL
 		rv <- list(desp = r$desp, name = r$name, svtype = r$sv, is.array = r$arr,
 			dim = d, compress = r$cp, cpratio = r$cpratio)
+		if (r$maxlen >= 0)
+			rv$maxlen <- r$maxlen
 	} else {
 		stop(lasterr.gds())
 	}
@@ -277,6 +281,16 @@ add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NUL
 			valdim <- c()
 	} else {
 		if (storage == "NULL") storage <- "integer"
+
+		if (!is.null(val))
+		{
+			rv <- add.gdsn(node, name, val=val, storage=storage,
+				compress=compress, closezip=FALSE)
+			r <- .C("gdsObjSetDim", as.integer(rv), length(valdim), rev(as.integer(valdim)),
+				err = integer(1), NAOK = TRUE, PACKAGE = "gdsfmt")
+			if (r$err != 0) stop(lasterr.gds())
+			return(rv)
+		}
 	}
 
 	if (is.character(val))
@@ -698,13 +712,14 @@ readex.gdsn <- function(node, sel=NULL)
 # Apply functions over array margins of a GDS node
 #
 apply.gdsn <- function(node, margin=2, row.sel=NULL, col.sel=NULL,
-	row.buf.size=128, FUN, ...)
+	buf.size=1024, simplify=TRUE, FUN, ...)
 {
 	# check
 	stopifnot(class(node)=="gdsn")
 	stopifnot(margin %in% c(1, 2))
 	stopifnot(is.null(row.sel) | is.logical(row.sel))
 	stopifnot(is.null(col.sel) | is.logical(col.sel))
+	stopifnot(is.logical(simplify))
 
 	desp <- objdesp.gdsn(node)
 	if (!desp$is.array)
@@ -762,7 +777,7 @@ apply.gdsn <- function(node, margin=2, row.sel=NULL, col.sel=NULL,
 		while (idx <= length(rowidx))
 		{
 			cnt <- length(rowidx) - idx + 1
-			if (cnt > row.buf.size) cnt = row.buf.size
+			if (cnt > buf.size) cnt <- buf.size
 
 			r <- .C("gdsApplyRow", as.integer(node), as.integer(idx),
 				as.integer(rowidx), as.integer(cnt), rsel$CBOOL, as.integer(rd$rtype),
@@ -796,48 +811,697 @@ apply.gdsn <- function(node, margin=2, row.sel=NULL, col.sel=NULL,
 			eachcnt <- sum(row.sel, na.rm=TRUE)
 		} else {
 			eachcnt <- desp$dim[1]
+			row.sel <- rep(TRUE, eachcnt)
 		}
 
 		ans <- vector(mode="list", length=totalcnt)
-		idx <- 1
+		rsel <- .C("gdsLongBool2CBOOL", row.sel, CBOOL=integer(length(row.sel)),
+			length(row.sel), NAOK=TRUE, PACKAGE="gdsfmt")
 
 		# for-loop
-		if (is.logical(row.sel))
+		idx <- 1
+		while (idx <= length(colidx))
 		{
-			rsel <- .C("gdsLongBool2CBOOL", row.sel, CBOOL=integer(length(row.sel)),
-				length(row.sel), NAOK=TRUE, PACKAGE="gdsfmt")
-			for (col in colidx)
-			{
-				r <- .C("gdsApplyColEx", as.integer(node), as.integer(col), 
-					rsel$CBOOL, as.integer(rd$rtype),
-					data=switch(rd$rtype+1, integer(0), integer(eachcnt), double(eachcnt),
-						character(eachcnt), logical(eachcnt)),
-					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-				if (r$err != 0) stop(lasterr.gds())
-				# call
-				ans[[idx]] <- FUN(r$data, ...)
-				idx <- idx + 1
-			}
-		} else {
-			for (col in colidx)
-			{
-				r <- .C("gdsApplyCol", as.integer(node), as.integer(col), as.integer(rd$rtype),
-					data=switch(rd$rtype+1, integer(0), integer(eachcnt), double(eachcnt),
-						character(eachcnt), logical(eachcnt)),
-					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
-				if (r$err != 0) stop(lasterr.gds())
-				# call
-				ans[[idx]] <- FUN(r$data, ...)
-				idx <- idx + 1
-			}
+			cnt <- length(colidx) - idx + 1
+			if (cnt > buf.size) cnt <- buf.size
+
+			r <- .C("gdsApplyCol", as.integer(node), as.integer(idx),
+				as.integer(colidx), as.integer(cnt), rsel$CBOOL, as.integer(rd$rtype),
+				data=switch(rd$rtype+1, integer(0),
+					matrix(as.integer(0), nrow=eachcnt, ncol=cnt),
+					matrix(as.double(0), nrow=eachcnt, ncol=cnt),
+					matrix(as.character(0), nrow=eachcnt, ncol=cnt),
+					matrix(as.logical(0), nrow=eachcnt, ncol=cnt)),
+				err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+			if (r$err != 0) stop(lasterr.gds())
+
+			# call
+			for (i in seq.int(idx, idx+cnt-1))
+				ans[[i]] <- FUN(r$data[, i-idx+1], ...)
+
+			idx <- idx + cnt
 		}
 	}
 
 	# return
-	if (length(ans) > 0)
+	if ((length(ans) > 0) && simplify)
 		simplify2array(ans, higher=TRUE)
 	else
 		ans
+}
+
+
+#############################################################
+# Apply functions over array margins of a list of GDS nodes
+#
+applylt.gdsn <- function(nodes, margin=2, row.sel=NULL, col.sel=NULL,
+	buf.size=1024, simplify=TRUE, FUN, ...)
+{
+	# check
+	stopifnot(is.list(nodes))
+	stopifnot(length(nodes) > 0)
+	stopifnot(margin %in% c(1, 2))
+	stopifnot(is.logical(simplify))
+
+	if (margin == 1)
+	{
+		# enumerate each row
+
+		stopifnot(is.null(row.sel) | is.logical(row.sel))
+		stopifnot(is.null(col.sel) | is.list(col.sel))
+		if (is.list(col.sel))
+			stopifnot(length(col.sel) == length(nodes))
+
+		if (is.logical(row.sel))
+		{
+			num.row <- sum(row.sel, na.rm=TRUE)
+		} else {
+			desp <- objdesp.gdsn(nodes[[1]])
+			num.row <- desp$dim[1]
+		}
+		if (num.row <= 0) return(NULL)
+
+		for (i in 1:length(nodes))
+		{
+			if (class(nodes[[i]]) != "gdsn")
+				stop(sprintf("`nodes[%d]' should be a `gdsn' object!", i))
+
+			desp <- objdesp.gdsn(nodes[[i]])
+			if (!desp$is.array)
+				stop(sprintf("`nodes[%d]' should be array-type!", i))
+			if (!(length(desp$dim) %in% c(1,2)))
+				stop(sprintf("`nodes[%d]' should be a matrix or vector!", i))
+			if (is.logical(row.sel))
+			{
+				if (length(row.sel) != desp$dim[1])
+					stop(sprintf("The row dimension of `nodes[%d]' is invalid!", i))
+			} else {
+				if (num.row != desp$dim[1])
+					stop(sprintf("The row dimension of `nodes[%d]' is invalid!", i))
+			}
+			if (is.list(col.sel))
+			{
+				sel <- col.sel[[i]]
+				if (!is.null(sel) & !is.logical(sel))
+					stop(sprintf("`col.sel[%d]' should be NULL or a logical vector!", i))
+				if (length(desp$dim) > 1)
+				{
+					if (is.logical(sel) & length(sel)!= desp$dim[2])
+						stop(sprintf("Invalid length of `col.sel[%d]'!", i))
+				}
+			}
+		}
+
+	} else {
+		# enumerate each column
+
+		stopifnot(is.null(col.sel) | is.logical(col.sel))
+		stopifnot(is.null(row.sel) | is.list(row.sel))
+		if (is.list(row.sel))
+			stopifnot(length(row.sel) == length(nodes))
+
+		if (is.logical(col.sel))
+		{
+			num.col <- sum(col.sel, na.rm=TRUE)
+		} else {
+			desp <- objdesp.gdsn(nodes[[1]])
+			if (length(desp$dim) > 1)
+			{
+				num.col <- desp$dim[2]
+			} else {
+				num.col <- desp$dim[1]
+			}
+		}
+		if (num.col <= 0) return(NULL)
+
+		for (i in 1:length(nodes))
+		{
+			if (class(nodes[[i]]) != "gdsn")
+				stop(sprintf("`nodes[%d]' should be a `gdsn' object!", i))
+
+			desp <- objdesp.gdsn(nodes[[i]])
+			if (!desp$is.array)
+				stop(sprintf("`nodes[%d]' should be array-type!", i))
+			if (!(length(desp$dim) %in% c(1,2)))
+				stop(sprintf("`nodes[%d]' should be a matrix or vector!", i))
+			if (is.logical(col.sel))
+			{
+				if (length(desp$dim) > 1)
+				{
+					n.tmp <- desp$dim[2]
+				} else {
+					n.tmp <- desp$dim[1]
+				}
+				if (length(col.sel) != n.tmp)
+					stop(sprintf("The column dimension of `nodes[%d]' is invalid!", i))
+			} else {
+				if (length(desp$dim) > 1)
+				{
+					n.tmp <- desp$dim[2]
+				} else {
+					n.tmp <- desp$dim[1]
+				}
+				if (num.col != n.tmp)
+					stop(sprintf("The column dimension of `nodes[%d]' is invalid!", i))
+			}
+			if (is.list(row.sel))
+			{
+				sel <- row.sel[[i]]
+				if (!is.null(sel) & !is.logical(sel))
+					stop(sprintf("`row.sel[%d]' should be NULL or a logical vector!", i))
+				if (length(desp$dim) > 1)
+				{
+					if (is.logical(sel) & length(sel)!= desp$dim[1])
+						stop(sprintf("Invalid length of `row.sel[%d]'!", i))
+				}
+			}
+		}
+	}
+
+	# initialize function
+	FUN <- match.fun(FUN)
+
+	# initialize type
+	rtype <- integer(length(nodes))
+	for (i in 1:length(nodes))
+	{
+		r <- .C("gdsxObjType", as.integer(nodes[[i]]), rtype=integer(1), err=integer(1),
+			NAOK=TRUE, PACKAGE="gdsfmt")
+		if (r$err != 0) stop(lasterr.gds())
+		rtype[i] <- r$rtype
+	}
+
+	# for-loop
+	if (margin == 1)
+	{
+		# for each row
+
+		if (is.logical(row.sel))
+		{
+			rowidx <- which(row.sel)
+		} else {
+			rowidx <- seq_len(num.row)
+		}
+		ans <- vector(mode="list", length=num.row)
+
+		eachcnt <- integer(length(nodes))
+		sel.CBOOL <- vector("list", length(nodes))
+		for (i in 1:length(nodes))
+		{
+			desp <- objdesp.gdsn(nodes[[i]])
+			sel <- col.sel[[i]]
+			if (is.logical(sel))
+			{
+				eachcnt[i] <- sum(sel, na.rm=TRUE)
+			} else {
+				if (length(desp$dim) > 1)
+				{
+					eachcnt[i] <- desp$dim[2]
+				} else {
+					eachcnt[i] <- 1
+				}
+				sel <- rep(TRUE, eachcnt[i])
+			}
+			r <- .C("gdsLongBool2CBOOL", sel, CBOOL=integer(length(sel)),
+				length(sel), NAOK=TRUE, PACKAGE="gdsfmt")
+			sel.CBOOL[[i]] <- r$CBOOL
+		}
+
+		dat.list <- vector("list", length(nodes))
+		dat <- vector("list", length(nodes))
+		names(dat) <- names(nodes)
+
+		# for-loop
+		idx <- 1
+		while (idx <= length(rowidx))
+		{
+			cnt <- length(rowidx) - idx + 1
+			if (cnt > buf.size) cnt <- buf.size
+
+			for (i in 1:length(nodes))
+			{
+				r <- .C("gdsApplyRow", as.integer(nodes[[i]]), as.integer(idx),
+					as.integer(rowidx), as.integer(cnt), sel.CBOOL[[i]], rtype[i],
+					data=switch(rtype[i]+1, integer(0),
+						matrix(as.integer(0), nrow=cnt, ncol=eachcnt[i]),
+						matrix(as.double(0), nrow=cnt, ncol=eachcnt[i]),
+						matrix(as.character(0), nrow=cnt, ncol=eachcnt[i]),
+						matrix(as.logical(0), nrow=cnt, ncol=eachcnt[i])),
+					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+				if (r$err != 0) stop(lasterr.gds())
+				dat.list[[i]] <- r$data
+			}
+
+			# call
+			for (i in seq.int(idx, idx+cnt-1))
+			{
+				for (k in 1:length(nodes))
+					dat[[k]] <- dat.list[[k]][i-idx+1, ]
+				ans[[i]] <- FUN(dat, ...)
+			}
+
+			idx <- idx + cnt
+		}
+	} else {
+		# for each column
+
+		if (is.logical(col.sel))
+		{
+			colidx <- which(col.sel)
+		} else {
+			colidx <- seq_len(num.col)
+		}
+		ans <- vector(mode="list", length=num.col)
+
+		eachcnt <- integer(length(nodes))
+		sel.CBOOL <- vector("list", length(nodes))
+		for (i in 1:length(nodes))
+		{
+			desp <- objdesp.gdsn(nodes[[i]])
+			sel <- row.sel[[i]]
+			if (is.logical(sel))
+			{
+				eachcnt[i] <- sum(sel, na.rm=TRUE)
+			} else {
+				if (length(desp$dim) > 1)
+				{
+					eachcnt[i] <- desp$dim[1]
+				} else {
+					eachcnt[i] <- 1
+				}
+				sel <- rep(TRUE, eachcnt[i])
+			}
+			r <- .C("gdsLongBool2CBOOL", sel, CBOOL=integer(length(sel)),
+				length(sel), NAOK=TRUE, PACKAGE="gdsfmt")
+			sel.CBOOL[[i]] <- r$CBOOL
+		}
+
+		dat.list <- vector("list", length(nodes))
+		dat <- vector("list", length(nodes))
+		names(dat) <- names(nodes)
+
+		# for-loop
+		idx <- 1
+		while (idx <= length(colidx))
+		{
+			cnt <- length(colidx) - idx + 1
+			if (cnt > buf.size) cnt <- buf.size
+
+			for (i in 1:length(nodes))
+			{
+				r <- .C("gdsApplyCol", as.integer(nodes[[i]]), as.integer(idx),
+					as.integer(colidx), as.integer(cnt), sel.CBOOL[[i]], rtype[i],
+					data=switch(rtype[i]+1, integer(0),
+						matrix(as.integer(0), nrow=eachcnt[i], ncol=cnt),
+						matrix(as.double(0), nrow=eachcnt[i], ncol=cnt),
+						matrix(as.character(0), nrow=eachcnt[i], ncol=cnt),
+						matrix(as.logical(0), nrow=eachcnt[i], ncol=cnt)),
+					err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
+				if (r$err != 0) stop(lasterr.gds())
+				dat.list[[i]] <- r$data
+			}
+
+			# call
+			for (i in seq.int(idx, idx+cnt-1))
+			{
+				for (k in 1:length(nodes))
+					dat[[k]] <- dat.list[[k]][, i-idx+1]
+				ans[[i]] <- FUN(dat, ...)
+			}
+
+			idx <- idx + cnt
+		}
+	}
+
+	# return
+	if ((length(ans) > 0) && simplify)
+		simplify2array(ans, higher=TRUE)
+	else
+		ans
+}
+
+
+#############################################################
+# Apply functions over array margins of a GDS node via clusters
+#
+clusterApply.gdsn <- function(cl, gds.fn, node, margin=2,
+	row.sel=NULL, col.sel=NULL, buf.size=1024, simplify=TRUE, FUN, ...)
+{
+	# library
+    if (!require(parallel))
+    {
+	    if (!require(snow))
+			stop("the `parallel' or `snow' package is needed.")
+    }
+
+	# check
+	stopifnot(inherits(cl, "cluster"))
+	stopifnot(is.character(gds.fn))
+	stopifnot(is.character(node) | is.numeric(node))
+	stopifnot(margin %in% c(1, 2))
+	stopifnot(is.null(row.sel) | is.logical(row.sel))
+	stopifnot(is.null(col.sel) | is.logical(col.sel))
+	stopifnot(is.logical(simplify))
+
+	gds <- openfn.gds(gds.fn)
+	ifopen <- TRUE
+	on.exit({ if (ifopen) closefn.gds(gds) })
+
+	nd <- index.gdsn(gds, node, TRUE)
+	if (is.null(nd))
+	{
+		closefn.gds(gds)
+		stop(sprintf("There is no node \"%s\" in the specified gds file.",
+			paste(node, collapse="/")))
+	}
+	desp <- objdesp.gdsn(nd)
+
+	if (!desp$is.array)
+		stop("`node' should be array-type.")
+	if (length(desp$dim) != 2)
+		stop("`node' should be a matrix")
+	if (is.logical(row.sel))
+	{
+		if (length(row.sel) != desp$dim[1])
+			stop("Invalid length of `row.sel'.")
+		if (sum(row.sel, na.rm=TRUE) <= 0)
+			return(NULL)
+	}
+	if (is.logical(col.sel))
+	{
+		if (length(col.sel) != desp$dim[2])
+			stop("Invalid length of `col.sel'.")
+		if (sum(col.sel, na.rm=TRUE) <= 0)
+			return(NULL)
+	}
+
+	# initialize ...
+	if (margin == 1)
+	{
+		# enumerate each row
+		if (is.logical(row.sel))
+		{
+			sel <- which(row.sel)
+		} else {
+			sel <- seq_len(desp$dim[1])
+		}
+		n <- desp$dim[1]
+	} else {
+		# enumerate each column
+		if (is.logical(col.sel))
+		{
+			sel <- which(col.sel)
+		} else {
+			sel <- seq_len(desp$dim[2])
+		}
+		n <- desp$dim[2]
+	}
+
+	if (length(cl) > 1)
+	{
+		ifopen <- FALSE
+		closefn.gds(gds)
+
+		clseq <- splitIndices(length(sel), length(cl))
+		for (i in 1:length(cl))
+		{
+			val <- rep(FALSE, n)
+			val[ sel[ clseq[[i]] ] ] <- TRUE
+			clseq[[i]] <- val
+		}
+
+		if (margin == 1)
+		{
+			# enumerate each row
+			ans <- clusterApply(cl, clseq, fun =
+				function(sel, gds.fn, node, col.sel, buf.size, FUN, ...) {
+
+					library(gdsfmt)
+					# open the file
+					gds <- openfn.gds(gds.fn)
+					nd <- index.gdsn(gds, node)
+					# apply
+					rv <- apply.gdsn(node=nd, margin=1, row.sel=sel, col.sel=col.sel,
+						buf.size=buf.size, simplify=FALSE, FUN=FUN, ...)
+					# close
+					closefn.gds(gds)
+					rv
+
+				}, gds.fn=gds.fn, node=node,
+					col.sel=col.sel, buf.size=buf.size, FUN=FUN, ...)
+		} else {
+			# enumerate each column
+			ans <- clusterApply(cl, clseq, fun =
+				function(sel, gds.fn, node, row.sel, buf.size, FUN, ...) {
+
+					library(gdsfmt)
+					# open the file
+					gds <- openfn.gds(gds.fn)
+					nd <- index.gdsn(gds, node)
+					# apply
+					rv <- apply.gdsn(node=nd, margin=2, row.sel=row.sel, col.sel=sel,
+						buf.size=buf.size, simplify=FALSE, FUN=FUN, ...)
+					# close
+					closefn.gds(gds)
+					rv
+
+				}, gds.fn=gds.fn, node=node,
+					row.sel=row.sel, buf.size=buf.size, FUN=FUN, ...)
+		}
+
+		# return
+		ans <- unlist(ans, recursive=FALSE, use.names=FALSE)
+		if ((length(ans) > 0) && simplify)
+			simplify2array(ans, higher=TRUE)
+		else
+			ans
+	} else{
+		apply.gdsn(nd, margin, row.sel, col.sel, buf.size, simplify, FUN, ...)
+	}
+}
+
+
+#############################################################
+# Apply functions over array margins of a list of GDS nodes
+#
+clusterApplylt.gdsn <- function(cl, gds.fn, nodes, margin=2,
+	row.sel=NULL, col.sel=NULL, buf.size=1024, simplify=TRUE, FUN, ...)
+{
+	# library
+    if (!require(parallel))
+    {
+	    if (!require(snow))
+			stop("the `parallel' or `snow' package is needed.")
+    }
+
+	# check
+	stopifnot(inherits(cl, "cluster"))
+	stopifnot(is.character(gds.fn))
+	stopifnot(is.list(nodes))
+	stopifnot(length(nodes) > 0)
+	stopifnot(margin %in% c(1, 2))
+	stopifnot(is.logical(simplify))
+
+	ifopen <- TRUE
+	gds <- openfn.gds(gds.fn)
+	on.exit({ if (ifopen) closefn.gds(gds) })
+
+	nd.nodes <- vector("list", length(nodes))
+	for (i in 1:length(nodes))
+	{
+		v <- index.gdsn(gds, nodes[[i]], silent=TRUE)
+		nd.nodes[[i]] <- v
+		if (is.null(v))
+		{
+			stop(sprintf("There is no node \"%s\" in the specified gds file.",
+				paste(nodes[[i]], collapse="/")))
+		}
+	}
+
+	if (margin == 1)
+	{
+		# enumerate each row
+
+		stopifnot(is.null(row.sel) | is.logical(row.sel))
+		stopifnot(is.null(col.sel) | is.list(col.sel))
+		if (is.list(col.sel))
+			stopifnot(length(col.sel) == length(nodes))
+
+		if (is.logical(row.sel))
+		{
+			num.row <- sum(row.sel, na.rm=TRUE)
+			xsel <- which(row.sel)
+			n.total <- length(row.sel)
+		} else {
+			desp <- objdesp.gdsn(nd.nodes[[1]])
+			num.row <- desp$dim[1]
+			xsel <- seq_len(desp$dim[1])
+			n.total <- desp$dim[1]
+		}
+		if (num.row <= 0) return(NULL)
+
+		for (i in 1:length(nodes))
+		{
+			desp <- objdesp.gdsn(nd.nodes[[i]])
+			if (!desp$is.array)
+				stop(sprintf("`nodes[%d]' should be array-type!", i))
+			if (!(length(desp$dim) %in% c(1,2)))
+				stop(sprintf("`nodes[%d]' should be a matrix or vector!", i))
+			if (is.logical(row.sel))
+			{
+				if (length(row.sel) != desp$dim[1])
+					stop(sprintf("The row dimension of `nodes[%d]' is invalid!", i))
+			} else {
+				if (num.row != desp$dim[1])
+					stop(sprintf("The row dimension of `nodes[%d]' is invalid!", i))
+			}
+			if (is.list(col.sel))
+			{
+				sel <- col.sel[[i]]
+				if (!is.null(sel) & !is.logical(sel))
+					stop(sprintf("`col.sel[%d]' should be NULL or a logical vector!", i))
+				if (length(desp$dim) > 1)
+				{
+					if (is.logical(sel) & length(sel)!= desp$dim[2])
+						stop(sprintf("Invalid length of `col.sel[%d]'!", i))
+				}
+			}
+		}
+
+	} else {
+		# enumerate each column
+
+		stopifnot(is.null(col.sel) | is.logical(col.sel))
+		stopifnot(is.null(row.sel) | is.list(row.sel))
+		if (is.list(row.sel))
+			stopifnot(length(row.sel) == length(nodes))
+
+		if (is.logical(col.sel))
+		{
+			num.col <- sum(col.sel, na.rm=TRUE)
+			xsel <- which(col.sel)
+			n.total <- length(col.sel)
+		} else {
+			desp <- objdesp.gdsn(nd.nodes[[1]])
+			if (length(desp$dim) > 1)
+			{
+				num.col <- desp$dim[2]
+			} else {
+				num.col <- desp$dim[1]
+			}
+			xsel <- seq_len(num.col)
+			n.total <- num.col
+		}
+		if (num.col <= 0) return(NULL)
+
+		for (i in 1:length(nodes))
+		{
+			desp <- objdesp.gdsn(nd.nodes[[i]])
+			if (!desp$is.array)
+				stop(sprintf("`nodes[%d]' should be array-type!", i))
+			if (!(length(desp$dim) %in% c(1,2)))
+				stop(sprintf("`nodes[%d]' should be a matrix or vector!", i))
+			if (is.logical(col.sel))
+			{
+				if (length(desp$dim) > 1)
+				{
+					n.tmp <- desp$dim[2]
+				} else {
+					n.tmp <- desp$dim[1]
+				}
+				if (length(col.sel) != n.tmp)
+					stop(sprintf("The column dimension of `nodes[%d]' is invalid!", i))
+			} else {
+				if (length(desp$dim) > 1)
+				{
+					n.tmp <- desp$dim[2]
+				} else {
+					n.tmp <- desp$dim[1]
+				}
+				if (num.col != n.tmp)
+					stop(sprintf("The column dimension of `nodes[%d]' is invalid!", i))
+			}
+			if (is.list(row.sel))
+			{
+				sel <- row.sel[[i]]
+				if (!is.null(sel) & !is.logical(sel))
+					stop(sprintf("`row.sel[%d]' should be NULL or a logical vector!", i))
+				if (length(desp$dim) > 1)
+				{
+					if (is.logical(sel) & length(sel)!= desp$dim[1])
+						stop(sprintf("Invalid length of `row.sel[%d]'!", i))
+				}
+			}
+		}
+	}
+
+	# run ...
+	if (length(cl) > 1)
+	{
+		ifopen <- FALSE
+		closefn.gds(gds)
+
+		clseq <- splitIndices(length(xsel), length(cl))
+		for (i in 1:length(cl))
+		{
+			val <- rep(FALSE, n.total)
+			val[ xsel[ clseq[[i]] ] ] <- TRUE
+			clseq[[i]] <- val
+		}
+
+		if (margin == 1)
+		{
+			# enumerate each row
+			ans <- clusterApply(cl, clseq, fun =
+				function(sel, gds.fn, nodes, col.sel, buf.size, FUN, ...) {
+
+					library(gdsfmt)
+					# open the file
+					gds <- openfn.gds(gds.fn)
+					nd.nodes <- vector("list", length(nodes))
+					for (i in 1:length(nodes))
+						nd.nodes[[i]] <- index.gdsn(gds, nodes[[i]])
+					# apply
+					rv <- applylt.gdsn(nd.nodes, margin=1, row.sel=sel, col.sel=col.sel,
+						buf.size=buf.size, simplify=FALSE, FUN=FUN, ...)
+					# close
+					closefn.gds(gds)
+					rv
+
+				}, gds.fn=gds.fn, nodes=nodes,
+					col.sel=col.sel, buf.size=buf.size, FUN=FUN, ...)
+		} else {
+			# enumerate each column
+			ans <- clusterApply(cl, clseq, fun =
+				function(sel, gds.fn, nodes, row.sel, buf.size, FUN, ...) {
+
+					library(gdsfmt)
+					# open the file
+					gds <- openfn.gds(gds.fn)
+					nd.nodes <- vector("list", length(nodes))
+					for (i in 1:length(nodes))
+						nd.nodes[[i]] <- index.gdsn(gds, nodes[[i]])
+					# apply
+					rv <- applylt.gdsn(nd.nodes, margin=2, row.sel=row.sel, col.sel=sel,
+						buf.size=buf.size, simplify=FALSE, FUN=FUN, ...)
+					# close
+					closefn.gds(gds)
+					rv
+
+				}, gds.fn=gds.fn, nodes=nodes,
+					row.sel=row.sel, buf.size=buf.size, FUN=FUN, ...)
+		}
+
+		# return
+		ans <- unlist(ans, recursive=FALSE, use.names=FALSE)
+		if ((length(ans) > 0) && simplify)
+			simplify2array(ans, higher=TRUE)
+		else
+			ans
+	} else{
+		applylt.gdsn(nd.nodes, margin, row.sel, col.sel,
+			buf.size, simplify, FUN, ...)
+	}
 }
 
 

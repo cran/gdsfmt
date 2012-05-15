@@ -1394,7 +1394,7 @@ namespace CoreArray
 		typedef typename TdTraits<T>::TType ElmTypeEx;
 
 		CdFixedStr(size_t vDimCnt=0): CdVector<T>(vDimCnt)
-			{ vElmSize_Ptr = 0; };
+			{ vElmSize_Ptr = 0; }
 		virtual ~CdFixedStr()
 		{
 			if (this->fGDSStream) this->Synchronize();

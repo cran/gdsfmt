@@ -619,7 +619,7 @@ namespace CoreArray
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		out = L;
 	#elif defined(COREARRAY_BIG_ENDIAN)
-		out = COREARRAY_ENDIAN_CVT64(L) >> 16;
+		out = COREARRAY_ENDIAN_CVT64(L);
 	#else
 	#  error "Unsupported Endianness!"
 	#endif
@@ -675,7 +675,7 @@ namespace CoreArray
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		UInt64 L = in;
 	#elif defined(COREARRAY_BIG_ENDIAN)
-		UInt64 L = COREARRAY_ENDIAN_CVT64(in) << 16;
+		UInt64 L = COREARRAY_ENDIAN_CVT64(in);
 	#else
 	#  error "Unsupported Endianness!"
 	#endif
@@ -918,7 +918,7 @@ namespace CoreArray
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		out = L;
 	#elif defined(COREARRAY_BIG_ENDIAN)
-		out = COREARRAY_ENDIAN_CVT64(L) >> 16;
+		out = COREARRAY_ENDIAN_CVT64(L);
 	#else
 	#  error "Unsupported Endianness!"
 	#endif
@@ -983,7 +983,7 @@ namespace CoreArray
 	#if defined(COREARRAY_LITTLE_ENDIAN)
 		UInt64 L = in;
 	#elif defined(COREARRAY_BIG_ENDIAN)
-		UInt64 L = COREARRAY_ENDIAN_CVT64(in) << 16;
+		UInt64 L = COREARRAY_ENDIAN_CVT64(in);
 	#else
 	#  error "Unsupported Endianness!"
 	#endif

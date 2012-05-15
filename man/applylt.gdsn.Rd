@@ -1,16 +1,17 @@
-\name{apply.gdsn}
-\alias{apply.gdsn}
+\name{applylt.gdsn}
+\alias{applylt.gdsn}
 \title{Apply functions over matrix margins}
 \description{
-	Returns a vector or list of values obtained by applying a function to margins of a matrix,
-in a CoreArray Genomic Data Structure (GDS) file.
+	Returns a vector or list of values obtained by applying a function to margins of a list
+of matrices, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-apply.gdsn(node, margin=2, row.sel=NULL, col.sel=NULL, buf.size=1024, simplify=TRUE, FUN, ...)
+applylt.gdsn(nodes, margin=2, row.sel=NULL, col.sel=NULL, buf.size=1024,
+	simplify=TRUE, FUN, ...)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{nodes}{a list of \code{\link[gdsfmt]{gdsn}} objects, GDS nodes}
 	\item{margin}{an integer giving the subscripts which the function will be applied
 		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
 	\item{row.sel}{a logical vector giving which rows will be used, or NULL for all rows}
@@ -36,7 +37,6 @@ memory.
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{
-	\code{\link[gdsfmt]{applylt.gdsn}},
 	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{readex.gdsn}},
 	\code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
 	\code{\link[gdsfmt]{add.gdsn}}
@@ -46,19 +46,30 @@ memory.
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
 
-(n <- add.gdsn(f, "matrix", val=matrix(as.character(1:(10*6)), nrow=10)))
-read.gdsn(index.gdsn(f, "matrix"))
+X <- matrix(1:50, nrow=10)
+Y <- matrix((1:50)/100, nrow=10)
+Z1 <- paste("Z", 1:10, sep="")
+Z2 <- paste("Z", 1:5, sep="")
 
-# Apply functions over rows of matrix
-tmp <- apply.gdsn(n, margin=1, buf.size=2, FUN=function(x) print(x))
-tmp <- apply.gdsn(n, margin=1,
-	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+node.X <- add.gdsn(f, "X", X)
+node.Y <- add.gdsn(f, "Y", Y)
+node.Z1 <- add.gdsn(f, "Z1", Z1)
+node.Z2 <- add.gdsn(f, "Z2", Z2)
+
+v <- applylt.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), 1,
 	FUN=function(x) print(x))
 
-# Apply functions over columns of matrix
-tmp <- apply.gdsn(n, margin=2, FUN=function(x) print(x))
-tmp <- apply.gdsn(n, margin=2,
-	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+v <- applylt.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), 2,
+	FUN=function(x) print(x))
+
+v <- applylt.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), 1,
+	row.sel=rep(c(TRUE, FALSE), 5),
+	col.sel=list(X=c(TRUE, FALSE, TRUE, FALSE, TRUE), Y=c(TRUE, TRUE, FALSE, FALSE, TRUE), Z=NULL),
+	FUN=function(x) print(x))
+
+v <- applylt.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), 2,
+	row.sel=list(X=rep(c(TRUE, FALSE), 5), Y=rep(c(FALSE, TRUE), 5), Z=NULL),
+	col.sel=c(TRUE, FALSE, FALSE, FALSE, TRUE),
 	FUN=function(x) print(x))
 
 

@@ -44,6 +44,10 @@
 #  define __STDC_LIMIT_MACROS
 #endif
 
+#ifdef COREARRAY_UNIX
+#  include <sys/types.h>
+#endif
+
 #ifdef COREARRAY_MSC
 #  include <msvc/stdint.h>
 #else
@@ -632,7 +636,7 @@ namespace CoreArray
 	template<typename TYPE, ssize_t SIZE> struct TdNumber
 	{
 	public:
-    	/// The size of this type
+		/// The size of this type
 		static const ssize_t size = SIZE;
 
 		TdNumber() {}

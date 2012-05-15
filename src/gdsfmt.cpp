@@ -696,13 +696,14 @@ DLLEXPORT void gdsNodeIndexEx(CdGDSObj **Node, char **Name, int *Cnt,
  *  \param isarray     [out] indicates whether it is array-type
  *  \param DimCnt      [out] the number of dimension
  *  \param DimEach     [out] the size(s) of dimension
+ *  \param MaxLen      [out] the max length of characters
  *  \param PackMode    [out] compression mode
  *  \param PackRatio   [out] the ratio of compression
  *  \param err         [out] return TRUE if error occurs, otherwise FALSE
 **/
 DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SVType,
-	LongBool *isarray, int *DimCnt, int *DimEach, char **PackMode, double *PackRatio,
-	LongBool *err)
+	LongBool *isarray, int *DimCnt, int *DimEach, int *MaxLen,
+	char **PackMode, double *PackRatio, LongBool *err)
 {
 	CORETRY
 		// check
@@ -734,6 +735,20 @@ DLLEXPORT void gdsNodeObjDesp(CdGDSObj **Node, char **Desp, char **Name, int *SV
 			} else {
 				*PackRatio = NaN;
 			}
+
+			if (dynamic_cast<CdFStr8*>(Obj))
+			{
+				*MaxLen = static_cast<CdFStr8*>(Obj)->MaxLength();
+			} else if (dynamic_cast<CdFStr16*>(Obj))
+			{
+				*MaxLen = static_cast<CdFStr16*>(Obj)->MaxLength();
+			} else if (dynamic_cast<CdFStr32*>(Obj))
+			{
+				*MaxLen = static_cast<CdFStr32*>(Obj)->MaxLength();
+			} else {
+				*MaxLen = -1;
+			}
+
 		} else if (dynamic_cast<CdGDSStreamContainer*>(*Node))
 		{
 			CdGDSStreamContainer *Obj = static_cast<CdGDSStreamContainer*>(*Node);
@@ -1416,17 +1431,23 @@ DLLEXPORT void gdsObjReadExData(CdGDSObj **Node, LongBool *Selection,
 DLLEXPORT void gdsLongBool2CBOOL(LongBool *from, CBOOL *to, int *cnt)
 {
 	for (int i=0; i < *cnt; i++, from++, to++)
+	{
 		*to = (*from == TRUE);
+	}
 }
 
 /// read data from a node for "apply.gdsn"
 /** \param Node        [in] a specified GDS node
- *  \param Col         [in] the column index (starting from ONE)
+ *  \param Col         [in] the column index (starting from ONE), used for ColIdx
+ *  \param ColIdx      [in] the matching indices of columns
+ *  \param rCnt        [in] the count of columns
+ *  \param RowSel      [in] the selection of rows
  *  \param RType       [in] the data type
  *  \param Ptr         [out] the pointer to data field
  *  \param err         [out] return TRUE if error occurs, otherwise FALSE
 **/
-DLLEXPORT void gdsApplyCol(CdGDSObj **Node, int *Col, int *RType, void *Ptr, LongBool *err)
+DLLEXPORT void gdsApplyCol(CdGDSObj **Node, int *Col, int *ColIdx, int *rCnt,
+	CBOOL *RowSel, int *RType, void *Ptr, LongBool *err)
 {
 	CORETRY
 		// check
@@ -1436,51 +1457,20 @@ DLLEXPORT void gdsApplyCol(CdGDSObj **Node, int *Col, int *RType, void *Ptr, Lon
 
 		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
 		CdSequenceX::TSeqDimBuf DStart, Count;
-		DStart[0] = *Col - 1; DStart[1] = 0;
 		Obj->GetDimLen(Count);
-		Count[0] = 1;
 
-		TSVType SV = RtoSV(*RType);
-		if (!COREARRAY_SVSTR(SV))
-		{
-			Obj->rData(DStart, Count, Ptr, SV);
-		} else {
-			TIterDataExt Rec;
-			Rec.pBuf = (char*)Ptr;
-			Rec.LastDim = Count[1];
-			Rec.Seq = Obj;
-			if (Rec.LastDim > 0)
-				Internal::SeqIterRect(DStart, Count, 2, Rec, rIterStr);
-		}
-		*err = false;
+		// the following is OK for Obj->DimCnt() == 1 or 2
 
-	CORECATCH(*err = true)
-}
+		const int nCol = ColIdx[*Col + *rCnt - 2] - ColIdx[*Col - 1] + 1;
+		vector<CBOOL> ColFlag(nCol, false);
+		for (int i=0; i < *rCnt; i++)
+			ColFlag[ColIdx[*Col + i - 1] - ColIdx[*Col - 1]] = true;
+		CBOOL *SelPtr[2] = { &(ColFlag[0]), RowSel };
 
-/// read data from a node for "apply.gdsn"
-/** \param Node        [in] a specified GDS node
- *  \param Col         [in] the column index (starting from ONE)
- *  \param RType       [in] the data type
- *  \param Ptr         [out] the pointer to data field
- *  \param err         [out] return TRUE if error occurs, otherwise FALSE
-**/
-DLLEXPORT void gdsApplyColEx(CdGDSObj **Node, int *Col, CBOOL *Selection,
-	int *RType, void *Ptr, LongBool *err)
-{
-	CORETRY
-		// check
-		_NodeValid(*Node);
-		if (!dynamic_cast<CdSequenceX*>(*Node))
-			ErrNode(*Node);
+		DStart[0] = ColIdx[*Col - 1] - 1; DStart[1] = 0;
+		Count[0] = nCol;
 
-		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
-		CdSequenceX::TSeqDimBuf DStart, Count;
-		DStart[0] = *Col - 1; DStart[1] = 0;
-		Obj->GetDimLen(Count);
-		Count[0] = 1;
-
-		CBOOL ColFlag = true;
-		CBOOL *SelPtr[2] = { &ColFlag, Selection };
+		if (Obj->DimCnt() == 1) Count[1] = nCol;
 
 		TSVType SV = RtoSV(*RType);
 		if (!COREARRAY_SVSTR(SV))
@@ -1492,12 +1482,13 @@ DLLEXPORT void gdsApplyColEx(CdGDSObj **Node, int *Col, CBOOL *Selection,
 			Rec.LastDim = Count[1];
 			Rec.Seq = Obj;
 			if (Rec.LastDim > 0)
-				Internal::SeqIterRectEx(DStart, Count, SelPtr, 2, Rec, rIterStrEx);
+				Internal::SeqIterRectEx(DStart, Count, SelPtr, Obj->DimCnt(), Rec, rIterStrEx);
 		}
 		*err = false;
 
 	CORECATCH(*err = true)
 }
+
 
 /// read data from a node for "apply.gdsn"
 /** \param Node        [in] a specified GDS node
@@ -1531,6 +1522,12 @@ DLLEXPORT void gdsApplyRow(CdGDSObj **Node, int *Row, int *RowIdx, int *rCnt,
 		DStart[0] = 0; DStart[1] = RowIdx[*Row - 1] - 1;
 		Count[1] = nRow;
 
+		if (Obj->DimCnt() == 1)
+		{
+			DStart[0] = DStart[1]; Count[0] = Count[1];
+			SelPtr[0] = SelPtr[1];
+		}
+
 		TSVType SV = RtoSV(*RType);
 		if (!COREARRAY_SVSTR(SV))
 		{
@@ -1541,13 +1538,12 @@ DLLEXPORT void gdsApplyRow(CdGDSObj **Node, int *Row, int *RowIdx, int *rCnt,
 			Rec.LastDim = Count[1];
 			Rec.Seq = Obj;
 			if (Rec.LastDim > 0)
-				Internal::SeqIterRectEx(DStart, Count, SelPtr, 2, Rec, rIterStrEx);
+				Internal::SeqIterRectEx(DStart, Count, SelPtr, Obj->DimCnt(), Rec, rIterStrEx);
 		}
 		*err = false;
 
 	CORECATCH(*err = true)
 }
-
 
 
 

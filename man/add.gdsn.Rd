@@ -88,7 +88,9 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 (f <- createfn.gds("test.gds"))
 L <- -2500:2499
 
+##########################################################################
 # commom types
+
 add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP", closezip=TRUE)
 add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50))
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))
@@ -101,7 +103,10 @@ add.gdsn(f, "bit2-matrix", val=matrix(L[1:5000], nrow=50, ncol=100), storage="bi
 add.gdsn(f, "list", val=list(X=1:10, Y=seq(1, 10, 0.25)))
 add.gdsn(f, "data.frame", val=data.frame(X=1:19, Y=seq(1, 10, 0.5)))
 
+
+##########################################################################
 # save a .RData object
+
 obj <- list(X=1:10, Y=seq(1, 10, 0.1))
 save(obj, file="tmp.RData")
 addfile.gdsn(f, "tmp.RData", filename="tmp.RData")
@@ -110,6 +115,20 @@ f
 
 read.gdsn(index.gdsn(f, "list"))
 read.gdsn(index.gdsn(f, "data.frame"))
+
+
+##########################################################################
+# allocate the disk spaces
+
+n1 <- add.gdsn(f, "n1", val=1:100, valdim=c(10, 20))
+read.gdsn(index.gdsn(f, "n1"))
+
+n2 <- add.gdsn(f, "n2", val=matrix(1:100, 10, 10), valdim=c(15, 20))
+read.gdsn(index.gdsn(f, "n2"))
+
+n3 <- add.gdsn(f, "n3", val="ZXW", valdim=c(15, 20))
+read.gdsn(index.gdsn(f, "n3"))
+
 
 closefn.gds(f)
 }

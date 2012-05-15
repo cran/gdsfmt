@@ -988,8 +988,9 @@ template<typename OutUTF, typename InUTF>
 		if (rv == (size_t)(-1))
 		{
 			if (errno == E2BIG) // Need new room
+			{
 				rvstr.append(&buf[0], &buf[(sizeof(buf)-DestLeft)/sizeof(OutUTF)]);
-			else { // Invalid input character
+			} else { // Invalid input character
 				cd.Reset();
 				size_t cs = IConvName<InUTF>::Ign((InUTF*)src, SrcLeft/sizeof(InUTF));
 				SrcLeft -= cs * sizeof(InUTF);
