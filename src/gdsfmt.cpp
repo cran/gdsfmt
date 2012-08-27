@@ -101,6 +101,8 @@ public:
 		ClassMap["uint8"] = TdTraits<CoreArray::UInt8>::StreamName();
 		ClassMap["int16"] = TdTraits<CoreArray::Int16>::StreamName();
 		ClassMap["uint16"] = TdTraits<CoreArray::UInt16>::StreamName();
+		ClassMap["int24"] = TdTraits<CoreArray::Int24>::StreamName();
+		ClassMap["uint24"] = TdTraits<CoreArray::UInt24>::StreamName();
 		ClassMap["int32"] = TdTraits<CoreArray::Int32>::StreamName();
 		ClassMap["uint32"] = TdTraits<CoreArray::UInt32>::StreamName();
 		ClassMap["int64"] = TdTraits<CoreArray::Int64>::StreamName();
@@ -185,12 +187,13 @@ public:
 		// String
 
 		ClassMap["string"] = TdTraits<CoreArray::UTF8*>::StreamName();
-		ClassMap["wstring"] = TdTraits<CoreArray::UTF16*>::StreamName();
-		ClassMap["dwstring"] = TdTraits<CoreArray::UTF32*>::StreamName();
+		ClassMap["string16"] = TdTraits<CoreArray::UTF16*>::StreamName();
+		ClassMap["string32"] = TdTraits<CoreArray::UTF32*>::StreamName();
 
 		// R storage mode
 		ClassMap["integer"] = TdTraits<CoreArray::Int32>::StreamName();
 		ClassMap["numeric"] = TdTraits<CoreArray::Float64>::StreamName();
+		ClassMap["float"] = TdTraits<CoreArray::Float32>::StreamName();
 		ClassMap["double"] = TdTraits<CoreArray::Float64>::StreamName();
 		ClassMap["character"] = TdTraits<CoreArray::UTF8*>::StreamName();
 		ClassMap["logical"] = TdTraits<CoreArray::Int32>::StreamName();
@@ -213,8 +216,8 @@ public:
 		}
 	}
 
-	/// get an empty GDS file and its index
-	CdGDSFile *GetEmptyFile(int *Index)
+	/// check init
+	void CheckInit()
 	{
 		// register classess
 		if (!InitClassFlag)
@@ -222,7 +225,12 @@ public:
 			RegisterClass();
 			InitClassFlag = true;
 		}
+	}
 
+	/// get an empty GDS file and its index
+	CdGDSFile *GetEmptyFile(int *Index)
+	{
+		CheckInit();
 		for (int i=0; i < MaxFiles; i++)
 		{
 			if (Files[i] == NULL)
@@ -358,6 +366,7 @@ DLLEXPORT void gdsCreateGDS(char **FileName, int *gds, CdGDSFolder **Root,
 	LongBool *err)
 {
 	CdGDSFile *f = NULL;
+	*gds = -1;
 
 	CORETRY
 		f = Init.GetEmptyFile(gds);
@@ -376,6 +385,7 @@ DLLEXPORT void gdsCreateGDS(char **FileName, int *gds, CdGDSFolder **Root,
 			}
 		}
 		if (f) delete f;
+		if (*gds >= 0) Init.Files[*gds] = NULL;
 		*err = true; *gds = -1; *Root = NULL
 	)
 }
@@ -391,6 +401,7 @@ DLLEXPORT void gdsOpenGDS(char **FileName, int *gds, CdGDSFolder **Root,
 	LongBool *ReadOnly, LongBool *err)
 {
 	CdGDSFile *f = NULL;
+	*gds = -1;
 
 	CORETRY
 		f = Init.GetEmptyFile(gds);
@@ -409,6 +420,7 @@ DLLEXPORT void gdsOpenGDS(char **FileName, int *gds, CdGDSFolder **Root,
 			}
 		}
 		if (f) delete f;
+		if (*gds >= 0) Init.Files[*gds] = NULL;
 		*err = true; *gds = -1; *Root = NULL
 	)
 }
@@ -849,6 +861,7 @@ DLLEXPORT void gdsAddNode(CdGDSObj **Node, char **NodeName, char **Storage,
 					}
 				}
 			}
+
 			*Node = Dir.AddObj(RStr(*NodeName), vObj);
 		}
 
@@ -1776,5 +1789,45 @@ DLLEXPORT void gdsLastErrGDS(char **Msg)
 {
 	RStrAgn(Init.LastError.c_str(), Msg);
 }
+
+
+/// get number of bytes and bits
+/** \param ClassName   [in] the name of class
+ *  \param out_nbit    [out] the number of bits
+ *  \param err         [out] return TRUE if error occurs, otherwise FALSE
+**/
+DLLEXPORT void gds_Internal_Class(char **ClassName, int *out_nbit, int *err)
+{
+	CORETRY
+		Init.CheckInit();
+
+		*out_nbit = -1;
+
+		// Class Name Mapping
+		const char *nName;
+		map<const char*, const char*, TInit::strCmp>::iterator it;
+		it = Init.ClassMap.find(*ClassName);
+		if (it != Init.ClassMap.end())
+			nName = it->second;
+		else
+			throw ErrGDSFmt(string("Not support: ") + *ClassName);
+
+		// mapping
+		CdObjClassMgr::TdOnObjCreate OnCreate = dObjManager().NameToClass(nName);
+		if (OnCreate)
+		{
+			CdObject *obj = OnCreate();
+			if (dynamic_cast<CdContainer*>(obj))
+			{
+				*out_nbit = static_cast<CdContainer*>(obj)->BitOf();
+			}
+			delete obj;
+		} else
+			throw ErrGDSFmt(string("Not support: ") + *ClassName);
+
+		*err = false;
+	CORECATCH(*err = true)
+}
+
 
 } // extern "C"

@@ -27,10 +27,6 @@
 
 #include <dSeq.h>
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 
 namespace CoreArray
 {

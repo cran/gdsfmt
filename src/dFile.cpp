@@ -28,10 +28,6 @@
 #include <dFile.h>
 #include <algorithm>
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 
 namespace CoreArray
 {
@@ -1253,7 +1249,7 @@ void CdGDSStreamContainer::SaveStruct(CdSerial &Writer, bool IncludeName)
 			vAlloc_Stream = fGDSStream->Collection().NewBlockStream();
 			Writer.SetPosition(vAlloc_Ptr);
 			Writer << TdBlockID(vAlloc_Stream->ID());
-			Writer.FlushBuffer();
+			Writer.FlushWrite();
 
 			TdAutoRef<CBufdStream> M(new CBufdStream(vAlloc_Stream));
 			if (fPipeInfo)

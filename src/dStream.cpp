@@ -34,11 +34,6 @@
 #endif
 
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-
 using namespace std;
 using namespace CoreArray;
 
@@ -58,20 +53,24 @@ static const char *rsBlockInvalidPos = "Invalid Position: %lld in CdBlockStream.
 static const char *rsInvalidBlockLen = "Invalid length of Block!";
 
 
-#define FPosMask	(0x7FFFFFFFFFFFll)
-#define FPosMaskBit (0x800000000000ll)
-#define FPosNMask	(0xFFFFFFFFFFFFll)
+// CoreArray GDS Stream position mask
+static const Int64 FPosMask    = (Int64(0x7FFF) << 32) | Int64(0xFFFFFFFF);  // 0x7FFF,FFFFFFFF
+static const Int64 FPosMaskBit = (Int64(0x8000) << 32) | Int64(0x00000000);  // 0x8000,00000000
+static const Int64 FPosNMask   = (Int64(0xFFFF) << 32) | Int64(0xFFFFFFFF);  // 0xFFFF,FFFFFFFF
 
 
 // ErrAllocator
 
 ErrAllocator::ErrAllocator(EdAllocType Ed)
 {
-	switch (Ed) {
+	switch (Ed)
+	{
 		case eaRead:
-			fMessage = rsWriteOnlyMode; break;
+			fMessage = rsWriteOnlyMode;
+			break;
 		case eaWrite:
-            fMessage = rsReadOnlyMode; break;
+            fMessage = rsReadOnlyMode;
+        	break;
 	}
 }
 
@@ -194,7 +193,8 @@ static COREARRAY_FASTCALL void InvalidWrite64f(TdAllocator &obj, const TdPtr64 I
 
 static COREARRAY_FASTCALL void BaseDone(TdAllocator &obj)
 {
-	if (obj.Base) {
+	if (obj.Base)
+	{
 		free(obj.Base);
 		obj.Capacity = 0; obj.Base = NULL;
 		obj._Done = NULL;
@@ -209,7 +209,8 @@ static COREARRAY_FASTCALL void BaseCapacity(TdAllocator &obj, const TdPtr64 Size
 		if (!fail)
 		{
 			unsigned char *p = (unsigned char*)realloc((void*)obj.Base, Size);
-			if (p) {
+			if (p)
+			{
 				obj.Base = p;
                 obj.Capacity = Size;
 			} else
@@ -232,7 +233,8 @@ static COREARRAY_FASTCALL void BaseCapacityMem(TdAllocator &obj, const TdPtr64 S
 		if (!fail)
 		{
 			unsigned char *p = (unsigned char*)realloc((void*)obj.Base, Size);
-			if (p) {
+			if (p)
+			{
 				obj.Base = p;
 				obj.Capacity = Size;
 			} else
@@ -359,7 +361,7 @@ static COREARRAY_FASTCALL void BaseWrite64f(TdAllocator &obj, const TdPtr64 I,
 	*((double*)(obj.Base + (ssize_t)I)) = Value;
 }
 
-// blFilter
+// blBufStream
 
 static COREARRAY_FASTCALL void FilterDone(TdAllocator &obj)
 {
@@ -430,7 +432,7 @@ static COREARRAY_FASTCALL void FilterMove(TdAllocator &obj, const TdPtr64 I1,
 		TdPtr64 p1, p2, Cnt;
 		ssize_t L;
 
-		obj.Filter->FlushBuffer();
+		obj.Filter->FlushWrite();
 		Cnt = Len; Stream = obj.Filter->Stream();
 		if ((I1>I2) || (I1+Len<=I2))
 		{
@@ -472,7 +474,7 @@ static COREARRAY_FASTCALL void FilterSwap(TdAllocator &obj, const TdPtr64 I1,
 		TdPtr64 p1, p2, Cnt;
 		ssize_t L;
 
-		obj.Filter->FlushBuffer();
+		obj.Filter->FlushWrite();
 		Cnt = Len; Stream = obj.Filter->Stream();
 		p1 = I1; p2 = I2;
 		while (Cnt > 0)
@@ -620,7 +622,7 @@ void CoreArray::InitAllocator(TdAllocator &Allocator, bool CanRead,
 			Allocator._w32f = BaseWrite32f;
 			Allocator._w64f = BaseWrite64f;
 			break;
-		case blTempFile: case blFilter:
+		case blTempFile: case blBufStream:
 			if (vLevel == blTempFile)
 				BufFilter = new CBufdStream(new CdTempStream(""));
 			(Allocator.Filter = BufFilter)->AddRef();
@@ -681,7 +683,7 @@ void CoreArray::InitAllocatorEx(TdAllocator &Allocator, bool CanRead,
 {
 	CBufdStream *Filter;
 	Filter = new CBufdStream(Stream);
-	InitAllocator(Allocator, CanRead, CanWrite, blFilter, Filter);
+	InitAllocator(Allocator, CanRead, CanWrite, blBufStream, Filter);
 }
 
 void CoreArray::DoneAllocator(TdAllocator &Allocator)
@@ -1041,7 +1043,9 @@ CdBaseZStream::~CdBaseZStream()
 	fStream->Release();
 }
 
-static const char *SZInvalid = "Invalid ZStream operation '%s'!";
+
+static const char *SZDeflateInvalid = "Invalid Zip Deflate Stream operation '%s'!";
+static const char *SZInflateInvalid = "Invalid Zip Inflate Stream operation '%s'!";
 
 static short ZLevels[13] = {
 		Z_NO_COMPRESSION,       // zcNone
@@ -1106,7 +1110,7 @@ CdZIPDeflate::~CdZIPDeflate()
 
 ssize_t CdZIPDeflate::Read(void *Buffer, ssize_t Count)
 {
-	throw EZLibError(SZInvalid, "Read");
+	throw EZLibError(SZDeflateInvalid, "Read");
 }
 
 ssize_t CdZIPDeflate::Write(void *const Buffer, ssize_t Count)
@@ -1138,16 +1142,25 @@ ssize_t CdZIPDeflate::Write(void *const Buffer, ssize_t Count)
 
 TdPtr64 CdZIPDeflate::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
 {
-	if (Offset==0 && Origin==soCurrent)
-    	return fTotalIn;
-	else
-		throw EZLibError(SZInvalid, "Seek");
+	switch (Origin)
+	{
+		case soBeginning:
+			if (Offset == fTotalIn) return fTotalIn;
+			break;
+		case soCurrent:
+			if (Offset == 0) return fTotalIn;
+			break;
+		case soEnd:
+			if (Offset == 0) return fTotalIn;
+			break;
+	}
+	throw EZLibError(SZDeflateInvalid, "Seek");
 }
 
 void CdZIPDeflate::SetSize(const TdPtr64 NewSize)
 {
 	if (NewSize != fTotalIn)
-		throw EZLibError(SZInvalid, "SetSize");
+		throw EZLibError(SZDeflateInvalid, "SetSize");
 }
 
 void CdZIPDeflate::Close()
@@ -1292,7 +1305,7 @@ ssize_t CdZIPInflate::Read(void *Buffer, ssize_t Count)
 
 ssize_t CdZIPInflate::Write(void *const Buffer, ssize_t Count)
 {
-	throw EZLibError(SZInvalid, "Write");
+	throw EZLibError(SZInflateInvalid, "Write");
 }
 
 TdPtr64 CdZIPInflate::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
@@ -1350,7 +1363,7 @@ TdPtr64 CdZIPInflate::Seek(const TdPtr64 Offset, TdSysSeekOrg Origin)
         }
 		ReadBuffer((void*)buf, vOff % sizeof(buf));
 	} else
-		throw EZLibError(SZInvalid, "Seek");
+		throw EZLibError(SZInflateInvalid, "Seek");
 
 	return fCurPos;
 }
@@ -1362,7 +1375,7 @@ TdPtr64 CdZIPInflate::GetSize()
 
 void CdZIPInflate::SetSize(const TdPtr64 NewSize)
 {
-	throw EZLibError(SZInvalid, "SetSize");
+	throw EZLibError(SZInflateInvalid, "SetSize");
 }
 
 void CdZIPInflate::ClearPoints()

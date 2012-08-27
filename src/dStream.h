@@ -57,7 +57,12 @@ namespace CoreArray
 	};
 
 	/// the levels of allocator
-	enum TAllocLevel { blChunkMemory, blTempFile, blFilter, blUnknown };
+	enum TAllocLevel {
+		blChunkMemory,	//< memory
+		blTempFile,		//< temporary file
+		blBufStream,	//< buffer stream
+		blUnknown		//< undefined
+	};
 
 	/// the definition of allocator
 	struct TdAllocator
@@ -110,8 +115,8 @@ namespace CoreArray
 
 		union
 		{
-			CBufdStream* Filter;
 			unsigned char *Base;
+			CBufdStream* Filter;
 		};
 
 	public:
@@ -286,8 +291,7 @@ namespace CoreArray
 			UInt64 Buf64;
 		};
 
-		TdCompressRemainder()
-			{ memset((void*)this, 0, sizeof(TdCompressRemainder)); }
+		TdCompressRemainder() { Size = 0; Buf64 = 0; }
 	};
 
 

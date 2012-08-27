@@ -29,10 +29,6 @@
 #include <memory>
 #include <algorithm>
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
 
 namespace CoreArray
 {
@@ -1314,13 +1310,13 @@ void CdVectorX::SaveStruct(CdSerial &Writer, bool IncludeName)
 		TdBlockID Entry = vAlloc_Stream->ID();
 		Writer.SetPosition(vAlloc_Ptr);
 		Writer << Entry;
-		Writer.FlushWrite();
+		Writer.FlushBuffer();
 
 		{
 			TdAutoRef<CdSerial> M(new CdSerial(vAlloc_Stream));
 			SaveDirect(*M);
 			DoneAllocator(fAllocator);
-			InitAllocator(fAllocator, fPipeInfo==NULL, true, blFilter, M.get());
+			InitAllocator(fAllocator, fPipeInfo==NULL, true, blBufStream, M.get());
 		}
 	}
 }
@@ -1338,7 +1334,7 @@ void CdVectorX::Synchronize()
 
 void CdVectorX::CloseWriter()
 {
-	if (fAllocator.Level == blFilter)
+	if (fAllocator.Level == blBufStream)
 	{
 		fAllocator.Filter->OnFlush.Clear();
 		fAllocator.Filter->FlushWrite();
@@ -1356,7 +1352,7 @@ void CdVectorX::CloseWriter()
 				vAlloc_Stream->Release();
 				if (fPipeInfo)
 					fPipeInfo->PushReadPipe(*Reader);
-				InitAllocator(fAllocator, true, false, blFilter, Reader);
+				InitAllocator(fAllocator, true, false, blBufStream, Reader);
             }
 		} else {
 			fNeedUpdate = true;
@@ -1587,7 +1583,7 @@ void CdVectorX::SetLoadMode(TdStoreMode Mode)
 					if (fPipeInfo)
 						fPipeInfo->PushReadPipe(*Reader);
 					DoneAllocator(fAllocator);
-					InitAllocator(fAllocator, true, false, blFilter, Reader);
+					InitAllocator(fAllocator, true, false, blBufStream, Reader);
 					fAllocator.Capacity = Reader->GetSize();
 				} else {
 					DoneAllocator(fAllocator);
@@ -1609,7 +1605,7 @@ void CdVectorX::SetLoadMode(TdStoreMode Mode)
 						if (fPipeInfo)
 							fPipeInfo->PushReadPipe(*Reader);
 						DoneAllocator(fAllocator);
-						InitAllocator(fAllocator, true, false, blFilter, Reader);
+						InitAllocator(fAllocator, true, false, blBufStream, Reader);
 						fAllocator.Capacity = Reader->GetSize();
 						throw;
 					}
@@ -1654,7 +1650,7 @@ void CdVectorX::SetPackedMode(const char *Mode)
 				CdSerial *Filter = new CdSerial(vAlloc_Stream);
 				if (fPipeInfo)
 					fPipeInfo->PushReadPipe(*Filter);
-				InitAllocator(fAllocator, true, fPipeInfo==NULL, blFilter, Filter);
+				InitAllocator(fAllocator, true, fPipeInfo==NULL, blBufStream, Filter);
 			}
 			// Save self
 			SaveToBlockStream();
@@ -1816,7 +1812,7 @@ void CdVectorX::KeepInStream(CdSerial &Reader, void * Data)
 		if (fPipeInfo)
 			fPipeInfo->PushReadPipe(*Reader);
 		DoneAllocator(fAllocator);
-		InitAllocator(fAllocator, true, fPipeInfo==NULL, blFilter, Reader);
+		InitAllocator(fAllocator, true, fPipeInfo==NULL, blBufStream, Reader);
 		fAllocator.Capacity = Reader->GetSize();
 		fCapacityMem = (fAllocator.Capacity>0) ? fAllocator.Capacity : 0;
 	} else {
@@ -2008,7 +2004,7 @@ void CdVectorX::SaveAfter(CdSerial &Writer)
 
 void CdVectorX::GetPipeInfo()
 {
-	CBufdStream *buf = (fAllocator.Level==blFilter) ? fAllocator.Filter : NULL;
+	CBufdStream *buf = (fAllocator.Level==blBufStream) ? fAllocator.Filter : NULL;
 	if (_GetStreamPipeInfo(buf, false))
 		fNeedUpdate = true;
 }
@@ -2201,30 +2197,51 @@ void CdVectorX::xDimAuto(int DimIndex)
 
 void CdVectorX::xInitIter(TdIterator &it, Int64 Len)
 {
-	#if (COREARRAY_CPU == 64)
-	_InitIter(it, Len);
+	#ifdef SIZE_MAX
+	#  if (SIZE_MAX > UINT32_MAX)
+		_InitIter(it, Len);
+	#  else
+		while (Len > 0)
+		{
+			ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
+			_InitIter(it, L);
+			Len -= L;
+			if (Len > 0) it.Ptr += fElmSize*Int64(L);
+		}
+	#  endif
 	#else
-	while (Len > 0)
-	{
-		ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
-		_InitIter(it, L);
-		Len -= L;
-		if (Len > 0) it.Ptr += fElmSize*Int64(L);
-	}
+		while (Len > 0)
+		{
+			ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
+			_InitIter(it, L);
+			Len -= L;
+			if (Len > 0) it.Ptr += fElmSize*Int64(L);
+		}
 	#endif
 }
 
 void CdVectorX::xDoneIter(TdIterator &it, Int64 Len)
 {
-	#if (COREARRAY_CPU == 64)
-	_DoneIter(it, Len);
+	#ifdef SIZE_MAX
+	#  if (SIZE_MAX > UINT32_MAX)
+		_DoneIter(it, Len);
+	#  else
+		while (Len > 0)
+		{
+			ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
+			_DoneIter(it, L);
+			Len -= L;
+			if (Len > 0) it.Ptr += fElmSize*Int64(L);
+		}
+	#  endif
 	#else
-	while (Len > 0) {
-		ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
-		_DoneIter(it, L);
-		Len -= L;
-		if (Len > 0) it.Ptr += fElmSize*Int64(L);
-	}
+		while (Len > 0)
+		{
+			ssize_t L = (Len > INT32_MAX) ? INT32_MAX : Len;
+			_DoneIter(it, L);
+			Len -= L;
+			if (Len > 0) it.Ptr += fElmSize*Int64(L);
+		}
 	#endif
 }
 

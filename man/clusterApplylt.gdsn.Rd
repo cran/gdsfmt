@@ -12,8 +12,7 @@ clusterApplylt.gdsn(cl, gds.fn, nodes, margin=2, row.sel=NULL, col.sel=NULL,
 }
 \arguments{
 	\item{cl}{a cluster object, created by this package or by the package
-		\link[parallel]{parallel} or \href{http://CRAN.R-project.org/package=snow}{snow}.
-		If NULL, use the registered default cluster.}
+		\link[parallel]{parallel} or \href{http://CRAN.R-project.org/package=snow}{snow}}
 	\item{gds.fn}{the file name of GDS file}
 	\item{nodes}{it is a list of a vector of integers or characters, specifying the path}
 	\item{margin}{an integer giving the subscripts which the function will be applied

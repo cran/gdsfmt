@@ -1695,9 +1695,15 @@ namespace CoreArray
 		};
 
 		template<typename TYPE> TYPE & VAL()
-			{ return *static_cast<TYPE*>((void*)&_R.ptr); }
+			{
+				void *tmp = &_R.ptr;
+				return *static_cast<TYPE*>(tmp);
+			}
 		template<typename TYPE> const TYPE & VAL() const
-			{ return *static_cast<const TYPE*>((void*)&_R.ptr); }
+			{
+				const void *tmp = &_R.ptr;
+				return *static_cast<const TYPE*>(tmp);
+			}
 
 		void _Done();
 	};

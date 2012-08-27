@@ -82,7 +82,8 @@ namespace CoreArray
 		{
 			Int64 *p = (Int64*)data;
 			int Stop = false;
-			switch (Msg) {
+			switch (Msg)
+			{
 				case mcBeginLoad: case mcBeginSave:
 					if (evBegin)
 						evBegin(Data, *p, &Stop);
@@ -126,6 +127,7 @@ namespace CoreArray
 	static TInit Init;
 
 
+#ifndef COREARRAY_R_LINK
 	// TdCombine2View
 
 	class TdCombine2View: public CdSequenceX
@@ -346,6 +348,9 @@ namespace CoreArray
 			return NULL;
 		}
 	};
+
+#endif // COREARRAY_R_LINK
+
 }
 
 using namespace std;
@@ -771,6 +776,7 @@ extern "C"
 
 	// Functions for Specific Node
 
+#ifndef COREARRAY_R_LINK
 	COREARRAY_DLLEXPORT TdCombine2View *gds_NodeCombineView(CdSequenceX **List,
 		bool *Trans, int ListCnt)
 	{
@@ -778,6 +784,7 @@ extern "C"
 			return new TdCombine2View(List, Trans, ListCnt);
 		CORECATCH(NULL);
 	}
+#endif // COREARRAY_R_LINK
 
 	COREARRAY_DLLEXPORT bool gds_NodeFree(CdGDSObj *Node)
 	{

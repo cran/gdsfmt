@@ -50,14 +50,19 @@
 #include <queue>
 
 #if defined(COREARRAY_WINDOWS)
-	#include <windows.h>
+#   include <windows.h>
 #elif defined(COREARRAY_UNIX)
-	#include <iconv.h>
+#   ifdef COREARRAY_R_LINK
+#       include <R_ext/Riconv.h>
+#   else
+#       include <iconv.h>
+#   endif
 #endif
 
 #ifdef COREARRAY_POSIX_THREAD
-	#include <pthread.h>
+#   include <pthread.h>
 #endif
+
 
 
 namespace CoreArray
@@ -159,9 +164,19 @@ namespace CoreArray
 
 	#ifndef COREARRAY_HAVE_INT128
 		static Int128 Min()
-			{ Int128 rv; rv.Low = 0; rv.High = INT64_MIN; return rv; }
+			{
+				Int128 rv;
+				rv.Low = TdTraits<UInt64>::Max();
+				rv.High = TdTraits<Int64>::Min();
+				return rv;
+			}
 		static Int128 Max()
-			{ Int128 rv; rv.Low = UINT64_MAX; rv.High = INT64_MAX; return rv; }
+			{
+				Int128 rv;
+				rv.Low = TdTraits<UInt64>::Max();
+				rv.High = TdTraits<Int64>::Max();
+				return rv;
+			}
 	#else
 	#  error "Int128"
 	#endif
@@ -304,16 +319,22 @@ namespace CoreArray
 	class TdICONV
 	{
 	public:
+		#ifdef COREARRAY_R_LINK
+			typedef void* TIconv;
+		#else
+			typedef iconv_t TIconv;
+		#endif
+
 		TdICONV(const char *to, const char *from);
 		~TdICONV();
 		void Reset();
 		size_t Cvt(const char * &inbuf, size_t &inbytesleft,
 			char* &outbuf, size_t &outbytesleft);
 
-		COREARRAY_INLINE iconv_t Handle() const { return fHandle; }
+		COREARRAY_INLINE TIconv Handle() const { return fHandle; }
 //		static std::vector<std::string> List();
 	protected:
-		iconv_t fHandle;
+		TIconv fHandle;
 	};
 #endif
 

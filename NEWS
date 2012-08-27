@@ -1,0 +1,34 @@
+0.9.10	16-Aug-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* support RUnit tests
+	* fix warnings
+	* fix a bug: correct the dimension size of array data with more than two dimensions
+	* fix bugs: 'append.gdsn' appends data of bit9, bit10, etc, correctly
+	* fix a minor bug of compression stream
+	* change 'wstring' to 'string16' in add.gdsn
+	* change 'dwstring' to 'string32' in add.gdsn
+
+
+0.9.9	18-May-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* to support GCC4.7 compiler
+
+
+0.9.8	16-Apr-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* fix minor bugs
+
+
+0.9.7	17-Mar-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* add two functions to support the parallel package (R 2.14.0): 'clusterApply.gdsn', 'clusterApplylt.gdsn'
+
+
+0.9.1-0.9.6	05-Mar-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* fix minor bugs
+
+
+0.9.0	04-Jan-2011	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* first public release of gdsfmt

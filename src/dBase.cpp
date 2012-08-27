@@ -30,9 +30,6 @@
 #include <stdarg.h>
 #include <algorithm>
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 
 namespace CoreArray
 {
@@ -699,8 +696,7 @@ void CBufdStream::FlushWrite()
 			fStream->SetPosition(vBufStart);
         }
 	    WriteStream();
-		vActualPos = vBufEnd;
-		vBufEnd = vBufStart = 0;
+		vActualPos = vBufStart = vBufEnd;
 		OnFlush.Notify(this);
 	}
 }
@@ -805,7 +801,7 @@ void CBufdStream::CopyFrom(CBufdStream &Source, TdPtr64 Count)
 
 void CBufdStream::Truncate()
 {
-    FlushBuffer();
+    FlushWrite();
 	fStream->SetSize(fPosition);
 }
 
@@ -1214,7 +1210,7 @@ void CBufdStream::SetStream(CdStream* Value)
 {
 	if (fStream != Value)
 	{
-		if (fStream) FlushBuffer();
+		if (fStream) FlushWrite();
 		fStream->Release();
 		(fStream = Value)->AddRef();
 		if (!fBaseStream)
@@ -1243,7 +1239,7 @@ TdPtr64 CBufdStream::GetSize()
 
 void CBufdStream::SetSize(const TdPtr64 Value)
 {
-	FlushBuffer();
+	FlushWrite();
 	fStream->SetSize(Value);
 	RefreshStream();
 }

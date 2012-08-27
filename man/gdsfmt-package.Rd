@@ -11,8 +11,8 @@ from 2007.
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.9\cr
-	Date: \tab 2012-05-15\cr
+	Version: \tab 0.9.10\cr
+	Date: \tab 2012-08-27\cr
 	License: \tab LGPL version 3\cr
 }
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
@@ -24,6 +24,8 @@ high performance or parallel computing which ease the burden of large-scale calc
 support efficient data management in parallel for numerical genomic data, we developed the Genomic
 Data Structure (GDS) file format. \code{gdsfmt} provides fundamental functions to support accessing
 data in parallel, and allows future R packages to call these functions.
+
+	Forums:	\url{http://sourceforge.net/projects/corearray/forums}
 }
 \references{
 	\url{http://corearray.sourceforge.net}

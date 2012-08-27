@@ -62,9 +62,6 @@
 
 #endif
 
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
 
 
 namespace CoreArray
@@ -154,6 +151,9 @@ uint128_t::operator UInt64() const
 
 
 #ifndef COREARRAY_HAVE_FLOAT128
+
+namespace CoreArray
+{
 
 #ifndef COREARRAY_SUN
 #  pragma pack(push, 1)
@@ -273,6 +273,8 @@ typedef union
 #else
 #  pragma pack(8)
 #endif
+
+}
 
 
 #ifndef COREARRAY_HAVE_INT128
@@ -952,9 +954,10 @@ template<> struct IConvName<UTF8>
 	static const char *Name() { return nl_langinfo(CODESET); }
 	static size_t Ign(const UTF8* In, size_t InLen)
 	{
-		size_t rv = mblen(In, InLen);
-		mblen(NULL, 0);
-		return rv;
+		// size_t rv = mblen(In, InLen);
+		// mblen(NULL, 0);
+		// return rv;
+		return 1;
 	}
 };
 template<> struct IConvName<UTF16>
@@ -987,10 +990,12 @@ template<typename OutUTF, typename InUTF>
 		rv = cd.Cvt(src, SrcLeft, dest, DestLeft);
 		if (rv == (size_t)(-1))
 		{
-			if (errno == E2BIG) // Need new room
+			if (errno == E2BIG)
 			{
+				// Need new room
 				rvstr.append(&buf[0], &buf[(sizeof(buf)-DestLeft)/sizeof(OutUTF)]);
-			} else { // Invalid input character
+			} else {
+				// Invalid input character
 				cd.Reset();
 				size_t cs = IConvName<InUTF>::Ign((InUTF*)src, SrcLeft/sizeof(InUTF));
 				SrcLeft -= cs * sizeof(InUTF);
@@ -1023,38 +1028,55 @@ void ErrCoreArray::Init(const char *fmt, va_list arglist)
 #ifdef COREARRAY_UNIX
 TdICONV::TdICONV(const char *to, const char *from)
 {
-	fHandle = iconv_open(to, from);
-	if (fHandle == (iconv_t)(-1))
+	#ifdef COREARRAY_R_LINK
+		fHandle = Riconv_open(to, from);
+	#else
+		fHandle = iconv_open(to, from);
+	#endif
+	if (fHandle == (TIconv)(-1))
 		Init.LocaleConversionError();
 }
 
 TdICONV::~TdICONV()
 {
-	if (fHandle != (iconv_t)(-1))
-    	iconv_close(fHandle);
+	if (fHandle != (TIconv)(-1))
+	{
+	#ifdef COREARRAY_R_LINK
+		Riconv_close(fHandle);
+	#else
+		iconv_close(fHandle);
+	#endif
+    }
 }
 
 void TdICONV::Reset()
 {
 	size_t Zero = 0;
-	iconv(fHandle, NULL, &Zero, NULL, &Zero);
+	#ifdef COREARRAY_R_LINK
+		Riconv(fHandle, NULL, &Zero, NULL, &Zero);
+	#else
+		iconv(fHandle, NULL, &Zero, NULL, &Zero);
+	#endif
 }
 
 size_t TdICONV::Cvt(const char * &inbuf, size_t &inbytesleft,
 	char* &outbuf, size_t &outbytesleft)
 {
 	size_t rv;
-#if defined(COREARRAY_CYGWIN)
-	rv = iconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
-#elif defined(COREARRAY_SUN)
-	rv = iconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+
+#ifdef COREARRAY_R_LINK
+		rv = Riconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
 #else
-	rv = iconv(fHandle, (char**)&inbuf, &inbytesleft, &outbuf, &outbytesleft);
+#   if defined(COREARRAY_CYGWIN) || defined(COREARRAY_SUN)
+		rv = iconv(fHandle, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+#   else
+		rv = iconv(fHandle, (char**)&inbuf, &inbytesleft, &outbuf, &outbytesleft);
+#   endif
 #endif
 	if (rv == (size_t)(-1))
 	{
 		int err = errno;
-		if (err!=E2BIG && err!=EILSEQ && err!=EINVAL)
+		if ((err!=E2BIG) && (err!=EILSEQ) && (err!=EINVAL))
 			Init.LocaleConversionError();
 	}
 	return rv;
@@ -1256,9 +1278,9 @@ UTF16String CoreArray::UTF32toUTF16(const UTF32String &ws)
 int CoreArray::GetLastOSError()
 {
 	#if defined(COREARRAY_WINDOWS)
-	return GetLastError();
+		return GetLastError();
 	#elif defined(COREARRAY_UNIX)
-	return errno;
+		return errno;
 	#else
 		"GetLastOSError"
 	#endif
@@ -1267,13 +1289,13 @@ int CoreArray::GetLastOSError()
 UTF8String CoreArray::SysErrMessage(int err)
 {
 	#if defined(COREARRAY_WINDOWS)
-	char buf[1024];
-	memset((void*)buf, 0, sizeof(buf));
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
-		FORMAT_MESSAGE_ARGUMENT_ARRAY, NULL, err, 0, buf, sizeof(buf), NULL);
-	return string(buf);
+		char buf[1024];
+		memset((void*)buf, 0, sizeof(buf));
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS |
+			FORMAT_MESSAGE_ARGUMENT_ARRAY, NULL, err, 0, buf, sizeof(buf), NULL);
+		return string(buf);
 	#elif defined(COREARRAY_UNIX)
-	return UTF8String(strerror(err));
+		return UTF8String(strerror(err));
 	#else
 	#endif
 }
@@ -1362,13 +1384,14 @@ bool CoreArray::SysCloseHandle(TSysHandle Handle)
 size_t CoreArray::SysHandleRead(TSysHandle Handle, void *Buffer, size_t Count)
 {
 	#if defined(COREARRAY_WINDOWS)
-	unsigned long rv;
-	if (ReadFile(Handle, Buffer, Count, &rv, NULL))
-		return rv;
-	else return 0;
+		unsigned long rv;
+		if (ReadFile(Handle, Buffer, Count, &rv, NULL))
+			return rv;
+		else
+			return 0;
 	#elif defined(COREARRAY_UNIX)
-	ssize_t rv = read(Handle, Buffer, Count);
-	return (rv >= 0) ? rv : 0;
+		ssize_t rv = read(Handle, Buffer, Count);
+		return (rv >= 0) ? rv : 0;
 	#else
 		"SysHandleRead"
 	#endif
@@ -1416,10 +1439,10 @@ Int64 CoreArray::SysHandleSeek(TSysHandle Handle, Int64 Offset,
 bool CoreArray::SysHandleSetSize(TSysHandle Handle, Int64 NewSize)
 {
 	#if defined(COREARRAY_WINDOWS)
-	if (SysHandleSeek(Handle, NewSize, soBeginning)>=0)
-    	return SetEndOfFile(Handle);
-	else
-		return false;
+		if (SysHandleSeek(Handle, NewSize, soBeginning)>=0)
+			return SetEndOfFile(Handle);
+		else
+			return false;
 	#elif defined(COREARRAY_UNIX)
 		#if defined(COREARRAY_CYGWIN) || defined(COREARRAY_MACOS)
 			return ftruncate(Handle, NewSize)==0;
@@ -1471,26 +1494,26 @@ bool CoreArray::FileExists(const string &FileName)
 
 int CoreArray::Mach::GetNumberOfCPU()
 {
-#if defined(COREARRAY_WINDOWS)
-	SYSTEM_INFO info;
-	info.dwNumberOfProcessors = 0;
-	GetSystemInfo(&info);
-	return info.dwNumberOfProcessors;
-#elif defined(COREARRAY_CYGWIN)
-	const char * p = getenv("NUMBER_OF_PROCESSORS");
-	if (p) {
-		int rv = atoi(p);
-		if (rv < 0) rv = -1;
-		return rv;
-	} else
+	#if defined(COREARRAY_WINDOWS)
+		SYSTEM_INFO info;
+		info.dwNumberOfProcessors = 0;
+		GetSystemInfo(&info);
+		return info.dwNumberOfProcessors;
+	#elif defined(COREARRAY_CYGWIN)
+		const char * p = getenv("NUMBER_OF_PROCESSORS");
+		if (p) {
+			int rv = atoi(p);
+			if (rv < 0) rv = -1;
+			return rv;
+		} else
+			return -1;
+	#elif defined(COREARRAY_UNIX)
+		int numCPUs = sysconf(_SC_NPROCESSORS_ONLN);
+		if (numCPUs <= 0) numCPUs = -1;
+		return numCPUs;
+	#else
 		return -1;
-#elif defined(COREARRAY_UNIX)
-	int numCPUs = sysconf(_SC_NPROCESSORS_ONLN);
-	if (numCPUs <= 0) numCPUs = -1;
-	return numCPUs;
-#else
-	return -1;
-#endif
+	#endif
 }
 
 

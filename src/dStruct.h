@@ -1012,7 +1012,8 @@ namespace CoreArray
 		{
 			char buf[sizeof(TInside)];
 			Seq.fAllocator.Read(p, (void*)buf, sizeof(TInside));
-			*((TOutside*)OutBuffer) = ValCvt<TOutside, TInside>(*((TInside*)buf));
+			void *tmp = buf;
+			*((TOutside*)OutBuffer) = ValCvt<TOutside, TInside>(*((TInside*)tmp));
 			COREARRAY_ENDIAN_ARRAY((TOutside*)OutBuffer, 1);
 		}
 

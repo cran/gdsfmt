@@ -93,10 +93,13 @@ namespace CoreArray
 		typedef BITS<bits> ElmType;
 		typedef typename TdTraits<ElmType>::TType ElmTypeEx;
 
-    	static const unsigned BitOf = (bits > 0) ? bits : (-bits);
+    	static const unsigned N_BIT = (bits > 0) ? bits : (-bits);
 
 		CdBaseBit(size_t vDimCnt=0): CdVector< BITS<bits> >(vDimCnt)
 			{ this->SetElmSize(1); }
+
+		/// Return number of bits for the element type
+		virtual unsigned BitOf() { return N_BIT; }
 
         virtual CdGDSObj *NewOne(void *Param = NULL)
 		{
@@ -137,7 +140,7 @@ namespace CoreArray
 							it.Handler = this;
 							while (DCnt > 0)
 							{
-								bitMoveBits(this->fAllocator, pS*BitOf, pD*BitOf, MDimOld*BitOf);
+								bitMoveBits(this->fAllocator, pS*N_BIT, pD*N_BIT, MDimOld*N_BIT);
 								it.Ptr = pD + MDimOld;
 								this->xInitIter(it, DResid);
 								pS -= MDimOld; pD -= MDimNew;
@@ -152,7 +155,7 @@ namespace CoreArray
 								it.Ptr += MDimNew;
 								this->xDoneIter(it, DResid);
 								it.Ptr += LStep;
-								bitMoveBits(this->fAllocator, pS*BitOf, pD*BitOf, MDimNew*BitOf);
+								bitMoveBits(this->fAllocator, pS*N_BIT, pD*N_BIT, MDimNew*N_BIT);
 								pS += MDimOld; pD += MDimNew;
 								--DCnt;
 							}
@@ -174,7 +177,7 @@ namespace CoreArray
 	#endif
 
 		virtual void _InitIter(TdIterator &it, ssize_t Len)
-			{ bitClear(this->fAllocator, it.Ptr*BitOf, Len*BitOf); };
+			{ bitClear(this->fAllocator, it.Ptr*N_BIT, Len*N_BIT); };
 		virtual void _Assign(TdIterator &it, TdIterator &source)
 			{ this->_IntTo(it, source.toInt()); };
 		virtual int _Compare(TdIterator &it1, TdIterator &it2)
@@ -190,7 +193,7 @@ namespace CoreArray
 
 		virtual TdPtr64 AllocNeed(bool Full)
 		{
-			TdPtr64 rv = this->fEndPtr * BitOf;
+			TdPtr64 rv = this->fEndPtr * N_BIT;
 			if (Full)
 			{
 				rv = (((UInt8)rv) & 0x07) ? ((rv >> 3)+1) : (rv >> 3);
@@ -200,14 +203,14 @@ namespace CoreArray
 		}
 		virtual void NeedMemory(const TdPtr64 NewMem)
 		{
-			TdPtr64 rv = NewMem * BitOf;
+			TdPtr64 rv = NewMem * N_BIT;
 			rv = ((((UInt8)rv) & 0x07) ? ((rv >> 3)+1) : (rv >> 3))
 				+ ExtAllocNeed;
 			CdVectorX::NeedMemory(rv);
 		}
 		virtual void SaveDirect(CdSerial &Writer)
 		{
-			Int64 Total = (this->fEndPtr * BitOf) >> 3;
+			Int64 Total = (this->fEndPtr * N_BIT) >> 3;
 			this->Notify64(mcBeginSave, Total);
 
 			{   // Primary Part
@@ -234,25 +237,28 @@ namespace CoreArray
 				}
 			}
 			{	// Remaining Part
-				TdPtr64 LEnd = this->fEndPtr * BitOf;
+				TdPtr64 LEnd = this->fEndPtr * N_BIT;
 				unsigned char Remainder = ((UInt8)LEnd) & 0x07;
 				typename ElmType::IntTypeEx I = 0;
 
 				if (Remainder != 0)
 				{
 					this->fAllocator.Read(LEnd >> 3, &I, sizeof(I));
-					I &= ~((-1ll) << Remainder);
+					I &= ~(Int64(-1) << Remainder);
 
 					if (this->fPipeInfo)
 					{
 						this->fPipeInfo->Remainder().Size = sizeof(I);
-						memcpy(&this->fPipeInfo->Remainder().Buf[0], &I, sizeof(I));
+						memcpy(this->fPipeInfo->Remainder().Buf, &I, sizeof(I));
 					} else
 						Writer.Write(&I, sizeof(I));
 				} else {
-					Writer.Write(&I, ExtAllocNeed);
 					if (this->fPipeInfo)
-						this->fPipeInfo->Remainder().Size = 0;
+					{
+						memset(this->fPipeInfo->Remainder().Buf, 0, ExtAllocNeed);
+						this->fPipeInfo->Remainder().Size = ExtAllocNeed;
+					} else
+						Writer.Write(&I, ExtAllocNeed);			
 				}
 			}
 
@@ -266,7 +272,7 @@ namespace CoreArray
 	template<typename TOutside, int bits, int O>
 		struct TdVectorData<TOutside, BITS<bits>, false, O, COREARRAY_TR_INTEGER>
 	{
-    	static const unsigned BitOf = (bits > 0) ? bits : (-bits);
+    	static const unsigned N_BIT = (bits > 0) ? bits : (-bits);
 		static const unsigned ExtAllocNeed = sizeof(typename BITS<bits>::IntTypeEx)-1;
 
 		// Read
@@ -277,7 +283,7 @@ namespace CoreArray
 			// Initialize
 			TOutside *p = (TOutside*)Rec.pBuf;
 			ssize_t Len = Rec.LastDim, LStack = 0;
-			TdPtr64 pPtr = Rec.p64 * BitOf;
+			TdPtr64 pPtr = Rec.p64 * N_BIT;
 			typename BITS<bits>::IntTypeEx *pSt =
 				(typename BITS<bits>::IntTypeEx*)Stack;
 
@@ -290,7 +296,7 @@ namespace CoreArray
 				// Prepare Stack Buffer
 				if (LStack < (ssize_t)sizeof(typename BITS<bits>::IntTypeEx))
 				{
-					ssize_t L = Len*BitOf + offset;
+					ssize_t L = Len*N_BIT + offset;
 					if ((L & 0x07) > 0)
 						L = (L >> 3) + sizeof(typename BITS<bits>::IntTypeEx);
 					else
@@ -312,7 +318,7 @@ namespace CoreArray
 						(*pSt >> offset) & BITS<bits>::Mask));
 				}
 
-				offset += BitOf; B = offset >> 3; offset &= 0x07;
+				offset += N_BIT; B = offset >> 3; offset &= 0x07;
 				if (B > 0)
 				{
 					char *ps = (char*)pSt + B;
@@ -324,6 +330,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
@@ -331,7 +338,7 @@ namespace CoreArray
 			// Initialize
 			TOutside *p = (TOutside*)Rec.pBuf;
 			ssize_t Len = Rec.LastDim, LStack = 0;
-			TdPtr64 pPtr = Rec.p64 * BitOf;
+			TdPtr64 pPtr = Rec.p64 * N_BIT;
 			typename BITS<bits>::IntTypeEx *pSt =
 				(typename BITS<bits>::IntTypeEx*)Stack;
 
@@ -344,7 +351,7 @@ namespace CoreArray
 				// Prepare Stack Buffer
 				if (LStack < (ssize_t)sizeof(typename BITS<bits>::IntTypeEx))
 				{
-					ssize_t L = Len*BitOf + offset;
+					ssize_t L = Len*N_BIT + offset;
 					if ((L & 0x07) > 0)
 						L = (L >> 3) + sizeof(typename BITS<bits>::IntTypeEx);
 					else
@@ -369,7 +376,7 @@ namespace CoreArray
 					}
 				}
 
-				offset += BitOf; B = offset >> 3; offset &= 0x07;
+				offset += N_BIT; B = offset >> 3; offset &= 0x07;
 				if (B > 0)
 				{
 					char *ps = (char*)pSt + B;
@@ -384,7 +391,7 @@ namespace CoreArray
 		COREARRAY_INLINE static void rItem(void *OutBuffer, TdPtr64 p, CdVectorX &Seq)
 		{
 			typename BITS<bits>::IntTypeEx I = 0;
-			p *= BitOf;
+			p *= N_BIT;
 			Seq.fAllocator.Read(p >> 3, &I, sizeof(I));
 			I >>= ((UInt8)p) & 0x07;
 			I &= BITS<bits>::Mask;
@@ -402,22 +409,23 @@ namespace CoreArray
 		// Write
 		static void wArray(TIterVDataExt &Rec)
 		{
+			const size_t IntTypeEx_Size = sizeof(typename BITS<bits>::IntTypeEx);
 			unsigned char Stack[ARRAY_BUF_LEN];
 
 			// Initialize
 			TOutside *p = (TOutside*)Rec.pBuf;
 			ssize_t Len = Rec.LastDim, LStack, L;
-			TdPtr64 pPtr = Rec.p64 * BitOf;
+			TdPtr64 pPtr = Rec.p64 * N_BIT;
 			TdAllocator &alloc = Rec.Seq->Allocator();
-			bool vCompressed = (Rec.Seq->PipeInfo()!=NULL);
+			bool vCompressed = (Rec.Seq->PipeInfo() != NULL);
 			TdCompressRemainder *ar = vCompressed ? &Rec.Seq->PipeInfo()->Remainder() : NULL;
 			typename BITS<bits>::IntTypeEx *pSt;
-			unsigned char B, offset = (UInt8)(pPtr) & 0x07;
+			unsigned char B = 0, offset = (UInt8)(pPtr) & 0x07;
 
 			while (Len > 0)
 			{
-				if (Len <= (ssize_t)((sizeof(Stack) - sizeof(typename BITS<bits>::IntTypeEx))*8 / BitOf))
-					L = ((Len * BitOf) >> 3) + sizeof(typename BITS<bits>::IntTypeEx);
+				if (Len <= (ssize_t)((sizeof(Stack) - IntTypeEx_Size)*8 / N_BIT))
+					L = ((Len * N_BIT) >> 3) + IntTypeEx_Size;
 				else
 					L = sizeof(Stack);
 				memset((void*)Stack, 0, L);
@@ -434,19 +442,19 @@ namespace CoreArray
 
 				pSt = (typename BITS<bits>::IntTypeEx *)Stack;
 				LStack = 0; L = 0;
-				while ((Len > 0) && (LStack <= (ssize_t)(sizeof(Stack)-sizeof(typename BITS<bits>::IntTypeEx))))
+				while ((Len > 0) && (LStack <= (ssize_t)(sizeof(Stack)-IntTypeEx_Size)))
 				{
 					*pSt |= (ValCvt<typename BITS<bits>::IntTypeEx, TOutside>(
 						*p++) & BITS<bits>::Mask) << offset;
-					L += BitOf;
-					offset += BitOf; B = offset >> 3; offset &= 0x07;
+					L += N_BIT;
+					offset += N_BIT; B = offset >> 3; offset &= 0x07;
 					if (B > 0)
 					{
 						char *ps = (char*)pSt + B;
 						pSt = (typename BITS<bits>::IntTypeEx *)ps;
 						LStack += B;
 					}
-					Len--;
+					Len --;
 				}
 
 				if (Rec.AppendMode)
@@ -457,15 +465,19 @@ namespace CoreArray
 						if (vCompressed)
 						{
 							pSt = (typename BITS<bits>::IntTypeEx *)(ar->Buf);
-							*pSt = *((typename BITS<bits>::IntTypeEx *)&Stack[LStack]);
+							void *tmp = &Stack[LStack];
+							*pSt = *((typename BITS<bits>::IntTypeEx *)tmp);
 							ar->Size = sizeof(*pSt);
 						} else
 							alloc.Write((pPtr >> 3) + LStack, &Stack[LStack], sizeof(*pSt));
-						} else if (vCompressed)
+					} else {
+						if (vCompressed)
 						{
-							ar->Buf[0] = 0; ar->Size = 1u;
+							memset((void*)ar->Buf, 0, ExtAllocNeed);
+							ar->Size = ExtAllocNeed;
 						} else
-							alloc.w8((pPtr >> 3) + LStack, 0);
+							alloc.Fill((pPtr >> 3) + LStack, ExtAllocNeed, 0);
+					}
 				} else
 					bitBufToCpy(alloc, pPtr, (void*)Stack, L);
 
@@ -480,7 +492,7 @@ namespace CoreArray
 			typename BITS<bits>::IntTypeEx I, Val;
 			Val = ValCvt<typename BITS<bits>::IntTypeEx, TOutside>(
 				*((TOutside*)InBuffer)) & BITS<bits>::Mask;
-			p *= BitOf;
+			p *= N_BIT;
 			unsigned char B = ((UInt8)p) & 0x07;
 			p >>= 3;
 			Internal::TdIterMove<sizeof(I)>::Read((void*)&I, Seq.fAllocator, p);
@@ -554,6 +566,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
@@ -662,7 +675,7 @@ namespace CoreArray
 				if ((E < 7) && vCompressed)
 				{
 					Rec.Seq->PipeInfo()->Remainder().Buf[0] = B;
-					Rec.Seq->PipeInfo()->Remainder().Size = 1;
+					Rec.Seq->PipeInfo()->Remainder().Size = 1u;
 				} else
 					alloc.w8(pPtr, B);
 				pPtr++;
@@ -701,7 +714,7 @@ namespace CoreArray
 				}
 				if (vCompressed)
 				{
-					Rec.Seq->PipeInfo()->Remainder().Size = 1;
+					Rec.Seq->PipeInfo()->Remainder().Size = 1u;
 					Rec.Seq->PipeInfo()->Remainder().Buf[0] = B;
 				} else
 					alloc.w8(pPtr, B);
@@ -780,6 +793,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
@@ -809,7 +823,7 @@ namespace CoreArray
 			// The middle
 			while (Len >= 4)
 			{
-				ssize_t L = Len >> 2;
+				ssize_t L = (Len >> 2);
 				if ((size_t)L > sizeof(Stack)) L = sizeof(Stack);
 				alloc.Read(pPtr, Stack, L);
 				s = Stack;
@@ -824,7 +838,7 @@ namespace CoreArray
 					B >>= 2;
 					if (*Sel++) *p++ = ValCvt<TOutside, UInt8>(B & 0x03);
 				}
-				pPtr += L; Len -= L << 2;
+				pPtr += L; Len -= (L << 2);
 			}
 
 			// The tail
@@ -870,13 +884,13 @@ namespace CoreArray
 			{
 				B = (!vCompressed) ? alloc.r8(pPtr) :
 					Rec.Seq->PipeInfo()->Remainder().Buf[0];
-				E = (offset+Len-1 < 3) ? (offset+Len-1) : 3;
+				E = ((offset+Len-1) < 3) ? (offset+Len-1) : 3;
 				for (; offset <= E; offset++, Len--)
 				{
 					B = (B & CoreArray_MaskBit2ArrayNot[offset]) |
 						(((ValCvt<UInt8, TOutside>(*p++)) & 0x03) << (offset << 1));
                 }
-				if (E < 3 && vCompressed)
+				if ((E < 3) && vCompressed)
 				{
 					Rec.Seq->PipeInfo()->Remainder().Buf[0] = B;
 					Rec.Seq->PipeInfo()->Remainder().Size = 1u;
@@ -914,7 +928,7 @@ namespace CoreArray
                 }
 				if (vCompressed)
 				{
-					Rec.Seq->PipeInfo()->Remainder().Size = 1;
+					Rec.Seq->PipeInfo()->Remainder().Size = 1u;
 					Rec.Seq->PipeInfo()->Remainder().Buf[0] = B;
 				} else
 					alloc.w8(pPtr, B);
@@ -986,6 +1000,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
@@ -1092,7 +1107,7 @@ namespace CoreArray
 				B = (B & 0xF0) | (ValCvt<UInt8, TOutside>(*p++) & 0x0F);
 				if (vCompressed)
 				{
-					Rec.Seq->PipeInfo()->Remainder().Size = 1;
+					Rec.Seq->PipeInfo()->Remainder().Size = 1u;
 					Rec.Seq->PipeInfo()->Remainder().Buf[0] = B;
 				} else
 					alloc.w8(pPtr, B);
@@ -1141,6 +1156,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN];
@@ -1233,6 +1249,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)p;
 		}
 
+		// Read
 		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN], *pc;
@@ -1521,7 +1538,7 @@ namespace CoreArray
 			typename TdTraits<TInside>::TType buf(
 				ValCvt<typename TdTraits<TInside>::TType, TOutside>(
 				*static_cast<TOutside*>(InBuffer)) );
-			ssize_t len = buf.length() * TdTraits<TInside>::BitOf/8;
+			ssize_t len = buf.length() * TdTraits<TInside>::BitOf / 8;
 			if (len > Seq.fElmSize)
 			{
 				p64 /= Seq.fElmSize;
@@ -1548,7 +1565,7 @@ namespace CoreArray
 					if (MaxLen < (ssize_t)buf.length())
 						MaxLen = buf.length();
 				}
-				MaxLen *= TdTraits<TInside>::BitOf/8;
+				MaxLen *= TdTraits<TInside>::BitOf / 8;
 				if (MaxLen > Rec.Seq->fElmSize)
 					Rec.Seq->SetElmSize(MaxLen);
 			}
@@ -1558,7 +1575,7 @@ namespace CoreArray
 			for (Int32 L = Rec.LastDim; L > 0; L--)
 			{
 				buf = ValCvt<typename TdTraits<TInside>::TType, TOutside>(*pt++);
-				ssize_t len = buf.length() * TdTraits<TInside>::BitOf/8;
+				ssize_t len = buf.length() * TdTraits<TInside>::BitOf / 8;
 				if (len > Lx)
 				{
 					Rec.p64 /= Lx;

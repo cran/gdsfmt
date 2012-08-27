@@ -22,18 +22,16 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 			"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8",
 			"sbit9", "sbit10", "sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16",
 			"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
-			"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
 			"sbit25", "sbit26", "sbit27", "sbit28", "sbit29", "sbit30", "sbit31", "sbit32" ;
 		unsigned integer:
 			"uint8", "uint16", "uint24", "uint32", "uint64",
 			"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8",
 			"bit9", "bit10", "bit11", "bit12", "bit13", "bit14", "bit15", "bit16",
 			"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
-			"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
 			"bit25", "bit26", "bit27", "bit28", "bit29", "bit30", "bit31", "bit32" );
-			float ("float32", "float64"), string ("string", "wstring", "dwstring").
-			Or "integer" (="int32"), "double" (="float64"), "character" (="string"),
-			"logical", "list", "factor", "folder"}
+			float ("float32", "float64"), string ("string", "string16", "string32").
+			Or "integer" (="int32"), "float" (="float32"), "double" (="float64"),
+			"character" (="string"), "logical", "list", "factor", "folder"}
 	\item{valdim}{the dimension attribute for the array to be created, which is a
 		vector of length one or more giving the maximal indices in each dimension}
 	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max"}

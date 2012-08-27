@@ -434,6 +434,7 @@ get.attr.gdsn <- function(node)
 				name=character(1), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 			if (r2$err == 0)
 			{
+				if (rt == 0) r2$data <- NULL
 				if (!is.null(r2$data)) rv[[i]] <- r2$data
 				rn[i] <- r2$name
 			} else
@@ -633,7 +634,7 @@ read.gdsn <- function(node, start, count)
 			} else if (r$cnt <= 1)
 				return(r$data)
 			else
-				return(array(r$data, dim=r$count[1:r$cnt]))
+				return(array(r$data, dim=rev(r$count[1:r$cnt])))
 		}
 	}
 	stop(lasterr.gds())
