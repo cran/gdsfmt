@@ -9,7 +9,7 @@
 delete.gdsn(node)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
@@ -34,4 +34,5 @@ delete.gdsn(node)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

@@ -11,7 +11,7 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 }
 
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{name}{the variable name of the added node}
@@ -70,7 +70,7 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 }
 
 \value{
-	An object of class \code{\link[gdsfmt]{gdsn}} of the added node.
+	An object of class \code{\link[gdsfmt]{gdsn.class}} of the added node.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
@@ -131,4 +131,5 @@ read.gdsn(index.gdsn(f, "n3"))
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

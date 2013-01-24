@@ -10,7 +10,7 @@ Genomic Data Structure (GDS) file.
 setdim.gdsn(node, valdim)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{valdim}{the new dimension for the array to be created, which is a
 		vector of length one or more giving the maximal indices in each dimension}
 }
@@ -35,4 +35,5 @@ f
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

@@ -10,7 +10,7 @@ Data Structure (GDS) file.
 readex.gdsn(node, sel=NULL)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, the GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the GDS node}
 	\item{sel}{a list of m logical vectors, where m is the number of dimensions of \code{node}
 		and each logical vector should have the same size of dimension in \code{node}}
 }
@@ -44,4 +44,5 @@ readex.gdsn(index.gdsn(f, "matrix"),
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

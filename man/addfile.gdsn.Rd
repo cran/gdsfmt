@@ -10,7 +10,7 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", 
 }
 
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{name}{the variable name of the added node}
@@ -30,7 +30,7 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", 
 }
 
 \value{
-	An object of class \code{\link[gdsfmt]{gdsn}} of the added node.
+	An object of class \code{\link[gdsfmt]{gdsn.class}} of the added node.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
@@ -62,4 +62,5 @@ getfile.gdsn(index.gdsn(f, "tmp.RData"), "tmp1.RData")
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

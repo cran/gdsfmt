@@ -9,7 +9,7 @@
 objdesp.gdsn(node)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 }
 \value{
 	Returns a list:
@@ -49,4 +49,5 @@ objdesp.gdsn(node2)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

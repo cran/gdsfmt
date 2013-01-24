@@ -6,24 +6,26 @@
 # _/_/_/   _/_/_/  _/_/_/_/_/     _/     _/_/_/   _/_/
 # ===========================================================
 #
-# runTests.r: the R interface of CoreArray library
+# runTests.R: the R interface of CoreArray library
 #
 # Copyright (C) 2012	Xiuwen Zheng
 
 
 # load R packages
-library(RUnit)
-library(gdsfmt)
+if (require(RUnit))
+{
+	library(gdsfmt)
 
-# define a test suite
-myTestSuite <- defineTestSuite("gdsfmt examples",
-	system.file("unitTests", package = "gdsfmt"))
+	# define a test suite
+	myTestSuite <- defineTestSuite("gdsfmt examples",
+		system.file("unitTests", package = "gdsfmt"))
 
-# run the test suite
-testResult <- runTestSuite(myTestSuite)
+	# run the test suite
+	testResult <- runTestSuite(myTestSuite)
 
-# print detailed text protocol to standard out:
-printTextProtocol(testResult)
+	# print detailed text protocol to standard out:
+	printTextProtocol(testResult)
+}
 
 # quit
 q("no")

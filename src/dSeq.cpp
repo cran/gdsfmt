@@ -8,7 +8,7 @@
 //
 // dSeq.cpp: CoreArray Containers for extended types
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //

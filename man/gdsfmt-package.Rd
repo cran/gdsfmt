@@ -11,8 +11,8 @@ from 2007.
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.10\cr
-	Date: \tab 2012-08-27\cr
+	Version: \tab 0.9.11\cr
+	Date: \tab 2013-01-24\cr
 	License: \tab LGPL version 3\cr
 }
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
@@ -30,9 +30,9 @@ data in parallel, and allows future R packages to call these functions.
 \references{
 	\url{http://corearray.sourceforge.net}
 
-	X. Zheng, D. Levine, J. Shen, C. Laurie, B. Weir.
-	A high-performance computing package for relatedness and principal component analysis in GWAS.
-	Poster, International Congress of Human Genetics (ICHG), Montreal, QC Canada, Oct 11 - 15, 2011
+	Xiuwen Zheng, David Levine, Jess Shen, Stephanie M. Gogarten, Cathy Laurie, Bruce S. Weir.
+A High-performance Computing Toolset for Relatedness and Principal Component Analysis of SNP Data.
+Bioinformatics 2012; doi: 10.1093/bioinformatics/bts606
 }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 
@@ -69,12 +69,13 @@ read.gdsn(index.gdsn(f, "mat"))
 # Apply functions over columns of matrix
 tmp <- apply.gdsn(index.gdsn(f, "mat"), margin=2, FUN=function(x) print(x))
 tmp <- apply.gdsn(index.gdsn(f, "mat"), margin=2,
-	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+	selection = list(rep(c(TRUE, FALSE), 5), rep(c(TRUE, FALSE), 3)),
 	FUN=function(x) print(x))
 
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}
 \keyword{IO}
 \keyword{interface}

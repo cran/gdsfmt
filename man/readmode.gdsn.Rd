@@ -9,7 +9,7 @@
 readmode.gdsn(node)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 }
 \details{
 	After the compressed data field is created, it is in writing mode. Users can add new data
@@ -46,4 +46,5 @@ read.gdsn(n)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

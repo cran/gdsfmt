@@ -9,7 +9,7 @@
 write.gdsn(node, val, start, count)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{val}{the data to be written}
 	\item{start}{a vector of integers, starting from 1 for each dimension}
 	\item{count}{a vector of integers, the length of each dimnension}
@@ -46,4 +46,5 @@ f
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

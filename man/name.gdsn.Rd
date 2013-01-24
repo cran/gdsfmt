@@ -9,7 +9,7 @@
 name.gdsn(node, fullname = FALSE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{fullname}{if FALSE, return the node name (by default), otherwise the full name}
 }
 \value{
@@ -39,4 +39,5 @@ name.gdsn(node, fullname=TRUE)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

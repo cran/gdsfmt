@@ -1,6 +1,17 @@
-0.9.10	16-Aug-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+0.9.11	23-Jan-2013	Xiuwen Zheng <zhengx@u.washington.edu>
 
-	* support RUnit tests
+	* bug fix -- add a folder using 'add.gdsn'
+	* it is more efficient to store a factor variable
+	* 'put.attr.gds' allows a vector with more than one elements
+	* 'apply.gdsn' is recoded in C
+	* improve 'clusterApply.gdsn'
+	* the function 'applylt.gdsn' is merged into 'apply.gdsn' now
+	* the function 'clusterApplylt.gdsn' is merged into 'clusterApply.gdsn' now
+
+
+0.9.10	25-Aug-2012	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* add RUnit tests
 	* fix warnings
 	* fix a bug: correct the dimension size of array data with more than two dimensions
 	* fix bugs: 'append.gdsn' appends data of bit9, bit10, etc, correctly

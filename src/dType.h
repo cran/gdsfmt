@@ -8,7 +8,7 @@
 //
 // dType.h: Basic template classes for elementary types
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dType.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    Basic template classes for elementary types
  *	\details
 **/
@@ -64,7 +64,8 @@ namespace CoreArray
 	/// Memory data type id
 	enum TSVType {
 		svCustom = 0,   ///< Unknown or customized type
-		svCustomInt,    ///< Customized integer
+		svCustomInt,    ///< Customized signed integer
+		svCustomUInt,   ///< Customized unsigned integer
 		svCustomFloat,  ///< Customized float number
 		svCustomStr,    ///< Customized string type
 		svInt8,         ///< Signed integer of 8 bits
@@ -78,22 +79,29 @@ namespace CoreArray
 		svFloat32,      ///< Float number of single precision (32 bits)
 		svFloat64,      ///< Float number of double precision (64 bits)
 		svStrUTF8,      ///< UTF-8 string
-		svStrUTF16,     ///< UTF-16 string
-		svStrUTF32	///< UTF-32 string
+		svStrUTF16      ///< UTF-16 string
 	};
 
 
 	/// Whether x (TSVType) is an integer or not
-	#define COREARRAY_SVINT(x) \
-		((svInt8<=(x) && (x)<=svUInt64) || (x)==svCustomInt)
+	#define COREARRAY_SV_INTEGER(x) \
+		((svInt8<=(x) && (x)<=svUInt64) || (x)==svCustomInt || (x)==svCustomUInt)
+
+	/// Whether x (TSVType) is a signed integer or not
+	#define COREARRAY_SV_SINT(x) \
+		((x)==svInt8 || (x)==svInt16 || (x)==svInt32 || (x)==svInt64 || (x)==svCustomInt)
+
+	/// Whether x (TSVType) is an unsigned integer or not
+	#define COREARRAY_SV_UINT(x) \
+		((x)==svUInt8 || (x)==svUInt16 || (x)==svUInt32 || (x)==svUInt64 || (x)==svCustomUInt)
 
 	/// Whether x (TSVType) is a float number or not
-	#define COREARRAY_SVFLOAT(x) \
+	#define COREARRAY_SV_FLOAT(x) \
 		((x)==svFloat32 || (x)==svFloat64 || (x)==svCustomFloat)
 
 	/// Whether x (TSVType) is a string or not
-	#define COREARRAY_SVSTR(x) \
-		((x)==svStrUTF8 || (x)==svStrUTF16)
+	#define COREARRAY_SV_STRING(x) \
+		((x)==svStrUTF8 || (x)==svStrUTF16 || (x)==svCustomStr)
 
 
 	#define COREARRAY_TR_UNKNOWN    -1

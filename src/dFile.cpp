@@ -8,7 +8,7 @@
 //
 // dFile.cpp: Functions and classes for CoreArray Genomic Data Structure (GDS)
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -306,7 +306,7 @@ void CdObjAttr::Assign(CdObjAttr &Source)
     Changed();
 }
 
-TdsData & CdObjAttr::Add(const UTF16String &Name)
+TdsAny & CdObjAttr::Add(const UTF16String &Name)
 {
 	xValidateName(Name);
 	vector<TdPair*>::iterator it = Find(Name);
@@ -360,7 +360,7 @@ void CdObjAttr::Changed()
 	this->fOwner.fChanged = true;
 }
 
-TdsData & CdObjAttr::operator[](const UTF16String &Name)
+TdsAny & CdObjAttr::operator[](const UTF16String &Name)
 {
 	vector<TdPair*>::iterator it = Find(Name);
 	if (it == fList.end())
@@ -368,7 +368,7 @@ TdsData & CdObjAttr::operator[](const UTF16String &Name)
 	return (*it)->val;
 }
 
-TdsData & CdObjAttr::operator[](int Index)
+TdsAny & CdObjAttr::operator[](int Index)
 {
 	return fList.at(Index)->val;
 }

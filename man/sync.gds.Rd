@@ -9,7 +9,7 @@
 sync.gds(gds)
 }
 \arguments{
-	\item{gds}{An object of class \code{\link[gdsfmt]{gdsclass}}, returned by
+	\item{gds}{An object of class \code{\link[gdsfmt]{gds.class}}, returned by
 		\code{\link[gdsfmt]{createfn.gds}} or \code{\link[gdsfmt]{openfn.gds}}}
 }
 \details{
@@ -28,4 +28,5 @@ opened would be automatically closed.
 	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{openfn.gds}}
 }
 
+\keyword{GDS}
 \keyword{utilities}

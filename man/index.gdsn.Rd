@@ -9,7 +9,7 @@
 index.gdsn(node, index, silent=FALSE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{index}{a vector of integers or characters, specifying the path}
@@ -22,7 +22,7 @@ characters, e.g., \code{c("list", "x")}, the result is the child node with name 
 the "list" child node.
 }
 \value{
-	An object of class \code{\link[gdsfmt]{gdsn}} for the specified node.
+	An object of class \code{\link[gdsfmt]{gdsn.class}} for the specified node.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
@@ -49,4 +49,5 @@ index.gdsn(f, c("list", "z"))
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

@@ -9,7 +9,7 @@
 getfile.gdsn(node, out.filename)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}} or \code{\link[gdsfmt]{gdsclass}}:
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{out.filename}{the file name of output stream}
@@ -47,4 +47,5 @@ getfile.gdsn(index.gdsn(f, "tmp.RData"), "tmp1.RData")
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

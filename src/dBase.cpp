@@ -8,7 +8,7 @@
 //
 // dBase.cpp: Basic classes for CoreArray library
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -2283,26 +2283,26 @@ const CdObjClassMgr::_ClassStruct &CdObjClassMgr::ClassStruct(
 
 static const char * const erDSConvert = "Can't convert '%s' to '%s'!";
 
-Err_dsData::Err_dsData(TdsData::TdsType fromType, TdsData::TdsType toType)
+Err_dsAny::Err_dsAny(TdsAny::TdsType fromType, TdsAny::TdsType toType)
 {
-	const char *s1 = TdsData::dvtNames(fromType);
-	const char *s2 = TdsData::dvtNames(toType);
+	const char *s1 = TdsAny::dvtNames(fromType);
+	const char *s2 = TdsAny::dvtNames(toType);
 	fMessage = Format(erDSConvert, s1, s2);
 }
 
-// TdsData
+// TdsAny
 
-TdsData::TdsData()
+TdsAny::TdsAny()
 {
-	memset((void*)this, 0, sizeof(TdsData));
+	memset((void*)this, 0, sizeof(TdsAny));
 }
 
-TdsData::~TdsData()
+TdsAny::~TdsAny()
 {
 	_Done();
 }
 
-void TdsData::_Done()
+void TdsAny::_Done()
 {
 	switch (dsType)
 	{
@@ -2318,19 +2318,23 @@ void TdsData::_Done()
 			if (_R.ptrStr32) delete _R.ptrStr32;
 			_R.ptrStr32 = NULL;
 			break;
+		case dvtArray:
+			if (_P.ptr) delete[] _P.ptr;
+			_P.Length = 0; _P.ptr = NULL;
+			break;
 		case dvtObjRef:
 			if (_R.obj) _R.obj->Release();
 			_R.obj = NULL;
 			break;
 	}
-	dsType = dvtEmpty;
+	dsType = dvtNULL;
 }
 
-const char *TdsData::dvtNames(int index)
+const char *TdsAny::dvtNames(int index)
 {
 	switch (index)
 	{
-		case dvtEmpty:   return "Empty";
+		case dvtNULL:   return "Empty";
 		// integer
 		case dvtInt8:    return "Int8";
 		case dvtUInt8:   return "UInt8";
@@ -2383,7 +2387,7 @@ const char *TdsData::dvtNames(int index)
 	case dvtInt128:  return ValCvt<TYPE, Int128>(VAL<Int128>()); \
 	case dvtUInt128: return ValCvt<TYPE, UInt128>(VAL<UInt128>());
 
-// TdsData : float number
+// TdsAny : float number
 #define DSDATA_FLOAT(TYPE) \
 	case dvtFloat32:  return ValCvt<TYPE, Float32>(VAL<Float32>()); \
 	case dvtFloat64:  return ValCvt<TYPE, Float64>(VAL<Float64>()); \
@@ -2401,7 +2405,7 @@ const char *TdsData::dvtNames(int index)
 	case dvtInt64:   return ValCvt<TYPE, Int64>(VAL<Int64>()); \
 	case dvtUInt64:  return ValCvt<TYPE, UInt64>(VAL<UInt64>()); \
 
-// TdsData : float number
+// TdsAny : float number
 #define DSDATA_FLOAT(TYPE) \
 	case dvtFloat32:  return ValCvt<TYPE, Float32>(VAL<Float32>()); \
 	case dvtFloat64:  return ValCvt<TYPE, Float64>(VAL<Float64>()); \
@@ -2409,7 +2413,7 @@ const char *TdsData::dvtNames(int index)
 #endif
 
 
-// TdsData : string
+// TdsAny : string
 
 #define DSDATA_STR(TYPE) \
 	case dvtSString8: \
@@ -2425,13 +2429,13 @@ const char *TdsData::dvtNames(int index)
 	case dvtStr32: \
 		return ValCvt<TYPE, UTF32String>(*_R.ptrStr32);
 
-// TdsData : others
+// TdsAny : others
 
 #define DSDATA_RETURN_OTHER(TYPE, dvt) \
 	case dvtBoolean: \
 		return ValCvt<TYPE, int>(VAL<int>() ? 1 : 0); \
 	default: \
-		throw Err_dsData(dsType, dvt);
+		throw Err_dsAny(dsType, dvt);
 #define DSDATA_RETURN_STR_OTHER(TYPE, dvt) \
 	case dvtBoolean: \
 		return ValCvt<TYPE, UTF8String>(VAL<int>() ? "TRUE" : "FLASE"); \
@@ -2441,9 +2445,9 @@ const char *TdsData::dvtNames(int index)
 		else \
 			return ValCvt<TYPE, UTF8String>("[NULL]"); \
 	default: \
-		throw Err_dsData(dsType, dvt);
+		throw Err_dsAny(dsType, dvt);
 
-Int8 TdsData::getInt8() const
+Int8 TdsAny::getInt8() const
 {
 	switch (dsType)
 	{
@@ -2454,7 +2458,7 @@ Int8 TdsData::getInt8() const
 	}
 }
 
-UInt8 TdsData::getUInt8() const
+UInt8 TdsAny::getUInt8() const
 {
 	switch (dsType)
 	{
@@ -2465,7 +2469,7 @@ UInt8 TdsData::getUInt8() const
 	}
 }
 
-Int16 TdsData::getInt16() const
+Int16 TdsAny::getInt16() const
 {
 	switch (dsType)
 	{
@@ -2476,7 +2480,7 @@ Int16 TdsData::getInt16() const
 	}
 }
 
-UInt16 TdsData::getUInt16() const
+UInt16 TdsAny::getUInt16() const
 {
 	switch (dsType)
 	{
@@ -2487,7 +2491,7 @@ UInt16 TdsData::getUInt16() const
 	}
 }
 
-Int32 TdsData::getInt32() const
+Int32 TdsAny::getInt32() const
 {
 	switch (dsType)
 	{
@@ -2498,7 +2502,7 @@ Int32 TdsData::getInt32() const
 	}
 }
 
-UInt32 TdsData::getUInt32() const
+UInt32 TdsAny::getUInt32() const
 {
 	switch (dsType)
 	{
@@ -2509,7 +2513,7 @@ UInt32 TdsData::getUInt32() const
 	}
 }
 
-Int64 TdsData::getInt64() const
+Int64 TdsAny::getInt64() const
 {
 	switch (dsType)
 	{
@@ -2520,7 +2524,7 @@ Int64 TdsData::getInt64() const
 	}
 }
 
-UInt64 TdsData::getUInt64() const
+UInt64 TdsAny::getUInt64() const
 {
 	switch (dsType)
 	{
@@ -2532,7 +2536,7 @@ UInt64 TdsData::getUInt64() const
 }
 
 #ifndef COREARRAY_NO_EXTENDED_TYPES
-Int128 TdsData::getInt128() const
+Int128 TdsAny::getInt128() const
 {
 	switch (dsType)
 	{
@@ -2543,7 +2547,7 @@ Int128 TdsData::getInt128() const
 	}
 }
 
-UInt128 TdsData::getUInt128() const
+UInt128 TdsAny::getUInt128() const
 {
 	switch (dsType)
 	{
@@ -2555,11 +2559,11 @@ UInt128 TdsData::getUInt128() const
 }
 #endif
 
-Float32 TdsData::getFloat32() const
+Float32 TdsAny::getFloat32() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return NaN;
+		case dvtNULL: return NaN;
 		DSDATA_INT(Float32)
 		DSDATA_FLOAT(Float32)
 		DSDATA_STR(Float32)
@@ -2567,11 +2571,11 @@ Float32 TdsData::getFloat32() const
 	}
 }
 
-Float64 TdsData::getFloat64() const
+Float64 TdsAny::getFloat64() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return NaN;
+		case dvtNULL: return NaN;
 		DSDATA_INT(Float64)
 		DSDATA_FLOAT(Float64)
 		DSDATA_STR(Float64)
@@ -2580,11 +2584,11 @@ Float64 TdsData::getFloat64() const
 }
 
 #ifndef COREARRAY_NO_EXTENDED_TYPES
-Float128 TdsData::getFloat128() const
+Float128 TdsAny::getFloat128() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return Float128(NaN);
+		case dvtNULL: return Float128(NaN);
 		DSDATA_INT(Float128)
 		DSDATA_FLOAT(Float128)
 		DSDATA_STR(Float128)
@@ -2593,11 +2597,11 @@ Float128 TdsData::getFloat128() const
 }
 #endif
 
-UTF8String TdsData::getStr8() const
+UTF8String TdsAny::getStr8() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return UTF8String();
+		case dvtNULL: return UTF8String();
 		DSDATA_INT(UTF8String)
 		DSDATA_FLOAT(UTF8String)
 		DSDATA_STR(UTF8String)
@@ -2605,11 +2609,11 @@ UTF8String TdsData::getStr8() const
 	}
 }
 
-UTF16String TdsData::getStr16() const
+UTF16String TdsAny::getStr16() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return UTF16String();
+		case dvtNULL: return UTF16String();
 		DSDATA_INT(UTF16String)
 		DSDATA_FLOAT(UTF16String)
 		DSDATA_STR(UTF16String)
@@ -2617,11 +2621,11 @@ UTF16String TdsData::getStr16() const
 	}
 }
 
-UTF32String TdsData::getStr32() const
+UTF32String TdsAny::getStr32() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty: return UTF32String();
+		case dvtNULL: return UTF32String();
 		DSDATA_INT(UTF32String)
 		DSDATA_FLOAT(UTF32String)
 		DSDATA_STR(UTF32String)
@@ -2629,7 +2633,7 @@ UTF32String TdsData::getStr32() const
 	}
 }
 
-bool TdsData::getBool() const
+bool TdsAny::getBool() const
 {
 	switch (dsType)
 	{
@@ -2640,70 +2644,97 @@ bool TdsData::getBool() const
 	}
 }
 
-CdObjRef *TdsData::getObj() const
+void *TdsAny::getPtr() const
+{
+	if (dsType == dvtPointer)
+	{
+		return _P.ptr;
+	} else
+		throw Err_dsAny(dsType, dvtPointer);
+}
+
+const TdsAny *TdsAny::getArray() const
+{
+	if (dsType == dvtArray)
+	{
+		return _P.ptr;
+	} else
+		throw Err_dsAny(dsType, dvtArray);
+}
+
+UInt32 TdsAny::getArrayLength() const
+{
+	if (dsType == dvtArray)
+	{
+		return _P.Length;
+	} else
+		throw Err_dsAny(dsType, dvtArray);
+}
+
+CdObjRef *TdsAny::getObj() const
 {
 	if (dsType == dvtObjRef)
 		return _R.obj;
 	else
-		throw Err_dsData(dsType, dvtObjRef);
+		throw Err_dsAny(dsType, dvtObjRef);
 }
 
-void TdsData::setEmpty()
+void TdsAny::setEmpty()
 {
 	_Done();
-	dsType = dvtEmpty;
+	dsType = dvtNULL;
 }
 
-void TdsData::setInt8(Int8 val)
+void TdsAny::setInt8(Int8 val)
 {
 	_Done();
 	dsType = dvtInt8;
 	VAL<Int8>() = val;
 }
 
-void TdsData::setUInt8(UInt8 val)
+void TdsAny::setUInt8(UInt8 val)
 {
 	_Done();
 	dsType = dvtUInt8;
 	VAL<UInt8>() = val;
 }
 
-void TdsData::setInt16(Int16 val)
+void TdsAny::setInt16(Int16 val)
 {
 	_Done();
 	dsType = dvtInt16;
 	VAL<Int16>() = val;
 }
 
-void TdsData::setUInt16(UInt16 val)
+void TdsAny::setUInt16(UInt16 val)
 {
 	_Done();
 	dsType = dvtUInt16;
 	VAL<UInt16>() = val;
 }
 
-void TdsData::setInt32(Int32 val)
+void TdsAny::setInt32(Int32 val)
 {
 	_Done();
 	dsType = dvtInt32;
 	VAL<Int32>() = val;
 }
 
-void TdsData::setUInt32(UInt32 val)
+void TdsAny::setUInt32(UInt32 val)
 {
 	_Done();
 	dsType = dvtUInt32;
 	VAL<UInt32>() = val;
 }
 
-void TdsData::setInt64(Int64 val)
+void TdsAny::setInt64(Int64 val)
 {
 	_Done();
 	dsType = dvtInt64;
 	VAL<Int64>() = val;
 }
 
-void TdsData::setUInt64(UInt64 val)
+void TdsAny::setUInt64(UInt64 val)
 {
 	_Done();
 	dsType = dvtUInt64;
@@ -2711,14 +2742,14 @@ void TdsData::setUInt64(UInt64 val)
 }
 
 #ifndef COREARRAY_NO_EXTENDED_TYPES
-void TdsData::setInt128(const Int128 &val)
+void TdsAny::setInt128(const Int128 &val)
 {
 	_Done();
 	dsType = dvtInt128;
 	VAL<Int128>() = val;
 }
 
-void TdsData::setUInt128(const UInt128 &val)
+void TdsAny::setUInt128(const UInt128 &val)
 {
 	_Done();
 	dsType = dvtUInt128;
@@ -2726,14 +2757,14 @@ void TdsData::setUInt128(const UInt128 &val)
 }
 #endif
 
-void TdsData::setFloat32(Float32 val)
+void TdsAny::setFloat32(Float32 val)
 {
 	_Done();
 	dsType = dvtFloat32;
 	VAL<Float32>() = val;
 }
 
-void TdsData::setFloat64(Float64 val)
+void TdsAny::setFloat64(Float64 val)
 {
 	_Done();
 	dsType = dvtFloat64;
@@ -2741,7 +2772,7 @@ void TdsData::setFloat64(Float64 val)
 }
 
 #ifndef COREARRAY_NO_EXTENDED_TYPES
-void TdsData::setFloat128(const Float128 &val)
+void TdsAny::setFloat128(const Float128 &val)
 {
 	_Done();
 	dsType = dvtFloat128;
@@ -2749,7 +2780,7 @@ void TdsData::setFloat128(const Float128 &val)
 }
 #endif
 
-void TdsData::setStr8(const UTF8String &val)
+void TdsAny::setStr8(const UTF8String &val)
 {
 	_Done();
 	if (val.size() <= 22)
@@ -2763,7 +2794,7 @@ void TdsData::setStr8(const UTF8String &val)
     }
 }
 
-void TdsData::setStr16(const UTF16String &val)
+void TdsAny::setStr16(const UTF16String &val)
 {
 	_Done();
 	if (val.size() <= 11)
@@ -2777,7 +2808,7 @@ void TdsData::setStr16(const UTF16String &val)
     }
 }
 
-void TdsData::setStr32(const UTF32String &val)
+void TdsAny::setStr32(const UTF32String &val)
 {
 	_Done();
 	if (val.size() <= 5)
@@ -2791,14 +2822,61 @@ void TdsData::setStr32(const UTF32String &val)
     }
 }
 
-void TdsData::setBool(bool val)
+void TdsAny::setBool(bool val)
 {
 	_Done();
 	dsType = dvtBoolean;
 	VAL<int>() = val;
 }
 
-void TdsData::setObj(CdObjRef *obj)
+void TdsAny::setPtr(const void *ptr)
+{
+	_Done();
+	dsType = dvtPointer;
+	_P.const_ptr = ptr;
+}
+
+void TdsAny::setArray(Int32 *ptr, UInt32 size)
+{
+	_Done();
+	dsType = dvtArray;
+	_P.Length = size;
+	_P.ptr = new TdsAny[size];
+	for (UInt32 i=0; i < size; i++)
+		_P.ptr[i] = ptr[i];
+}
+
+void TdsAny::setArray(Int64 *ptr, UInt32 size)
+{
+	_Done();
+	dsType = dvtArray;
+	_P.Length = size;
+	_P.ptr = new TdsAny[size];
+	for (UInt32 i=0; i < size; i++)
+		_P.ptr[i] = ptr[i];
+}
+
+void TdsAny::setArray(Float64 *ptr, UInt32 size)
+{
+	_Done();
+	dsType = dvtArray;
+	_P.Length = size;
+	_P.ptr = new TdsAny[size];
+	for (UInt32 i=0; i < size; i++)
+		_P.ptr[i] = ptr[i];
+}
+
+void TdsAny::setArray(const char* const ptr[], UInt32 size)
+{
+	_Done();
+	dsType = dvtArray;
+	_P.Length = size;
+	_P.ptr = new TdsAny[size];
+	for (UInt32 i=0; i < size; i++)
+		_P.ptr[i] = UTF8String(ptr[i]);
+}
+
+void TdsAny::setObj(CdObjRef *obj)
 {
 	_Done();
 	dsType = dvtObjRef;
@@ -2806,13 +2884,13 @@ void TdsData::setObj(CdObjRef *obj)
 	obj->AddRef();
 }
 
-void TdsData::Assign(const UTF8String &val)
+void TdsAny::Assign(const UTF8String &val)
 {
 	_Done();
 
 	if (val.empty())
 	{
-		dsType = dvtEmpty;
+		dsType = dvtNULL;
 		return;
 	}
 	if (val == "TRUE")
@@ -2844,12 +2922,12 @@ void TdsData::Assign(const UTF8String &val)
 	setStr8(val);
 }
 
-bool TdsData::isEmpty() const
+bool TdsAny::IsNULL() const
 {
-	return (dsType == dvtEmpty);
+	return (dsType == dvtNULL);
 }
 
-bool TdsData::isInt() const
+bool TdsAny::IsInt() const
 {
 	#ifndef COREARRAY_NO_EXTENDED_TYPES
 		return (dvtInt8 <= dsType) && (dsType <= dvtUInt128);
@@ -2858,7 +2936,7 @@ bool TdsData::isInt() const
 	#endif
 }
 
-bool TdsData::isFloat() const
+bool TdsAny::IsFloat() const
 {
 	#ifndef COREARRAY_NO_EXTENDED_TYPES
 		return (dvtFloat32 <= dsType) && (dsType <= dvtFloat128);
@@ -2867,21 +2945,21 @@ bool TdsData::isFloat() const
 	#endif
 }
 
-bool TdsData::isNum() const
+bool TdsAny::IsNumeric() const
 {
-	return isInt() || isFloat();
+	return IsInt() || IsFloat();
 }
 
-bool TdsData::isBool() const
+bool TdsAny::IsBool() const
 {
 	return (dsType == dvtBoolean);
 }
 
-bool TdsData::isNaN() const
+bool TdsAny::IsNaN() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty   : return true;
+		case dvtNULL   : return true;
 		case dvtInt8: case dvtUInt8:
 		case dvtInt16: case dvtUInt16:
 		case dvtInt32: case dvtUInt32:
@@ -2896,23 +2974,28 @@ bool TdsData::isNaN() const
 	}
 }
 
-bool TdsData::isNA() const
+bool TdsAny::IsNA() const
 {
 	switch (dsType)
 	{
-		case dvtEmpty   : return true;
+		case dvtNULL   : return true;
 		case dvtFloat32:  return !IsFinite(VAL<Float32>());
 		case dvtFloat64:  return !IsFinite(VAL<Float64>());
 		default:          return false;
 	}
 }
 
-bool TdsData::isStr() const
+bool TdsAny::IsString() const
 {
 	return (dvtSString8 <= dsType) && (dsType <= dvtStr32);
 }
 
-bool TdsData::Packed()
+bool TdsAny::IsArray() const
+{
+	return (dsType == dvtArray);
+}
+
+bool TdsAny::Packed()
 {
 	#define xRANGE(L, I, H) ((L<=I) && (I<=H))
 	#define yRANGE(L, H) (L<=H)
@@ -2968,33 +3051,34 @@ bool TdsData::Packed()
 	#undef xRANGE
 }
 
-void TdsData::Swap(TdsData &D)
+void TdsAny::Swap(TdsAny &D)
 {
-	char buf[sizeof(TdsData)];
-	memcpy((void*)buf, (void*)&D, sizeof(TdsData));
-	memcpy((void*)&D, (void*)this, sizeof(TdsData));
-	memcpy((void*)this, (void*)buf, sizeof(TdsData));
+	char buf[sizeof(TdsAny)];
+
+	memcpy((void*)buf, (void*)&D, sizeof(TdsAny));
+	memcpy((void*)&D, (void*)this, sizeof(TdsAny));
+	memcpy((void*)this, (void*)buf, sizeof(TdsAny));
 }
 
-int TdsData::Compare(const TdsData &D, bool NALast)
+int TdsAny::Compare(const TdsAny &D, bool NALast)
 {
-	if (isNA())
+	if (IsNA())
 	{
-		if (D.isNA())
+		if (D.IsNA())
 			return 0;
 		else if (NALast)
 			return 1;
 		else
 			return -1;
-	} else if (D.isNA())
+	} else if (D.IsNA())
 	{
 		if (NALast)
 			return -1;
 		else
 			return 1;
-	} else if (isNum() && D.isNum())
+	} else if (IsNumeric() && D.IsNumeric())
 	{
-		if (isInt() && D.isInt())
+		if (IsInt() && D.IsInt())
 		{
 			Int64 I1 = getInt64();
 			Int64 I2 = D.getInt64();
@@ -3018,7 +3102,7 @@ int TdsData::Compare(const TdsData &D, bool NALast)
 		return getStr32().compare(D.getStr32());
 }
 
-TdsData & TdsData::operator= (const TdsData &_Right)
+TdsAny & TdsAny::operator= (const TdsAny &_Right)
 {
 	if (this != &_Right)
 	{
@@ -3026,7 +3110,7 @@ TdsData & TdsData::operator= (const TdsData &_Right)
 		switch (_Right.dsType)
 		{
 			case dvtObjRef:
-				memcpy((void*)this, (void*)&_Right, sizeof(TdsData));
+				memcpy((void*)this, (void*)&_Right, sizeof(TdsAny));
 				_R.obj->AddRef();
 				break;
 			case dvtStr8:
@@ -3042,87 +3126,101 @@ TdsData & TdsData::operator= (const TdsData &_Right)
 				_R.ptrStr32 = new UTF32String(*_Right._R.ptrStr32);
 				break;
 			default:
-				memcpy(this, &_Right, sizeof(TdsData));
+				memcpy(this, &_Right, sizeof(TdsAny));
 		}
 	}
 	return *this;
 }
 
-CdSerial& CoreArray::operator>> (CdSerial &s, TdsData& out)
+CdSerial& CoreArray::operator>> (CdSerial &s, TdsAny& out)
 {
 	out._Done();
 	out.dsType = s.rUInt8();
 
 	switch (out.dsType)
 	{
-		case TdsData::dvtEmpty:
-        	break;
+		case TdsAny::dvtNULL:
+			break;
     	// integer
-		case TdsData::dvtInt8: case TdsData::dvtUInt8:
+		case TdsAny::dvtInt8: case TdsAny::dvtUInt8:
 			out.VAL<UInt8>() = s.rUInt8();
 			break;
-		case TdsData::dvtInt16: case TdsData::dvtUInt16:
-        	out.VAL<UInt16>() = s.rUInt16();
+		case TdsAny::dvtInt16: case TdsAny::dvtUInt16:
+			out.VAL<UInt16>() = s.rUInt16();
 			break;
-		case TdsData::dvtInt32: case TdsData::dvtUInt32:
+		case TdsAny::dvtInt32: case TdsAny::dvtUInt32:
 			out.VAL<UInt32>() = s.rUInt32();
 			break;
-		case TdsData::dvtInt64: case TdsData::dvtUInt64:
+		case TdsAny::dvtInt64: case TdsAny::dvtUInt64:
 			out.VAL<UInt64>() = s.rUInt64();
 			break;
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		case TdsData::dvtInt128: case TdsData::dvtUInt128:
+		case TdsAny::dvtInt128: case TdsAny::dvtUInt128:
 			out.VAL<UInt128>() = s.rUInt128();
 			break;
 		#endif
 
 		// float number
-		case TdsData::dvtFloat32:
+		case TdsAny::dvtFloat32:
 			out.VAL<Float32>() = s.rFloat32();
 			break;
-		case TdsData::dvtFloat64:
+		case TdsAny::dvtFloat64:
 			out.VAL<Float64>() = s.rFloat64();
 			break;
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		case TdsData::dvtFloat128:
+		case TdsAny::dvtFloat128:
 			out.VAL<Float128>() = s.rFloat128();
 			break;
 		#endif
 
 		// string
-		case TdsData::dvtSString8:
+		case TdsAny::dvtSString8:
 			out._S8.SStrLen8 = s.rUInt8();
 			if (out._S8.SStrLen8 > 22)
-            	throw Err_dsData("Invalid length (%d) for dvtSString8", out._S8.SStrLen8);
+            	throw Err_dsAny("Invalid length (%d) for dvtSString8", out._S8.SStrLen8);
 			s.Read((void*)out._S8.SStr8, out._S8.SStrLen8);
 			break;
-		case TdsData::dvtSString16:
+		case TdsAny::dvtSString16:
 			out._S16.SStrLen16 = s.rUInt8();
 			if (out._S16.SStrLen16 > 11)
-            	throw Err_dsData("Invalid length (%d) for dvtSString16", out._S16.SStrLen16);
+            	throw Err_dsAny("Invalid length (%d) for dvtSString16", out._S16.SStrLen16);
 			s.Read((void*)out._S16.SStr16, out._S16.SStrLen16*2);
 			break;
-		case TdsData::dvtSString32:
+		case TdsAny::dvtSString32:
 			out._S32.SStrLen32 = s.rUInt8();
 			if (out._S32.SStrLen32 > 5)
-            	throw Err_dsData("Invalid length (%d) for dvtSString32", out._S32.SStrLen32);
+            	throw Err_dsAny("Invalid length (%d) for dvtSString32", out._S32.SStrLen32);
 			s.Read((void*)out._S32.SStr32, out._S32.SStrLen32*4);
         	break;
-		case TdsData::dvtStr8:
+		case TdsAny::dvtStr8:
             out._R.ptrStr8 = new UTF8String(s.rStrUTF8());
 			break;
-		case TdsData::dvtStr16:
+		case TdsAny::dvtStr16:
 			out._R.ptrStr16 = new UTF16String(s.rStrUTF16());
 			break;
-		case TdsData::dvtStr32:
+		case TdsAny::dvtStr32:
 			out._R.ptrStr32 = new UTF32String(s.rStrUTF32());
 			break;
 
-		// others
-		case TdsData::dvtBoolean:
+		// other extended type
+		case TdsAny::dvtBoolean:
 			out.VAL<int>() = s.rUInt8();
 			break;
-		case TdsData::dvtObjRef:
+
+		// pointer
+		case TdsAny::dvtPointer:
+			out._P.const_ptr = NULL;
+			break;
+		// array
+		case TdsAny::dvtArray:
+			out._P.Length = s.rUInt32();
+			out._P.ptr = new TdsAny[out._P.Length];
+			for (UInt32 i=0; i < out._P.Length; i++)
+				s >> out._P.ptr[i];
+			break;
+
+		// CdObjRef
+		case TdsAny::dvtObjRef:
 			if (s.rUInt8())
 			{
 				out._R.obj = dObjMgr.toObj(s);
@@ -3134,72 +3232,84 @@ CdSerial& CoreArray::operator>> (CdSerial &s, TdsData& out)
 	return s;
 }
 
-CdSerial& CoreArray::operator<< (CdSerial &s, TdsData &in)
+CdSerial& CoreArray::operator<< (CdSerial &s, TdsAny &in)
 {
 	s.wUInt8(in.dsType);
 
 	switch (in.dsType)
 	{
 		// integer
-		case TdsData::dvtInt8: case TdsData::dvtUInt8:
+		case TdsAny::dvtInt8: case TdsAny::dvtUInt8:
 			s.wUInt8(in.VAL<UInt8>());
 			break;
-		case TdsData::dvtInt16: case TdsData::dvtUInt16:
+		case TdsAny::dvtInt16: case TdsAny::dvtUInt16:
         	s.wUInt16(in.VAL<UInt16>());
 			break;
-		case TdsData::dvtInt32: case TdsData::dvtUInt32:
+		case TdsAny::dvtInt32: case TdsAny::dvtUInt32:
         	s.wUInt32(in.VAL<UInt32>());
 			break;
-		case TdsData::dvtInt64: case TdsData::dvtUInt64:
+		case TdsAny::dvtInt64: case TdsAny::dvtUInt64:
         	s.wUInt64(in.VAL<UInt64>());
 			break;
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		case TdsData::dvtInt128: case TdsData::dvtUInt128:
+		case TdsAny::dvtInt128: case TdsAny::dvtUInt128:
 			s.wUInt128(in.VAL<UInt128>());
 			break;
 		#endif
 
 		// float number
-		case TdsData::dvtFloat32:
+		case TdsAny::dvtFloat32:
 			s.wFloat32(in.VAL<Float32>());
 			break;
-		case TdsData::dvtFloat64:
+		case TdsAny::dvtFloat64:
 			s.wFloat64(in.VAL<Float64>());
 			break;
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		case TdsData::dvtFloat128:
+		case TdsAny::dvtFloat128:
 			s.wFloat128(in.VAL<Float128>());
 			break;
 		#endif
 
 		// string
-		case TdsData::dvtSString8:
+		case TdsAny::dvtSString8:
 			s.wUInt8(in._S8.SStrLen8);
 			s.Write((void*)in._S8.SStr8, in._S8.SStrLen8);
 			break;
-		case TdsData::dvtSString16:
+		case TdsAny::dvtSString16:
 			s.wUInt8(in._S16.SStrLen16);
 			s.Write((void*)in._S16.SStr16, in._S16.SStrLen16*2);
 			break;
-		case TdsData::dvtSString32:
+		case TdsAny::dvtSString32:
 			s.wUInt8(in._S32.SStrLen32);
 			s.Write((void*)in._S32.SStr32, in._S32.SStrLen32*4);
         	break;
-		case TdsData::dvtStr8:
+		case TdsAny::dvtStr8:
 			s.wStrUTF8(in._R.ptrStr8->c_str());
 			break;
-		case TdsData::dvtStr16:
+		case TdsAny::dvtStr16:
 			s.wStrUTF16(in._R.ptrStr16->c_str());
 			break;
-		case TdsData::dvtStr32:
+		case TdsAny::dvtStr32:
         	s.wStrUTF32(in._R.ptrStr32->c_str());
 			break;
 
-		// others
-		case TdsData::dvtBoolean:
+		// other extended type
+		case TdsAny::dvtBoolean:
         	s.wUInt8(in.VAL<int>() ? 1 : 0);
 			break;
-		case TdsData::dvtObjRef:
+
+		// pointer
+		case TdsAny::dvtPointer:
+			break;
+		// array
+		case TdsAny::dvtArray:
+			s.wUInt32(in._P.Length);
+			for (UInt32 i=0; i < in._P.Length; i++)
+				s << in._P.ptr[i];
+			break;
+
+		// CdObjRef
+		case TdsAny::dvtObjRef:
 			if (in._R.obj)
 			{
 				s.wUInt8(1);

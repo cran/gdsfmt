@@ -21,10 +21,10 @@ for writing). To create a new GDS file, use \code{\link[gdsfmt]{createfn.gds}} i
 including hierachical structure, variable names, data field, etc.
 }
 \value{
-	Return an object of class \code{\link[gdsfmt]{gdsclass}}.
+	Return an object of class \code{\link[gdsfmt]{gds.class}}.
 	\item{filename}{the file name}
 	\item{id}{ID of GDS file, internal use}
-	\item{root}{an object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure}
+	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the root of hierachical structure}
 	\item{readonly}{whether it is read-only or not}
 }
 
@@ -51,4 +51,5 @@ read.gdsn(node)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

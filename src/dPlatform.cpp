@@ -8,7 +8,7 @@
 //
 // dPlatform.cpp: Functions for independent platforms
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -2107,11 +2107,11 @@ void CdThreadsSuspending::Suspend()
 {
 #if defined(COREARRAY_WINDOWS)
 
-	// Avoid conditions.
+	// Avoid conditions
 	EnterCriticalSection(&waiters_count_lock_);
-	// Increment count of waiters.
+	// Increment count of waiters
 	waiters_count_ ++;
-	// Store current generation in our activation record.
+	// Store current generation in our activation record
 	int my_generation = wait_generation_count_;
 	// Leave conditions
 	LeaveCriticalSection(&waiters_count_lock_);
@@ -2137,8 +2137,10 @@ void CdThreadsSuspending::Suspend()
 	LeaveCriticalSection(&waiters_count_lock_);
 
 	if (last_waiter)
+	{
 		// We're the last waiter to be notified, so reset the manual event.
 		ResetEvent (event_);
+	}
 
 #elif defined(COREARRAY_POSIX_THREAD)
 

@@ -1,12 +1,16 @@
-\name{lasterr.gds}
-\alias{lasterr.gds}
-\title{Return the last error}
+\name{gdsUnitTest}
+\alias{gdsUnitTest}
+\title{Unit testing}
 \description{
-	Gets the last error of gdsfmt.
+	Run the test R codes in the folder of 'unitTests'
 }
 
 \usage{
-lasterr.gds()
+gdsUnitTest()
+}
+
+\value{
+	None.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}

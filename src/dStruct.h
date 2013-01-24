@@ -8,7 +8,7 @@
 //
 // dStruct.h: Data container - array, matrix, etc
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dStruct.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    Data container - array, matrix, etc
  *	\details
 **/
@@ -425,9 +425,10 @@ namespace CoreArray
 	{
 	public:
         /// The maximum number of dimensions
-		static const size_t MaxSeqDim = 256;
+		static const size_t MAX_SEQ_DIM = 256;
         /// A type of dimension
-		typedef Int32 TSeqDimBuf[MaxSeqDim];
+		typedef Int32 TSeqDimBuf[MAX_SEQ_DIM];
+
 
 		CdSequenceX();
 		virtual ~CdSequenceX();
@@ -461,7 +462,7 @@ namespace CoreArray
 		 *  \param OutSV       data type of output buffer
 		**/
 		virtual void rDataEx(Int32 const* Start, Int32 const* Length,
-			CBOOL *Selection[], void *OutBuffer, TSVType OutSV);
+			const CBOOL *const Selection[], void *OutBuffer, TSVType OutSV);
 
 		/// write array-oriented data
 		/** \param Start       the starting positions (from ZERO), it should not be NULL
@@ -479,6 +480,16 @@ namespace CoreArray
 			TdDefParamText *Param = NULL);
 		virtual void SaveStreamText(CBufdStream &Writer,
 			TdDefParamText *Param = NULL);
+
+		/// determine the starting position, block length and valid count from a selection
+		/** \param Selection    NULL (the whole dataset), or a selection
+		 *  \param OutStart     NULL (ignore), or output the starting position
+		 *  \param OutBlockLen  NULL (ignore), or output the block length
+		 *  \param OutValidCnt  NULL (ignore), or output the valid count
+		**/
+		void GetInfoSelection(const CBOOL *const Selection[],
+			Int32 OutStart[], Int32 OutBlockLen[], Int32 OutValidCnt[]);
+
 	protected:
 		virtual void LoadDirect(CdSerial &Reader);
 		virtual void SaveDirect(CdSerial &Writer);
@@ -719,7 +730,7 @@ namespace CoreArray
 		}
 
 		template<typename Function>
-		void SeqIterRectEx(Int32 const* Start, Int32 const* Length, CBOOL *Sel[],
+		void SeqIterRectEx(Int32 const* Start, Int32 const* Length, const CBOOL *const Sel[],
 			int DimCnt, TIterDataExt &Rec, Function Proc)
 		{
 			if (Start && Length)
@@ -727,7 +738,7 @@ namespace CoreArray
 				CdSequenceX::TSeqDimBuf DFor, DForLen;
 				Int32 *ForP = &DFor[0], *ForLenP = &DForLen[0];
 				Int32 ForI = 0, ForEnd = DimCnt-1;
-                CBOOL *Selection = Sel[ForEnd];
+				const CBOOL *Selection = Sel[ForEnd];
 
 				Rec.Index = &DFor[0];
 				DFor[0] = Start[0]; DForLen[0] = Length[0];
@@ -791,7 +802,7 @@ namespace CoreArray
 		}
 
 		template<typename Function>
-		void VecIterRectEx(Int32 const* Start, Int32 const* Length, CBOOL *Sel[],
+		void VecIterRectEx(Int32 const* Start, Int32 const* Length, const CBOOL *const Sel[],
 			int DimCnt, TIterVDataExt &Rec, Function Functor)
 		{
 			if (Start && Length)
@@ -799,7 +810,7 @@ namespace CoreArray
 				CdSequenceX::TSeqDimBuf DFor, DForLen;
 				Int32 *ForP = &DFor[0], *ForLenP = &DForLen[0];
 				Int32 ForI = 0, ForEnd = DimCnt-1;
-                CBOOL *Selection = Sel[ForEnd];
+                const CBOOL *Selection = Sel[ForEnd];
 
 				DFor[0] = Start[0]; DForLen[0] = Length[0];
 				while (ForI >= 0)
@@ -897,7 +908,7 @@ namespace CoreArray
 			COREARRAY_ENDIAN_ARRAY((TInside*)Rec.pBuf, Rec.LastDim);
 			Rec.pBuf += Lx;
 		}
-		COREARRAY_INLINE static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		COREARRAY_INLINE static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			for (size_t L = Rec.LastDim; L > 0; L--)
 			{
@@ -979,7 +990,7 @@ namespace CoreArray
 			}
 			Rec.pBuf = (char*)p;
 		}
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
             char buf[ARRAY_BUF_LEN];
 			Int32 Len = Rec.LastDim;
@@ -1058,7 +1069,7 @@ namespace CoreArray
 		typedef typename TdTraits<T>::TType ElmTypeEx;
 
 		/// Constructor
-		/** \param vDimCnt  number of dimensions, should be <= MaxSeqDim **/
+		/** \param vDimCnt  number of dimensions, should be <= MAX_SEQ_DIM **/
 		CdVector(size_t vDimCnt = 0): CdVectorX(
 			(TdTraits<T>::BitOf/8) + ((TdTraits<T>::BitOf%8)?1:0),
 			vDimCnt, !TdTraits<T>::isClass) { };
@@ -1163,7 +1174,7 @@ namespace CoreArray
 		}
 
 		virtual void rDataEx(Int32 const* Start, Int32 const* Length,
-			CBOOL *Selection[], void *OutBuffer, TSVType OutSV)
+			const CBOOL *const Selection[], void *OutBuffer, TSVType OutSV)
 		{
 			#ifdef COREARRAY_DEBUG_CODE
 			xCheckRect(Start, Length);
@@ -1527,6 +1538,96 @@ namespace CoreArray
 	/// Array of float number with quadruple precision
 	typedef CdVector<Float128>		CdFloat128;
 	#endif
+
+
+
+	// ***********************************************************
+	//
+	// Apply functions by margin
+	//
+	// ***********************************************************
+
+	/// the size of memory buffer for reading dataset marginally, by default 1G
+	extern Int64 ARRAY_READ_MEM_BUFFER_SIZE;
+
+
+	/// read an array-oriented object margin by margin
+	class CdArrayRead
+	{
+	public:
+
+		CdArrayRead();
+		~CdArrayRead();
+
+		void Init(CdSequenceX &vObj, int vMargin, TSVType vSVType,
+			const CBOOL *const vSelection[], bool buf_if_need=true);
+
+		/// allocate memory buffer if needed
+		/** \param  buffer_size  the size of memory buffer; if -1, buffer_size = ARRAY_READ_MEM_BUFFER_SIZE
+		 */
+		void AllocBuffer(Int64 buffer_size);
+
+		void Read(void *Buffer);
+
+		bool Eof();
+
+		/// return an object
+		COREARRAY_INLINE CdSequenceX &Object() { return *fObject; }
+		/// return margin index
+		COREARRAY_INLINE int Margin() { return fMargin; }
+		/// 
+		COREARRAY_INLINE TSVType SVType() { return fSVType; }
+		///
+		COREARRAY_INLINE ssize_t ElmSize() { return fElmSize; }
+
+		COREARRAY_INLINE Int32 Index() { return fIndex; }
+		COREARRAY_INLINE Int32 Count() { return fCount; }
+
+		COREARRAY_INLINE Int32 MarginIndex() { return fMarginIndex; }
+		COREARRAY_INLINE Int64 MarginCount() { return fMarginCount; }
+		COREARRAY_INLINE Int64 MarginSize() { return fMarginCount * fElmSize; }
+
+		COREARRAY_INLINE const Int32 *DimCntValid() { return _DCntValid; }
+
+	protected:
+		CdSequenceX *fObject;
+		int fMargin;
+		TSVType fSVType;
+		ssize_t fElmSize;
+
+		Int32 fIndex, fCount, fMarginIndex;
+		Int64 fMarginCount;
+
+		CdSequenceX::TSeqDimBuf _DStart;
+		CdSequenceX::TSeqDimBuf _DCount;
+		CdSequenceX::TSeqDimBuf _DCntValid;
+
+		/// a variable of selection
+		const CBOOL* _Selection[CdSequenceX::MAX_SEQ_DIM];
+		/// 
+		bool _Have_Selection;
+		/// true for calling rData, false for calling rDataEx
+		bool _Call_rData;
+
+		Int32 _MarginStart;
+		Int32 _MarginEnd;
+
+		vector< vector<CBOOL> > _sel_array;
+		vector<UInt8> _Margin_Buffer;
+
+		Int32 _Margin_Buf_IncCnt;
+		Int32 _Margin_Buf_Cnt;
+		Int32 _Margin_Buf_Old_Index;
+		bool _Margin_Buf_Need;
+		Int64 _Margin_Buf_MajorCnt;
+		Int64 _Margin_Buf_MinorSize;
+		Int64 _Margin_Buf_MinorSize2;
+	};
+
+
+	/// 
+	void Balance_ArrayRead_Buffer(CdArrayRead array[], int n, Int64 buffer_size=-1);
+
 }
 
 #endif /* _dStruct_H_ */

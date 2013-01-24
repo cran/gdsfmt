@@ -16,10 +16,10 @@ createfn.gds(fn)
 \code{\link[gdsfmt]{closefn.gds}} or \code{\link[gdsfmt]{sync.gds}} is called.
 }
 \value{
-	Return an object of class \code{\link[gdsfmt]{gdsclass}}:
+	Return an object of class \code{\link[gdsfmt]{gds.class}}:
 	\item{filename}{the file name to be created.}
 	\item{id}{ID of GDS file, internal use.}
-	\item{root}{an object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure.}
+	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the root of hierachical structure.}
 	\item{readonly}{whether it is read-only or not}
 }
 
@@ -39,4 +39,5 @@ node <- add.gdsn(f, val=list(x=c(1,2), y=c("T", "B", "C"), z=TRUE))
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

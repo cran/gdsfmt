@@ -8,7 +8,7 @@
 //
 // dBase.h: Basic classes for CoreArray library
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dBase.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    Basic classes for CoreArray library
  *	\details
 **/
@@ -1460,18 +1460,20 @@ namespace CoreArray
 
 
 	/// Generic data type
-	struct TdsData
+	struct TdsAny
 	{
 	public:
-		friend CdSerial& operator>> (CdSerial &s, TdsData& out);
-		friend CdSerial& operator<< (CdSerial &s, TdsData &in);
+		friend CdSerial& operator>> (CdSerial &s, TdsAny& out);
+		friend CdSerial& operator<< (CdSerial &s, TdsAny &in);
 
-		/// Data type for TdsData
+		/// Data type for TdsAny
 		typedef unsigned char TdsType;
 
 		/// Type ID
 		enum {
-			dvtEmpty       = 0,    ///< NULL type
+			dvtAtomicBegin = 0,    ///< the first atomic type
+
+			dvtNULL       = 0,    ///< NULL type
 
 			// integer
 			dvtInt8        = 1,    ///< Signed integer of 8 bits
@@ -1501,21 +1503,28 @@ namespace CoreArray
 			dvtStr8        = 17,   ///< UTF-8 string
 			dvtStr16       = 18,   ///< UTF-16 string
 			dvtStr32       = 19,   ///< UTF-32 string
-			// others
-			dvtBoolean     = 20,   ///< Boolean
-			dvtObjRef      = 21,   ///< TdObjRef object
-			dvtDefLast     = 21
+
+			// other extended type
+			dvtBoolean     = 20,   ///< Boolean type
+			dvtAtomicLast  = 20,   ///< the last atomic type
+
+			// pointer
+			dvtExtFirst    = 32,   ///< the first extended type
+			dvtPointer     = 32,   ///< pointer
+			dvtArray       = 33,   ///< array of TdsAny, include a length
+			dvtObjRef      = 34,   ///< TdObjRef object
+			dvtExtLast     = 34    ///< the last extended type
 		};
 
-		/// Initialize TdsData, clear TdsData with ZERO
-		TdsData();
-		/// Free TdsData
-		~TdsData();
+		/// Initialize TdsAny, clear TdsAny with ZERO
+		TdsAny();
+		/// Free TdsAny
+		~TdsAny();
 
 		/// Return type ID
 		COREARRAY_INLINE TdsType Type() const { return dsType; }
 
-		/// Type ID of TdsData to a name
+		/// Type ID of TdsAny to a name
 		static const char *dvtNames(int index);
 
 
@@ -1545,10 +1554,21 @@ namespace CoreArray
 		UTF16String getStr16() const; ///< get UTF16String, throw an exception if fail
 		UTF32String getStr32() const; ///< get UTF32String, throw an exception if fail
 
+		// other extended type
+		bool getBool() const;  ///< get boolean, throw an exception if fail
+
+		// pointer
+		void *getPtr() const;  ///< get a pointer, throw an exception if fail
+
+		// array
+		const TdsAny *getArray() const;  ///< get a pointer
+		UInt32 getArrayLength() const;  ///< get the length of array
+
 		// others
-		bool getBool() const;     ///< get boolean, throw an exception if fail
 		CdObjRef* getObj() const; ///< get CdObjRef, throw an exception if fail
 
+
+		/// define a 'get' method
 		template<typename FUNC, typename TYPE, TYPE DEFAULT>
 			TYPE get()
 		{
@@ -1587,34 +1607,47 @@ namespace CoreArray
 		void setStr16(const UTF16String &val); ///< set UTF16String
 		void setStr32(const UTF32String &val); ///< set UTF32String
 
-		// others
+		// other extended type
 		void setBool(bool val);     ///< set boolean
+
+		// pointer
+		void setPtr(const void *ptr);  ///< set a pointer
+
+		// array
+		void setArray(Int32 *ptr, UInt32 size);  ///< set an int32 array
+		void setArray(Int64 *ptr, UInt32 size);  ///< set an int64 array
+		void setArray(Float64 *ptr, UInt32 size);  ///< set an double array
+		void setArray(const char* const ptr[], UInt32 size);  ///< set a character array
+
+		// CdObjRef
 		void setObj(CdObjRef *obj); ///< set a CdObjRef object
+
 
 		void Assign(const UTF8String &val); ///< auto determine data type
 
 		// check data type
-		bool isEmpty() const;  ///< return true, if it is dvtEmpty
-		bool isInt() const;    ///< return true, if it is an integer
-		bool isFloat() const;  ///< return true, if it is a float number
-		bool isNum() const;    ///< return true, if it is an integer or float number
-		bool isBool() const;   ///< return true, if it is dvtBoolean
-		bool isNaN() const;    ///< return true, if it is a NaN, or not a number
-		bool isNA() const;     ///< return true, if it is a NaN, or dvtEmpty
-		bool isStr() const;    ///< return true, if it is a string
+		bool IsNULL() const;  ///< return true, if it is dvtNULL
+		bool IsInt() const;    ///< return true, if it is an integer
+		bool IsFloat() const;  ///< return true, if it is a float number
+		bool IsNumeric() const;    ///< return true, if it is an integer or float number
+		bool IsBool() const;   ///< return true, if it is dvtBoolean
+		bool IsNaN() const;    ///< return true, if it is a NaN, or not a number
+		bool IsNA() const;     ///< return true, if it is a NaN, or dvtNULL
+		bool IsString() const;    ///< return true, if it is a string
+		bool IsArray() const;  ///< return true, if it is array-type
 
 		bool Packed();  ///< pack the data, if packed return true
-		void Swap(TdsData &D); ///< swap *this and D
+		void Swap(TdsAny &D); ///< swap *this and D
 
-		/// compare *this and D (TdsData)
-		/** \param D       a TdsData data
+		/// compare *this and D (TdsAny)
+		/** \param D       a TdsAny data
 		 *  \param NALast  NA value will be the last
 		 *
 		 *  return  1, if *this > D;
 		 *  return  0, if *this == D;
          *  return -1, if *this < D
 		**/
-		int Compare(const TdsData &D, bool NALast = true);
+		int Compare(const TdsAny &D, bool NALast = true);
 
 
 		// operator
@@ -1642,29 +1675,31 @@ namespace CoreArray
 		COREARRAY_INLINE operator UTF32String() { return getStr32(); }
 
 		/// an operator of assignment
-		TdsData & operator= (const TdsData &_Right);
-		TdsData & operator= (const Int8 val) { setInt8(val); return *this; }
-		TdsData & operator= (const UInt8 val) { setUInt8(val); return *this; }
-		TdsData & operator= (const Int16 val) { setInt16(val); return *this; }
-		TdsData & operator= (const UInt16 val) { setUInt16(val); return *this; }
-		TdsData & operator= (const Int32 val) { setInt32(val); return *this; }
-		TdsData & operator= (const UInt32 val) { setUInt32(val); return *this; }
-		TdsData & operator= (const Int64 val) { setInt64(val); return *this; }
-		TdsData & operator= (const UInt64 val) { setUInt64(val); return *this; }
+		TdsAny & operator= (const TdsAny &_Right);
+		TdsAny & operator= (const Int8 val) { setInt8(val); return *this; }
+		TdsAny & operator= (const UInt8 val) { setUInt8(val); return *this; }
+		TdsAny & operator= (const Int16 val) { setInt16(val); return *this; }
+		TdsAny & operator= (const UInt16 val) { setUInt16(val); return *this; }
+		TdsAny & operator= (const Int32 val) { setInt32(val); return *this; }
+		TdsAny & operator= (const UInt32 val) { setUInt32(val); return *this; }
+		TdsAny & operator= (const Int64 val) { setInt64(val); return *this; }
+		TdsAny & operator= (const UInt64 val) { setUInt64(val); return *this; }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		TdsData & operator= (const Int128 &val) { setInt128(val); return *this; }
-		TdsData & operator= (const UInt128 &val) { setUInt128(val); return *this; }
+		TdsAny & operator= (const Int128 &val) { setInt128(val); return *this; }
+		TdsAny & operator= (const UInt128 &val) { setUInt128(val); return *this; }
 		#endif
 
-		TdsData & operator= (const Float32 val) { setFloat32(val); return *this; }
-		TdsData & operator= (const Float64 val) { setFloat64(val); return *this; }
+		TdsAny & operator= (const Float32 val) { setFloat32(val); return *this; }
+		TdsAny & operator= (const Float64 val) { setFloat64(val); return *this; }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		TdsData & operator= (const Float128 &val) { setFloat128(val); return *this; }
+		TdsAny & operator= (const Float128 &val) { setFloat128(val); return *this; }
 		#endif
 
-		TdsData & operator= (const UTF8String &val) { setStr8(val); return *this; }
-		TdsData & operator= (const UTF16String &val) { setStr16(val); return *this; }
-		TdsData & operator= (const UTF32String &val) { setStr32(val); return *this; }
+		TdsAny & operator= (const UTF8String &val) { setStr8(val); return *this; }
+		TdsAny & operator= (const UTF16String &val) { setStr16(val); return *this; }
+		TdsAny & operator= (const UTF32String &val) { setStr32(val); return *this; }
+
+		TdsAny & operator= (const void *val) { setPtr(val); return *this; }
 
 	private:
 
@@ -1692,6 +1727,15 @@ namespace CoreArray
 				unsigned char Reserved1, SStrLen32, Reserved2;
 				UTF32 SStr32[5];
 			} _S32;
+			struct {
+				TdsType dsArray;
+				UInt8 Reserved[2];
+				UInt32 Length;
+				union {
+					const void *const_ptr;
+					TdsAny *ptr;
+				};
+			} _P;
 		};
 
 		template<typename TYPE> TYPE & VAL()
@@ -1708,18 +1752,18 @@ namespace CoreArray
 		void _Done();
 	};
 
-	/// an operator, to read TdsData from a filter
-	CdSerial& operator>> (CdSerial &s, TdsData& out);
-	/// an operator, to write TdsData to a filter
-	CdSerial& operator<< (CdSerial &s, TdsData &in);
+	/// an operator, to read TdsAny from a filter
+	CdSerial& operator>> (CdSerial &s, TdsAny& out);
+	/// an operator, to write TdsAny to a filter
+	CdSerial& operator<< (CdSerial &s, TdsAny &in);
 
 
-	/// Exception for TdsData
-	class Err_dsData: public ErrConvert
+	/// Exception for TdsAny
+	class Err_dsAny: public ErrConvert
 	{
 	public:
-		Err_dsData(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
-		Err_dsData(TdsData::TdsType fromType, TdsData::TdsType toType);
+		Err_dsAny(const char *fmt, ...) { _COREARRAY_ERRMACRO_(fmt); }
+		Err_dsAny(TdsAny::TdsType fromType, TdsAny::TdsType toType);
 	};
 }
 

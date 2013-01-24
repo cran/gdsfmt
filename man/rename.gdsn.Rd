@@ -9,7 +9,7 @@
 rename.gdsn(node, newname)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{newname}{the new name of a specified node}
 }
 \details{
@@ -38,4 +38,5 @@ f
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

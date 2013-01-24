@@ -8,7 +8,7 @@
 //
 // dFile.h: Functions and classes for CoreArray Genomic Data Structure (GDS)
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dFile.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    Functions and classes for CoreArray Genomic Data Structure (GDS)
  *	\details
 **/
@@ -131,8 +131,8 @@ namespace CoreArray
 		virtual ~CdObjAttr();
 
     	void Assign(CdObjAttr &Source);
-		TdsData &Add(const UTF16String &Name);
-		COREARRAY_INLINE TdsData &Add(const char *Name) { return Add(PChartoUTF16(Name)); }
+		TdsAny &Add(const UTF16String &Name);
+		COREARRAY_INLINE TdsAny &Add(const char *Name) { return Add(PChartoUTF16(Name)); }
 
 		int IndexName(const UTF16String &Name);
 		COREARRAY_INLINE int IndexName(const char *Name) { return IndexName(PChartoUTF16(Name)); }
@@ -149,10 +149,10 @@ namespace CoreArray
 
 		COREARRAY_INLINE CdGDSObj &Owner() const { return fOwner; }
 
-		TdsData & operator[](const UTF16String &Name);
-		COREARRAY_INLINE TdsData & operator[](const char *Name)
+		TdsAny & operator[](const UTF16String &Name);
+		COREARRAY_INLINE TdsAny & operator[](const char *Name)
 			{ return (*this)[UTF8toUTF16(Name)]; }
-		TdsData & operator[](int Index);
+		TdsAny & operator[](int Index);
 
 		COREARRAY_INLINE UTF16String &Names(int Index) { return fList[Index]->name; }
 		void SetName(const UTF16String &OldName, const UTF16String &NewName);
@@ -162,7 +162,7 @@ namespace CoreArray
 	protected:
 		struct TdPair {
 			UTF16String name;
-			TdsData val;
+			TdsAny val;
 		};
 
 		CdGDSObj &fOwner;

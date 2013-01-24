@@ -8,7 +8,7 @@
 //
 // dSeq.h: CoreArray Containers for extended types
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     dSeq.h
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    CoreArray Containers for extended types
  *	\details
 **/
@@ -331,7 +331,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 
@@ -567,7 +567,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -794,7 +794,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -1001,7 +1001,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char Stack[ARRAY_BUF_LEN];
 			unsigned char B, offset, *s;
@@ -1157,7 +1157,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN];
 			Int32 Len = Rec.LastDim;
@@ -1250,7 +1250,7 @@ namespace CoreArray
 		}
 
 		// Read
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			unsigned char buf[ARRAY_BUF_LEN], *pc;
 			Int32 Len = Rec.LastDim;
@@ -1511,7 +1511,7 @@ namespace CoreArray
 			Rec.pBuf = (char*)pt;
 		}
 
-		static void rArrayEx(TIterVDataExt &Rec, CBOOL *Sel)
+		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			TOutside *pt = (TOutside*)Rec.pBuf;
 			ssize_t Lx = Rec.Seq->ElmSize();

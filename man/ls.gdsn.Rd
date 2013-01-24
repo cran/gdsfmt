@@ -10,7 +10,7 @@ Structure (GDS) file.
 ls.gdsn(node)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 }
 \value{
 	A vector of characters.
@@ -35,4 +35,5 @@ ls.gdsn(node)
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

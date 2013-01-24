@@ -8,7 +8,7 @@
 //
 // dStruct.cpp: Data container - array, matrix, etc
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -48,7 +48,7 @@ namespace CoreArray
 				Rec.pBuf = (void*)p;
 			}
 
-			static void rArrayEx(TIterDataExt &Rec, CBOOL *Sel)
+			static void rArrayEx(TIterDataExt &Rec, const CBOOL *Sel)
 			{
 				T *p = (T*)Rec.pBuf;
 				TdIterator it = Rec.Seq->Iterator(Rec.Index);
@@ -764,7 +764,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 		TdIterator it = Seq.atStart();
 
 		TSVType sv = SVType();
-		if (((svInt8<=sv) && (sv<=svInt64)) || (sv==svCustomInt))
+		if (COREARRAY_SV_SINT(sv))
 		{
 			auto_ptr<Int64> buf(new Int64[BufSize]);
 			while (Cnt > 0)
@@ -775,7 +775,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				Append(buf.get(), L, svInt64);
 				Cnt -= L;
 			}
-		} else if (sv == svUInt64)
+		} else if (COREARRAY_SV_UINT(sv))
 		{
 			auto_ptr<UInt64> buf(new UInt64[BufSize]);
 			while (Cnt > 0)
@@ -786,7 +786,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				Append(buf.get(), L, svUInt64);
 				Cnt -= L;
 			}
-		} else if (COREARRAY_SVFLOAT(sv))
+		} else if (COREARRAY_SV_FLOAT(sv))
 		{
 			auto_ptr<Float64> buf(new Float64[BufSize]);
 			while (Cnt > 0)
@@ -797,7 +797,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				Append(buf.get(), L, svFloat64);
 				Cnt -= L;
 			}
-		} else if (COREARRAY_SVSTR(sv))
+		} else if (COREARRAY_SV_STRING(sv))
 		{
 			auto_ptr<UTF16String> buf(new UTF16String[BufSize]);
 			while (Cnt > 0)
@@ -807,7 +807,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				if (L == 0) break;
                 Append(buf.get(), L, svStrUTF16);
 				Cnt -= L;
-            }
+			}
 		}
 
 		CloseWriter();
@@ -880,7 +880,7 @@ void CdSequenceX::rData(Int32 const* Start, Int32 const* Length,
 }
 
 void CdSequenceX::rDataEx(Int32 const* Start, Int32 const* Length,
-	CBOOL *Selection[], void *OutBuffer, TSVType OutSV)
+	const CBOOL *const Selection[], void *OutBuffer, TSVType OutSV)
 {
 	#ifdef COREARRAY_DEBUG_CODE
 	xCheckRect(Start, Length);
@@ -1212,6 +1212,90 @@ void CdSequenceX::xAssignToDim(CdSequenceX &Dest) const
 }
 
 
+// fill selection, return true if it is a block
+static bool fill_selection(Int32 DimSize, const CBOOL Selection[],
+	Int32 &OutStart, Int32 &OutCnt, Int32 &OutCntValid)
+{
+	if (Selection)
+	{
+		// find the first
+		const CBOOL *s = Selection;
+		OutStart = 0;
+		for (Int32 D = DimSize; D >= 0; D--)
+		{
+			if (*s) break;
+			s ++; OutStart ++;
+		}
+		if (OutStart >= DimSize)
+		{
+			OutStart = 0; OutCnt = 0; OutCntValid = 0;
+			return true;
+		} 
+
+		// find the last
+		s = Selection + DimSize - 1;
+		Int32 _st = DimSize - 1;
+		for (Int32 D = DimSize; D >= 0; D--)
+		{
+			if (*s) break;
+			s --; _st --;
+		}
+
+		// the block size
+		OutCnt = _st - OutStart + 1;
+		OutCntValid = 0;
+		bool rv = true;
+
+		s = &Selection[OutStart];
+		for (Int32 i=0; i < OutCnt; i++)
+		{
+			if (*s)
+				OutCntValid ++;
+			else
+				rv = false;
+			s ++;
+		}
+
+		return rv;
+
+	} else {
+		OutStart = 0;
+		OutCnt = DimSize;
+		OutCntValid = DimSize;
+		return true;
+	}
+}
+
+
+void CdSequenceX::GetInfoSelection(const CBOOL *const Selection[],
+	Int32 OutStart[], Int32 OutBlockLen[], Int32 OutValidCnt[])
+{
+	// no need a memory buffer
+	if (Selection)
+	{
+		// with selection
+		for (int i=0; i < DimCnt(); i++)
+		{
+			Int32 S, L, C;
+			fill_selection(GetDLen(i), Selection[i], S, L, C);
+			if (OutStart) OutStart[i] = S;
+			if (OutBlockLen) OutBlockLen[i] = L;
+			if (OutValidCnt) OutValidCnt[i] = C;
+		}
+	} else {
+		// no selection, using all data
+		for (int i=0; i < DimCnt(); i++)
+		{
+			if (OutStart) OutStart[i] = 0;
+			Int32 L = GetDLen(i);
+			if (OutValidCnt) OutValidCnt[i] = L;
+			if (OutBlockLen) OutBlockLen[i] = L;
+		}
+	}
+}
+
+
+
 // CdVectorX
 
 COREARRAY_INLINE static TdIterator IteratorPtr(CdContainer *Handler, const TdPtr64 ptr)
@@ -1424,7 +1508,7 @@ void CdVectorX::GetDimLen(Int32 *Dims) const
 
 void CdVectorX::SetDimLen(const Int32 *Lens, size_t LenCnt)
 {
-	if (LenCnt > MaxSeqDim)
+	if (LenCnt > MAX_SEQ_DIM)
 		throw ErrSequence("Invalid number of dimentions (%d).", LenCnt);
 
 	bool UpdateFlag = (LenCnt != fDims.size());
@@ -2283,3 +2367,363 @@ void CdVectorX::xSetCapacity(const TdPtr64 NewMem)
 	}
 }
 
+
+
+// ***********************************************************
+// Apply functions
+// ***********************************************************
+
+// the size of memory buffer for reading dataset marginally
+Int64 CoreArray::ARRAY_READ_MEM_BUFFER_SIZE = 1024*1024*1024;
+
+
+// read an array-oriented object margin by margin
+
+CdArrayRead::CdArrayRead()
+{
+	fObject = NULL;
+	fMargin = 0;
+	fSVType = svCustom;
+	fIndex = fCount = 0;
+	fMarginCount = 0;
+	fMarginIndex = _MarginStart = _MarginEnd = 0;
+	_Margin_Buf_IncCnt = 0;
+	_Margin_Buf_Cnt = 0;
+}
+
+CdArrayRead::~CdArrayRead()
+{
+}
+		
+void CdArrayRead::Init(CdSequenceX &vObj, int vMargin, TSVType vSVType,
+	const CBOOL *const vSelection[], bool buf_if_need)
+{
+	// set object
+	fObject = &vObj;
+
+	// check
+	int DCnt = vObj.DimCnt();
+	fMargin = vMargin;
+	if ((vMargin < 0) || (vMargin >= DCnt))
+		throw ErrSequence("Error margin %d: reading dataset marginally.", vMargin);
+
+	// initialize ...
+	CdSequenceX::TSeqDimBuf DimLen;
+	vObj.GetDimLen(DimLen);
+
+	// determine the size of element
+	fSVType = vSVType;
+	switch (vSVType)
+	{
+		case svInt8:         // Signed integer of 8 bits
+		case svUInt8:        // Unsigned integer of 8 bits
+			fElmSize = 1; break;
+		case svInt16:        // Signed integer of 16 bits
+		case svUInt16:       // Unsigned integer of 16 bits
+			fElmSize = 2; break;
+		case svInt32:        // Signed integer of 32 bits
+		case svUInt32:       // Unsigned integer of 32 bits
+			fElmSize = 4; break;
+		case svInt64:        // Signed integer of 64 bits
+		case svUInt64:       // Unsigned integer of 64 bits
+			fElmSize = 8; break;
+		case svFloat32:      // Float number of single precision (32 bits)
+			fElmSize = 4; break;
+		case svFloat64:      // Float number of double precision (64 bits)
+			fElmSize = 8; break;
+		case svStrUTF8:      // UTF-8 string
+			fElmSize = 1;
+			throw "Not support character in apply.gdsn";
+			break;
+		case svStrUTF16:     // UTF-16 string
+			fElmSize = 2;
+			throw "Not support character in apply.gdsn";
+			break;
+		default:
+			if (dynamic_cast<CdVectorX*>(&vObj))
+			{
+				fElmSize = dynamic_cast<CdVectorX*>(&vObj)->ElmSize();
+			} else {
+				fElmSize = ((vObj.BitOf() & 0x7) > 0) ? (vObj.BitOf()/8 + 1) : (vObj.BitOf()/8);
+			}
+			if (fElmSize <= 0) fElmSize = 1;
+			break;
+	};
+
+	// true for calling rData, false for calling rDataEx
+	_Call_rData = true;
+
+	// selection determination
+	_sel_array.clear();
+	_Have_Selection = (vSelection != NULL);
+	if (_Have_Selection)
+	{
+		// with selection
+		_sel_array.resize(DCnt);
+		// for - loop
+		for (int i=0; i < DCnt; i++)
+		{
+			bool v = fill_selection(DimLen[i], vSelection[i],
+				_DStart[i], _DCount[i], _DCntValid[i]);
+			if ((i > 0) && (!v))
+				_Call_rData = false;
+			_sel_array[i].assign(vSelection[i] + _DStart[i],
+				vSelection[i] + _DStart[i] + _DCount[i]);
+			_Selection[i] = &(_sel_array[i][0]);
+		}
+	} else {
+		// no selection, using all data
+		for (int i=0; i < DCnt; i++)
+		{
+			_DStart[i] = 0;
+			_DCount[i] = DimLen[i];
+			_DCntValid[i] = DimLen[i];
+		}
+	}
+
+	// total number
+	Int64 TotalCount = 1;
+	for (int i=0; i < DCnt; i++)
+		TotalCount *= _DCntValid[i];
+
+	fIndex = 0; fCount = _DCntValid[vMargin];
+	fMarginCount = (fCount > 0) ? (TotalCount / fCount) : 0;
+
+	_MarginStart = _DStart[vMargin];
+	fMarginIndex = _MarginStart;
+	_MarginEnd = _DStart[vMargin] + _DCount[vMargin];
+
+
+	// make a margin buffer
+	if (vMargin > 0)
+	{
+		_Margin_Buf_Cnt = 0;
+
+		_Margin_Buf_MajorCnt = 1;
+		for (int i=0; i < vMargin; i++)
+			_Margin_Buf_MajorCnt *= _DCntValid[i];
+
+		_Margin_Buf_MinorSize = fElmSize;
+		for (int i=vMargin+1; i < DCnt; i++)
+			_Margin_Buf_MinorSize *= _DCntValid[i];
+
+		// determine buffer
+		if (buf_if_need)
+		{
+			// need a memory buffer to speed up
+			_Margin_Buf_IncCnt = ARRAY_READ_MEM_BUFFER_SIZE / (fElmSize * fMarginCount);
+	
+			if (_Margin_Buf_IncCnt > 1)
+			{
+				if (_Margin_Buf_IncCnt > fCount)
+					_Margin_Buf_IncCnt = fCount;
+				_Margin_Buffer.resize(fElmSize * _Margin_Buf_IncCnt * fMarginCount);
+			} else {
+				_Margin_Buf_IncCnt = 1;
+				_Margin_Buffer.clear();
+			}
+		} else {
+			_Margin_Buf_IncCnt = 1;
+			_Margin_Buffer.clear();
+		}
+	} else {
+		_Margin_Buffer.clear();
+	}
+}
+
+void CdArrayRead::AllocBuffer(Int64 buffer_size)
+{
+	if (fIndex >= fCount)
+	{
+		throw ErrSequence("call CdArrayRead::Init first.");
+	}
+
+	if (fMargin > 0)
+	{
+		if (buffer_size < 0)
+			buffer_size = ARRAY_READ_MEM_BUFFER_SIZE;
+
+		// need a memory buffer to speed up
+		_Margin_Buf_IncCnt = buffer_size / (fElmSize * fMarginCount);
+	
+		if (_Margin_Buf_IncCnt > 1)
+		{
+			if (_Margin_Buf_IncCnt > fCount)
+				_Margin_Buf_IncCnt = fCount;
+			_Margin_Buffer.resize(fElmSize * _Margin_Buf_IncCnt * fMarginCount);
+		} else {
+			_Margin_Buf_IncCnt = 1;
+			_Margin_Buffer.clear();
+		}
+	} else {
+		_Margin_Buffer.clear();
+	}
+}
+
+void CdArrayRead::Read(void *Buffer)
+{
+	if (fIndex < fCount)
+	{
+		// whether it is the major dimension
+		if (fMargin == 0)
+		{
+			// init
+			_DStart[0] = fMarginIndex;
+			_DCount[0] = 1;
+
+			// read sub data
+			if (_Call_rData)
+			{
+				fObject->rData(_DStart, _DCount, Buffer, fSVType);
+			} else {
+				_Selection[0] = &(_sel_array[0][fMarginIndex - _MarginStart]);
+				fObject->rDataEx(_DStart, _DCount, _Selection, Buffer, fSVType);
+			}
+
+			// next ``Index'', ``MarginIndex''
+			fIndex ++;
+			fMarginIndex ++;
+			if (_Have_Selection)
+			{
+				// skip unselected layout
+				while ((fMarginIndex < _MarginEnd) &&
+					!_sel_array[0][fMarginIndex - _MarginStart])
+				{
+					fMarginIndex ++;
+				}
+			}
+		} else {
+
+			// determine buffer size
+			if (_Margin_Buf_Cnt <= 0)
+			{
+				// determine '_Margin_Buf_Cnt' first
+				if (_Margin_Buf_IncCnt > 1)
+				{
+					if (_Have_Selection)
+					{
+						_DCount[fMargin] = 0;
+						_Margin_Buf_Cnt = 0;
+
+						Int32 Cnt = _Margin_Buf_IncCnt;
+						for (Int32 k=fMarginIndex; (k < _MarginEnd) && (Cnt > 0); k ++)
+						{
+							_DCount[fMargin] ++;
+							if (_Selection[fMargin][k - _MarginStart])
+							{
+								_Margin_Buf_Cnt ++;
+								Cnt --;
+							}
+						}
+					} else {
+						Int32 I = fMarginIndex + _Margin_Buf_IncCnt;
+						if (I > _MarginEnd) I = _MarginEnd;
+						_Margin_Buf_Cnt = I - fMarginIndex;
+						_DCount[fMargin] = _Margin_Buf_Cnt;
+					}
+				} else {
+					_Margin_Buf_Cnt = 1;
+				}
+
+				// read sub data to margin buffer
+				_Margin_Buf_Need = (_Margin_Buf_Cnt > 1);
+				_DStart[fMargin] = fMarginIndex;
+				if (_Call_rData)
+				{
+					// call reading with a block
+					if (_Margin_Buf_Need)
+					{
+						fObject->rData(_DStart, _DCount, &_Margin_Buffer[0], fSVType);
+					} else {
+						fObject->rData(_DStart, _DCount, Buffer, fSVType);
+					}
+				} else {
+					// call reading with a selection
+					_Selection[fMargin] = &(_sel_array[fMargin][fMarginIndex - _MarginStart]);
+					if (_Margin_Buf_Need)
+					{
+						fObject->rDataEx(_DStart, _DCount, _Selection, &_Margin_Buffer[0], fSVType);
+					} else {
+						fObject->rDataEx(_DStart, _DCount, _Selection, Buffer, fSVType);
+					}
+				}
+
+				if (_Margin_Buf_Need)
+				{
+					_Margin_Buf_MinorSize2 = _Margin_Buf_MinorSize * _Margin_Buf_Cnt;
+				}
+
+				_Margin_Buf_Old_Index = fIndex;
+			}
+
+			if (_Margin_Buf_Need)
+			{
+				UInt8 *s = &(_Margin_Buffer[0]) + _Margin_Buf_MinorSize *
+					(fIndex - _Margin_Buf_Old_Index);
+				UInt8 *p = (UInt8*)Buffer;
+				for (Int64 n=_Margin_Buf_MajorCnt; n > 0; n--)
+				{
+					memcpy(p, s, _Margin_Buf_MinorSize);
+					p += _Margin_Buf_MinorSize;
+					s += _Margin_Buf_MinorSize2;
+				}
+			}
+
+			_Margin_Buf_Cnt	--;
+
+			// next ``Index'', ``MarginIndex''
+			fIndex ++;
+			fMarginIndex ++;
+			if (_Have_Selection)
+			{
+				// skip unselected layout
+				while ((fMarginIndex < _MarginEnd) &&
+					!_sel_array[fMargin][fMarginIndex - _MarginStart])
+				{
+					fMarginIndex ++;
+				}
+			}
+		}
+	} else {
+		throw ErrSequence("Invalid CdArrayRead::Read.");	
+	}
+}
+
+bool CdArrayRead::Eof()
+{
+	return (fIndex >= fCount);
+}
+
+
+
+void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead array[], int n,
+	Int64 buffer_size)
+{
+	if (n <= 0)
+		throw ErrSequence("CoreArray::Balance_ArrayRead_Buffer !");
+
+	if (buffer_size < 0)
+		buffer_size = ARRAY_READ_MEM_BUFFER_SIZE;
+
+	// calculate memory sizes
+	vector<double> Mem(n);
+	for (int i=0; i < n; i++)
+	{
+		Mem[i] = (array[i].Margin() > 0) ? (double)array[i].MarginSize() : 0.0;
+	}
+
+	// compute ratio
+	double sum = 0;
+	for (int i=0; i < n; i++) sum += Mem[i];
+	for (int i=0; i < n; i++) Mem[i] /= sum;
+
+	// reallocate buffer
+	for (int i=0; i < n; i++)
+	{
+		if (Mem[i] > 0)
+		{
+			Int64 size = (Int64)(buffer_size * Mem[i]);
+			array[i].AllocBuffer(size);
+		}
+	}
+}

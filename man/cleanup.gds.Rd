@@ -42,11 +42,12 @@ f
 closefn.gds(f)
 
 # clean up fragments
-cleanup.gds("test.gds")
+# cleanup.gds("test.gds")
 
 # cteate the GDS file "test.gds"
 (f <- openfn.gds("test.gds"))
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

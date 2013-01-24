@@ -8,7 +8,7 @@
 //
 // CoreGDS.cpp: Export the C interface of CoreArray library
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -29,7 +29,7 @@
  *	\file     CoreGDS.cpp
  *	\author   Xiuwen Zheng
  *	\version  1.0
- *	\date     2007 - 2012
+ *	\date     2007 - 2013
  *	\brief    Export the C interface of CoreArray library
  *	\details
 **/
@@ -815,7 +815,7 @@ extern "C"
 		const char *Value)
 	{
 		CORETRY
-			TdsData &D = Node->Attribute().Add(Name);
+			TdsAny &D = Node->Attribute().Add(Name);
 			D.Assign(Value);
 			return true;
 		CORECATCH(false);
@@ -844,7 +844,7 @@ extern "C"
 		int OutBufLen)
 	{
 		CORETRY
-			TdsData &D = Node->Attribute()[Index];
+			TdsAny &D = Node->Attribute()[Index];
 			string n = D.getStr8();
 			if (OutStr)
 				strncpy(OutStr, n.c_str(), OutBufLen);
@@ -855,7 +855,7 @@ extern "C"
 	COREARRAY_DLLEXPORT bool gds_AttrIxToStr(CdGDSObj *Node, int Index, const char *Str)
 	{
 		CORETRY
-			TdsData &D = Node->Attribute()[Index];
+			TdsAny &D = Node->Attribute()[Index];
 			if (D.getStr8() != Str)
 			{
 				D.Assign(Str);
@@ -868,7 +868,7 @@ extern "C"
 	COREARRAY_DLLEXPORT int gds_AttrIxType(CdGDSObj *Node, int Index)
 	{
 		CORETRY
-			TdsData &D = Node->Attribute()[Index];
+			TdsAny &D = Node->Attribute()[Index];
 			return D.Type();
 		CORECATCH(-1);
 	}
@@ -876,7 +876,7 @@ extern "C"
 	COREARRAY_DLLEXPORT const char *gds_AttrIxTypeStr(CdGDSObj *Node, int Index)
 	{
 		CORETRY
-			TdsData &D = Node->Attribute()[Index];
+			TdsAny &D = Node->Attribute()[Index];
 			return D.dvtNames(D.Type());
 		CORECATCH(NULL);
 	}

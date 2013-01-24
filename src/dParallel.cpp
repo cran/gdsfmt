@@ -8,7 +8,7 @@
 //
 // dParallel.cpp: Functions for parallel computing
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //

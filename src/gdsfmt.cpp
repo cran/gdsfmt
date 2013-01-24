@@ -8,7 +8,7 @@
 //
 // gdsfmt.cpp: the R interface of CoreArray library
 //
-// Copyright (C) 2012	Xiuwen Zheng
+// Copyright (C) 2013	Xiuwen Zheng
 //
 // This file is part of CoreArray.
 //
@@ -30,8 +30,9 @@
 #include <dSeq.h>
 
 #include <R.h>
-#include <Rinternals.h>
+#include <Rdefines.h>
 #include <string.h>
+
 #include <map>
 #include <string>
 #include <memory>
@@ -180,12 +181,10 @@ public:
 		ClassMap["sbit32"] = TdTraits< CoreArray::Int32 >::StreamName();
 
 		// Float
-
 		ClassMap["float32"] = TdTraits<CoreArray::Float32>::StreamName();
 		ClassMap["float64"] = TdTraits<CoreArray::Float64>::StreamName();
 
 		// String
-
 		ClassMap["string"] = TdTraits<CoreArray::UTF8*>::StreamName();
 		ClassMap["string16"] = TdTraits<CoreArray::UTF16*>::StreamName();
 		ClassMap["string32"] = TdTraits<CoreArray::UTF32*>::StreamName();
@@ -198,7 +197,7 @@ public:
 		ClassMap["character"] = TdTraits<CoreArray::UTF8*>::StreamName();
 		ClassMap["logical"] = TdTraits<CoreArray::Int32>::StreamName();
 		ClassMap["list"] = "$FOLDER$";
-		ClassMap["factor"] = TdTraits<CoreArray::UTF8*>::StreamName();;
+		ClassMap["factor"] = TdTraits<CoreArray::Int32>::StreamName();;
 	}
 
 	/// destructor
@@ -349,8 +348,50 @@ inline static Int64 TotalCount(int *Count, int Cnt)
 
 
 
+
+
 extern "C"
 {
+
+/// return true, if Obj is a logical object in R
+static bool _Is_R_Logical(CdGDSObj &Obj)
+{
+	return Obj.Attribute().HasName("R.logical");
+}
+
+/// return 1, if Obj is a factor object in R; otherwise return 0
+static int _Set_If_R_Factor(CdGDSObj &Obj, SEXP val)
+{
+	int nProtected = 0;
+
+	if (Obj.Attribute().HasName("R.class") && Obj.Attribute().HasName("R.levels"))
+	{
+		if (Obj.Attribute()["R.class"].getStr8() == "factor")
+		{
+			if (Obj.Attribute()["R.levels"].IsArray())
+			{
+				const TdsAny *p = Obj.Attribute()["R.levels"].getArray();
+				UInt32 L = Obj.Attribute()["R.levels"].getArrayLength();
+
+				SEXP levels;
+				PROTECT(levels = NEW_CHARACTER(L));
+				nProtected ++;
+				for (UInt32 i=0; i < L; i++)
+					SET_STRING_ELT(levels, i, mkCharCE(p[i].getStr8().c_str(), CE_UTF8));
+
+				SET_LEVELS(val, levels);
+				SET_CLASS(val, mkString("factor"));
+			}
+		}
+	}
+
+	return nProtected;
+}
+
+
+
+
+
 
 // *****************************************************************************
 // File Operations
@@ -993,23 +1034,50 @@ DLLEXPORT void gdsAttrCnt(CdGDSObj **Node, int *Cnt, LongBool *err)
  *  \param PType       [out] output the types of attributes
  *  \param err         [out] return TRUE if error occurs, otherwise FALSE
 **/
-DLLEXPORT void gdsAttrType(CdGDSObj **Node, int *PType, LongBool *err)
+DLLEXPORT void gdsAttrType(CdGDSObj **Node, int *PType, int *PCnt, LongBool *err)
 {
 	CORETRY
 		for (int i = 0; i < (int)(*Node)->Attribute().Count(); i++)
 		{
-			TdsData &p = (*Node)->Attribute()[i];
-			if (p.isInt())
+			const TdsAny &p = (*Node)->Attribute()[i];
+			if (p.IsInt())
+			{
 				*PType = rtInt;
-			else if (p.isFloat())
+				*PCnt = 1;
+			} else if (p.IsFloat())
+			{
 				*PType = rtFloat;
-			else if (p.isStr())
+				*PCnt = 1;
+			} else if (p.IsString())
+			{
 				*PType = rtString;
-			else if (p.isBool())
+				*PCnt = 1;
+			} else if (p.IsBool())
+			{
 				*PType = rtLogical;
-			else
+				*PCnt = 1;
+			} else if (p.IsArray() && (p.getArrayLength()>0))
+			{
+				*PCnt = p.getArrayLength();
+				const TdsAny &pp = p.getArray()[0];
+				if (pp.IsInt())
+					*PType = rtInt;
+				else if (pp.IsFloat())
+					*PType = rtFloat;
+				else if (pp.IsString())
+					*PType = rtString;
+				else if (pp.IsBool())
+					*PType = rtLogical;
+				else {
+					*PType = rtNULL;
+					*PCnt = 0;
+				}
+			} else {
 				*PType = rtNULL;
-			PType++;
+				*PCnt = 0;
+			}
+
+			PType ++; PCnt ++;
 		}
 		*err = false;
 	CORECATCH(*err = true)
@@ -1031,17 +1099,46 @@ DLLEXPORT void gdsGetAttr(CdGDSObj **Node, int *Index, int *RType, void *Ptr,
 		_NodeValid(*Node);
 
 		RStrAgn(UTF16toUTF8((*Node)->Attribute().Names(*Index-1)).c_str(), Name);
-		TdsData &p = (*Node)->Attribute()[*Index-1];
-		switch (*RType)
+
+		TdsAny &dat = (*Node)->Attribute()[*Index-1];
+		if (!dat.IsArray())
 		{
-			case rtInt:
-				*static_cast<int*>(Ptr) = p.getInt32(); break;
-			case rtFloat:
-				*static_cast<double*>(Ptr) = p.getFloat64(); break;
-			case rtString:
-				RStrAgn(p.getStr8().c_str(), static_cast<char**>(Ptr)); break;
-			case rtLogical:
-				*static_cast<LongBool*>(Ptr) = p.getBool(); break;
+			switch (*RType)
+			{
+				case rtInt:
+					*static_cast<int*>(Ptr) = dat.getInt32();
+					break;
+				case rtFloat:
+					*static_cast<double*>(Ptr) = dat.getFloat64();
+					break;
+				case rtString:
+					RStrAgn(dat.getStr8().c_str(), static_cast<char**>(Ptr));
+					break;
+				case rtLogical:
+					*static_cast<LongBool*>(Ptr) = dat.getBool();
+					break;
+			}
+		} else {
+			UInt32 i = 0;
+			switch (*RType)
+			{
+				case rtInt:
+					for (int *p=static_cast<int*>(Ptr); i < dat.getArrayLength(); i++, p++)
+						*p = dat.getArray()[i].getInt32();
+					break;
+				case rtFloat:
+					for (double *p=static_cast<double*>(Ptr); i < dat.getArrayLength(); i++, p++)
+						*p = dat.getArray()[i].getFloat64();
+					break;
+				case rtString:
+					for (char **p=static_cast<char**>(Ptr); i < dat.getArrayLength(); i++, p++)
+						RStrAgn(dat.getArray()[i].getStr8().c_str(), p);
+					break;
+				case rtLogical:
+					for (int *p=static_cast<int*>(Ptr); i < dat.getArrayLength(); i++, p++)
+						*p = dat.getArray()[i].getBool();
+					break;
+			}
 		}
 
 		*err = false;
@@ -1056,27 +1153,49 @@ DLLEXPORT void gdsGetAttr(CdGDSObj **Node, int *Index, int *RType, void *Ptr,
  *  \param err         [out] return TRUE if error occurs, otherwise FALSE
 **/
 DLLEXPORT void gdsPutAttr(CdGDSObj **Node, char **Name, int *RType,
-	void *Ptr, LongBool *err)
+	void *Ptr, int *Cnt, LongBool *err)
 {
 	CORETRY
 		// check
 		_NodeValid(*Node);
 
-		TdsData *p;
+		TdsAny *p;
 		if ((*Node)->Attribute().HasName(*Name))
 			p = &((*Node)->Attribute()[*Name]);
 		else
 			p = &((*Node)->Attribute().Add(*Name));
-		switch (*RType)
+
+		if (*Cnt == 1)
 		{
-			case rtInt:
-            	p->setInt32(*static_cast<int*>(Ptr)); break;
-			case rtFloat:
-            	p->setFloat64(*static_cast<double*>(Ptr)); break;
-			case rtString:
-				p->setStr8(RStr(*static_cast<char**>(Ptr))); break;
-			case rtLogical:
-				p->setBool(*static_cast<int*>(Ptr)); break;
+			switch (*RType)
+			{
+				case rtInt:
+    	        	p->setInt32(*static_cast<int*>(Ptr));
+    	        	break;
+				case rtFloat:
+    	        	p->setFloat64(*static_cast<double*>(Ptr));
+    	        	break;
+				case rtString:
+					p->setStr8(RStr(*static_cast<char**>(Ptr)));
+					break;
+				case rtLogical:
+					p->setBool(*static_cast<int*>(Ptr));
+					break;
+			}
+		} else {
+			switch (*RType)
+			{
+				case rtInt:
+				case rtLogical:
+    	        	p->setArray((int*)Ptr, *Cnt);
+    	        	break;
+				case rtFloat:
+    	        	p->setArray((double*)Ptr, *Cnt);
+    	        	break;
+				case rtString:
+    	        	p->setArray((const char* const*)Ptr, *Cnt);
+					break;
+			}
 		}
 
 		*err = false;
@@ -1219,13 +1338,13 @@ DLLEXPORT void gdsxObjDesp(CdGDSObj **Node, int *DimCnt, int *Start,
 
 			Int64 Total = TotalCount(Count, *DimCnt);
 			*TotalCnt = Total;
-			if (COREARRAY_SVINT(Obj->SVType()))
+			if (COREARRAY_SV_INTEGER(Obj->SVType()))
 			{
 				*RType = ((*Node)->Attribute().HasName("R.logical")) ?
 					rtLogical : rtInt;
-			} else if (COREARRAY_SVFLOAT(Obj->SVType()))
+			} else if (COREARRAY_SV_FLOAT(Obj->SVType()))
 				*RType = rtFloat;
-			else if (COREARRAY_SVSTR(Obj->SVType()))
+			else if (COREARRAY_SV_STRING(Obj->SVType()))
 				*RType = rtString;
 			else
 				*RType = rtNULL;
@@ -1254,13 +1373,13 @@ DLLEXPORT void gdsxObjType(CdGDSObj **Node, int *RType, LongBool *err)
 		if (dynamic_cast<CdSequenceX*>(*Node))
 		{
 			CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
-			if (COREARRAY_SVINT(Obj->SVType()))
+			if (COREARRAY_SV_INTEGER(Obj->SVType()))
 			{
 				*RType = ((*Node)->Attribute().HasName("R.logical")) ?
 					rtLogical : rtInt;
-			} else if (COREARRAY_SVFLOAT(Obj->SVType()))
+			} else if (COREARRAY_SV_FLOAT(Obj->SVType()))
 				*RType = rtFloat;
-			else if (COREARRAY_SVSTR(Obj->SVType()))
+			else if (COREARRAY_SV_STRING(Obj->SVType()))
 				*RType = rtString;
 			else
 				*RType = rtNULL;
@@ -1315,7 +1434,7 @@ DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 			CopyDec(Start, *DimCnt, DStart);
 
 			TSVType SV = RtoSV(*RType);
-			if (!COREARRAY_SVSTR(SV))
+			if (!COREARRAY_SV_STRING(SV))
 			{
 				Obj->rData(DStart, Count, Ptr, SV);
 			} else {
@@ -1353,7 +1472,7 @@ DLLEXPORT void gdsObjReadData(CdGDSObj **Node, int *DimCnt, int *Start,
 
 
 /// read string from the selection
-static void rIterStrEx(TIterDataExt &Rec, CBOOL *Selection)
+static void rIterStrEx(TIterDataExt &Rec, const CBOOL *Selection)
 {
 	char **p = (char**)Rec.pBuf;
 	TdIterator it = Rec.Seq->Iterator(Rec.Index);
@@ -1405,7 +1524,7 @@ DLLEXPORT void gdsObjReadExData(CdGDSObj **Node, LongBool *Selection,
 			for (int i=0; i < DCnt; i++) SelPtr[i] = &(Select[i][0]);
 
 			TSVType SV = RtoSV(*RType);
-			if (!COREARRAY_SVSTR(SV))
+			if (!COREARRAY_SV_STRING(SV))
 			{
 				Obj->rDataEx(DStart, DLen, &(SelPtr[0]), Ptr, SV);
 			} else {
@@ -1430,134 +1549,6 @@ DLLEXPORT void gdsObjReadExData(CdGDSObj **Node, LongBool *Selection,
 
 	CORECATCH(*err = true)
 }
-
-
-// *************************************************************************
-// apply.gdsn
-//
-
-/// convert LongBool to CBOOL
-/** \param from        [in] input logical vector
- *  \param to          [out] output CBOOL vector
- *  \param cnt         [in] the length of vector
-**/
-DLLEXPORT void gdsLongBool2CBOOL(LongBool *from, CBOOL *to, int *cnt)
-{
-	for (int i=0; i < *cnt; i++, from++, to++)
-	{
-		*to = (*from == TRUE);
-	}
-}
-
-/// read data from a node for "apply.gdsn"
-/** \param Node        [in] a specified GDS node
- *  \param Col         [in] the column index (starting from ONE), used for ColIdx
- *  \param ColIdx      [in] the matching indices of columns
- *  \param rCnt        [in] the count of columns
- *  \param RowSel      [in] the selection of rows
- *  \param RType       [in] the data type
- *  \param Ptr         [out] the pointer to data field
- *  \param err         [out] return TRUE if error occurs, otherwise FALSE
-**/
-DLLEXPORT void gdsApplyCol(CdGDSObj **Node, int *Col, int *ColIdx, int *rCnt,
-	CBOOL *RowSel, int *RType, void *Ptr, LongBool *err)
-{
-	CORETRY
-		// check
-		_NodeValid(*Node);
-		if (!dynamic_cast<CdSequenceX*>(*Node))
-			ErrNode(*Node);
-
-		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
-		CdSequenceX::TSeqDimBuf DStart, Count;
-		Obj->GetDimLen(Count);
-
-		// the following is OK for Obj->DimCnt() == 1 or 2
-
-		const int nCol = ColIdx[*Col + *rCnt - 2] - ColIdx[*Col - 1] + 1;
-		vector<CBOOL> ColFlag(nCol, false);
-		for (int i=0; i < *rCnt; i++)
-			ColFlag[ColIdx[*Col + i - 1] - ColIdx[*Col - 1]] = true;
-		CBOOL *SelPtr[2] = { &(ColFlag[0]), RowSel };
-
-		DStart[0] = ColIdx[*Col - 1] - 1; DStart[1] = 0;
-		Count[0] = nCol;
-
-		if (Obj->DimCnt() == 1) Count[1] = nCol;
-
-		TSVType SV = RtoSV(*RType);
-		if (!COREARRAY_SVSTR(SV))
-		{
-			Obj->rDataEx(DStart, Count, SelPtr, Ptr, SV);
-		} else {
-			TIterDataExt Rec;
-			Rec.pBuf = (char*)Ptr;
-			Rec.LastDim = Count[1];
-			Rec.Seq = Obj;
-			if (Rec.LastDim > 0)
-				Internal::SeqIterRectEx(DStart, Count, SelPtr, Obj->DimCnt(), Rec, rIterStrEx);
-		}
-		*err = false;
-
-	CORECATCH(*err = true)
-}
-
-
-/// read data from a node for "apply.gdsn"
-/** \param Node        [in] a specified GDS node
- *  \param Row         [in] the row index (starting from ONE), used for RowIdx
- *  \param RowIdx      [in] the matching indices of rows
- *  \param rCnt        [in] the count of rows
- *  \param ColSel      [in] the selection of columns
- *  \param RType       [in] the data type
- *  \param Ptr         [out] the pointer to data field
- *  \param err         [out] return TRUE if error occurs, otherwise FALSE
-**/
-DLLEXPORT void gdsApplyRow(CdGDSObj **Node, int *Row, int *RowIdx, int *rCnt,
-	CBOOL *ColSel, int *RType, void *Ptr, LongBool *err)
-{
-	CORETRY
-		// check
-		_NodeValid(*Node);
-		if (!dynamic_cast<CdSequenceX*>(*Node))
-			ErrNode(*Node);
-
-		CdSequenceX *Obj = static_cast<CdSequenceX*>(*Node);
-		CdSequenceX::TSeqDimBuf DStart, Count;
-		Obj->GetDimLen(Count);
-
-		const int nRow = RowIdx[*Row + *rCnt - 2] - RowIdx[*Row - 1] + 1;
-		vector<CBOOL> RowFlag(nRow, false);
-		for (int i=0; i < *rCnt; i++)
-			RowFlag[RowIdx[*Row + i - 1] - RowIdx[*Row - 1]] = true;
-		CBOOL *SelPtr[2] = { ColSel, &(RowFlag[0]) };
-
-		DStart[0] = 0; DStart[1] = RowIdx[*Row - 1] - 1;
-		Count[1] = nRow;
-
-		if (Obj->DimCnt() == 1)
-		{
-			DStart[0] = DStart[1]; Count[0] = Count[1];
-			SelPtr[0] = SelPtr[1];
-		}
-
-		TSVType SV = RtoSV(*RType);
-		if (!COREARRAY_SVSTR(SV))
-		{
-			Obj->rDataEx(DStart, Count, SelPtr, Ptr, SV);
-		} else {
-			TIterDataExt Rec;
-			Rec.pBuf = (char*)Ptr;
-			Rec.LastDim = Count[1];
-			Rec.Seq = Obj;
-			if (Rec.LastDim > 0)
-				Internal::SeqIterRectEx(DStart, Count, SelPtr, Obj->DimCnt(), Rec, rIterStrEx);
-		}
-		*err = false;
-
-	CORECATCH(*err = true)
-}
-
 
 
 /// write string
@@ -1616,7 +1607,7 @@ DLLEXPORT void gdsObjWriteAll(CdGDSObj **Node, int *DimCnt, int *Dim,
 
 			CdSequenceX::TSeqDimBuf DStart, DLen;
 			TSVType SV = RtoSV(*RType);
-			if (!COREARRAY_SVSTR(SV))
+			if (!COREARRAY_SV_STRING(SV))
 			{
 				memset((void*)DStart, 0, sizeof(DStart));
 				Obj->wData(DStart, Dim, Ptr, SV);
@@ -1666,7 +1657,7 @@ DLLEXPORT void gdsObjWriteData(CdGDSObj **Node, int *DimCnt, int *Start,
 			CopyDec(Start, *DimCnt, DStart);
 
 			TSVType SV = RtoSV(*RType);
-			if (!COREARRAY_SVSTR(SV))
+			if (!COREARRAY_SV_STRING(SV))
 			{
 				Obj->wData(DStart, Count, Ptr, SV);
 			} else {
@@ -1827,6 +1818,551 @@ DLLEXPORT void gds_Internal_Class(char **ClassName, int *out_nbit, int *err)
 
 		*err = false;
 	CORECATCH(*err = true)
+}
+
+
+
+
+// **********************************************************************
+// **********************************************************************
+// **********************************************************************
+
+/// called by 'apply.gdsn'
+/** \param gds_nodes   [in] a list of objects of 'gdsn' class
+ *  \param margins     [in] margin indices starting from 1
+ *  \param FUN         [in] a function applied marginally
+ *  \param selection   [in] indicates selection
+ *  \param as_is       [in] the type of returned value
+ *  \param rho         [in] the environment variable
+**/
+DLLEXPORT SEXP gds_apply_call(SEXP gds_nodes, SEXP margins,
+	SEXP FUN, SEXP selection, SEXP as_is, SEXP rho)
+{
+	bool has_error = false;
+	SEXP rv_ans = R_NilValue;
+
+	CORETRY
+
+		// the total number of objects
+		int nObject = Rf_length(gds_nodes);
+
+
+		// ***********************************************************
+		// gds_nodes, a list of data variables
+
+		vector< CdSequenceX* > ObjList(nObject);
+		// for -- loop
+		for (int i=0; i < nObject; i++)
+		{
+			CdGDSObj *Node;
+			memcpy(&Node, INTEGER(VECTOR_ELT(gds_nodes, i)), sizeof(Node));
+			_NodeValid(Node);
+			if (dynamic_cast<CdSequenceX*>(Node))
+			{
+				ObjList[i] = static_cast<CdSequenceX*>(Node);
+			} else {
+				throw ErrGDSFmt("'nodes[[%d]]' should be array-based!", i+1);
+			}
+		}
+
+
+		// ***********************************************************
+		// get information
+
+		vector<int> DimCnt(nObject);
+		vector< vector<CoreArray::Int32> > DLen(nObject);
+		vector<TSVType> SVType(nObject);
+		// for -- loop
+		for (int i=0; i < nObject; i++)
+		{
+			SVType[i] = ObjList[i]->SVType();
+			if (!(COREARRAY_SV_INTEGER(SVType[i]) || COREARRAY_SV_FLOAT(SVType[i])))
+				throw ErrGDSFmt("Only support numeric data currently.");	
+			DimCnt[i] = ObjList[i]->DimCnt();
+			DLen[i].resize(DimCnt[i]);
+			ObjList[i]->GetDimLen(&(DLen[i][0]));
+		}
+
+
+		// ***********************************************************
+		// margin should be integer
+
+		vector<int> Margin(nObject);
+		for (int i=0; i < nObject; i++)
+		{
+			Margin[i] = DimCnt[i] - INTEGER(margins)[i];
+			if ((Margin[i] < 0) || (Margin[i] >= DimCnt[i]))
+				throw ErrGDSFmt("'margin' is not valid according to 'nodes[[i]]'!", i+1);
+		}
+
+
+		// ***********************************************************
+		// function
+		if(!isFunction(FUN))
+			throw ErrGDSFmt("'FUN' must be a function.");
+
+
+		// ***********************************************************
+		// selection
+
+		vector< vector<CBOOL *> > array_sel(nObject);
+		vector< vector< vector<CBOOL> > > sel_list(nObject);
+		vector<CBOOL **> sel_ptr(nObject);
+
+		if (!isNull(selection))
+		{
+			if (Rf_length(selection) != nObject)
+				throw ErrGDSFmt("length(selection) should be equal to length(nodes).");
+
+			for (int i=0; i < nObject; i++)
+			{			
+				SEXP SelItem = VECTOR_ELT(selection, i);
+
+				if (!isNull(SelItem))
+				{
+					array_sel[i].resize(DimCnt[i]);
+					sel_ptr[i] = &(array_sel[i][0]);
+					sel_list[i].resize(DimCnt[i]);
+
+					for (int j=0; j < DimCnt[i]; j++)
+					{
+						sel_list[i][j].resize(DLen[i][j]);
+						array_sel[i][j] = &(sel_list[i][j][0]);
+					}
+
+					// check
+					if (!isNewList(SelItem))
+						throw ErrGDSFmt("'selection[[%d]]' must be NULL or a list.", i+1);
+					if (Rf_length(SelItem) != DimCnt[i])
+						throw ErrGDSFmt("length(selection[[%d]]) is not valid!", i+1);
+
+					SEXP elmt = R_NilValue;
+					for (R_len_t k = 0; k < Rf_length(SelItem); k ++)
+					{
+						int DimIdx = DimCnt[i] - k - 1;
+						elmt = VECTOR_ELT(SelItem, k);
+						if (isNull(elmt))
+						{
+							for (int j=0; j < DLen[i][DimIdx]; j++)
+								array_sel[i][DimIdx][j] = true;
+						} else if (isLogical(elmt))
+						{
+							if (Rf_length(elmt) != DLen[i][DimIdx])
+								throw ErrGDSFmt("Invalid length of selection[[%d]][%d]!", i+1, k+1);
+							int *p = LOGICAL(elmt);
+							for (int j=0; j < DLen[i][DimIdx]; j++)
+								array_sel[i][DimIdx][j] = (p[j]==TRUE);
+						} else {
+							throw ErrGDSFmt("The element of 'selection[[%d]]' should be a logical variable or NULL.",
+								i + 1);
+						}
+					}
+				} else {
+					sel_ptr[i] = NULL;
+				}
+			}
+		} else {
+			// no selection
+			for (int i=0; i < nObject; i++)
+			{
+				sel_ptr[i] = NULL;
+			}
+		}
+
+
+		// ***********************************************************
+		// as.is
+		//     0: integer, 1: double, 2: character, 3: list, other: NULL
+		int DatType;
+		const char *as = CHAR(STRING_ELT(as_is, 0));
+		if (strcmp(as, "integer") == 0)
+			DatType = 0;
+		else if (strcmp(as, "double") == 0)
+			DatType = 1;
+		else if (strcmp(as, "character") == 0)
+			DatType = 2;
+		else if (strcmp(as, "list") == 0)
+			DatType = 3;
+		else if (strcmp(as, "none") == 0)
+			DatType = -1;
+		else
+			throw ErrGDSFmt("'as.is' is not valid!");
+
+
+		// ***********************************************************
+		// rho
+		if (!isEnvironment(rho))
+			throw ErrGDSFmt("'rho' should be an environment");
+
+
+		// *************************************************************
+		// initialize variables
+
+		// array read object
+		vector<CdArrayRead> Array(nObject);
+		for (int i=0; i < nObject; i++)
+		{
+			if (COREARRAY_SV_INTEGER(SVType[i]))
+				Array[i].Init(*ObjList[i], Margin[i], svInt32, sel_ptr[i], false);
+			else if (COREARRAY_SV_FLOAT(SVType[i]))
+				Array[i].Init(*ObjList[i], Margin[i], svFloat64, sel_ptr[i], false);
+			else
+				throw ErrGDSFmt("not support in apply.gdsn");
+		}
+
+		// check the margin
+		CoreArray::Int32 MCnt = Array[0].Count();
+		for (int i=1; i < nObject; i++)
+		{
+			if (Array[i].Count() != MCnt)
+				throw ErrGDSFmt("nodes[[%d]] should have the same number of elements as nodes[[1]] marginally (margins[%d] = margins[1]).", i+1, i+1);
+		}
+
+		// allocate internal buffer uniformly
+		Balance_ArrayRead_Buffer(&(Array[0]), Array.size());
+
+
+		// used in UNPROTECT
+		int nProtected = 0;
+
+		// initialize param in FUN
+		vector<void *> BufPtr(nObject);
+		SEXP R_call_param = R_NilValue;
+		SEXP tmp = R_NilValue;
+
+		if (nObject > 1)
+		{
+			PROTECT(R_call_param = NEW_LIST(nObject));
+			nProtected ++;
+		}
+
+		for (int i=0; i < nObject; i++)
+		{
+			if (COREARRAY_SV_INTEGER(SVType[i]))
+			{
+				if (_Is_R_Logical(*ObjList[i]))
+				{
+					PROTECT(tmp = NEW_LOGICAL(Array[i].MarginCount()));
+				} else {
+					PROTECT(tmp = NEW_INTEGER(Array[i].MarginCount()));
+					nProtected += _Set_If_R_Factor(*ObjList[i], tmp);
+				}
+				nProtected ++;
+				BufPtr[i] = INTEGER(tmp);
+			} else if (COREARRAY_SV_FLOAT(SVType[i]))
+			{
+				PROTECT(tmp = NEW_NUMERIC(Array[i].MarginCount()));
+				nProtected ++;
+				BufPtr[i] = REAL(tmp);
+			} else {
+				tmp = R_NilValue;
+				BufPtr[i] = NULL;
+			}
+
+			// init dim
+			if (DimCnt[i] > 2)
+			{
+				SEXP dim;
+				PROTECT(dim = NEW_INTEGER(DimCnt[i] - 1));
+				nProtected ++;
+				int I = 0;
+				for (int k=DimCnt[i]-1; k >= 0; k--)
+				{
+					if (k != Margin[i])
+						INTEGER(dim)[ I++ ] = Array[i].DimCntValid()[k];
+				}
+				SET_DIM(tmp, dim);
+			}
+
+			if (nObject > 1)
+				SET_VECTOR_ELT(R_call_param, i, tmp);
+		}
+
+		if (nObject > 1)
+		{
+			// set name to R_call_param
+			SET_NAMES(R_call_param, GET_NAMES(gds_nodes));
+		} else {
+			R_call_param = tmp;
+		}
+
+
+		// init return values
+		// int DatType;  //< 0: integer, 1: double, 2: character, 3: list, other: NULL
+		switch (DatType)
+		{
+		case 0:
+			PROTECT(rv_ans = NEW_INTEGER(Array[0].Count()));
+			nProtected ++;
+			break;
+		case 1:
+			PROTECT(rv_ans = NEW_NUMERIC(Array[0].Count()));
+			nProtected ++;
+			break;
+		case 2:
+			PROTECT(rv_ans = NEW_CHARACTER(Array[0].Count()));
+			nProtected ++;
+			break;
+		case 3:
+			PROTECT(rv_ans = NEW_LIST(Array[0].Count()));
+			nProtected ++;
+			break;
+		default:
+			rv_ans = R_NilValue;
+		}
+
+		// init call
+		SEXP R_fcall;
+		PROTECT(R_fcall = LCONS(FUN,
+			LCONS(R_call_param, LCONS(R_DotsSymbol, R_NilValue))));
+		nProtected ++;
+
+		SEXP val;
+		int idx = 0;
+
+		// for - loop
+		while (!Array[0].Eof())
+		{
+			// read marginally
+			for (int i=0; i < nObject; i++)
+				Array[i].Read(BufPtr[i]);
+
+			// call R function
+			SEXP val = eval(R_fcall, rho);
+
+			switch (DatType)
+			{
+			case 0:    // integer
+				INTEGER(rv_ans)[idx] = INTEGER(AS_INTEGER(val))[0];
+				break;
+			case 1:    // double
+				REAL(rv_ans)[idx] = REAL(AS_NUMERIC(val))[0];
+				break;
+			case 2:    // character
+				SET_STRING_ELT(rv_ans, idx, STRING_ELT(AS_CHARACTER(val), 0));
+				break;
+			case 3:    // others
+				if (NAMED(val) > 0)
+				{
+					// the object is bound to other symbol(s), need a copy
+					val = duplicate(val);
+				}
+				SET_VECTOR_ELT(rv_ans, idx, val);
+				break;
+			}
+
+			idx ++;
+		}
+
+		//
+		UNPROTECT(nProtected);
+
+	CORECATCH(has_error=true);
+
+	if (has_error)
+		error(Init.LastError.c_str());
+
+	return(rv_ans);
+}
+
+
+/// called by 'clusterApply.gdsn', return a selection (list)
+/** \param gds_nodes   [in] a list of objects of 'gdsn' class
+ *  \param margins     [in] margin indices starting from 1
+ *  \param selection   [in] indicates selection
+**/
+DLLEXPORT SEXP gds_apply_create_selection(SEXP gds_nodes, SEXP margins, SEXP selection)
+{
+	bool has_error = false;
+	SEXP rv_ans = R_NilValue;
+
+	CORETRY
+
+		// the total number of objects
+		int nObject = Rf_length(gds_nodes);
+		// used in UNPROTECT
+		int nProtected = 0;
+
+		// initialize returned value
+		PROTECT(rv_ans = NEW_LIST(nObject));
+		nProtected ++;
+
+
+		// ***********************************************************
+		// gds_nodes, a list of data variables
+
+		vector< CdSequenceX* > ObjList(nObject);
+		// for -- loop
+		for (int i=0; i < nObject; i++)
+		{
+			CdGDSObj *Node;
+			memcpy(&Node, INTEGER(VECTOR_ELT(gds_nodes, i)), sizeof(Node));
+			_NodeValid(Node);
+			if (dynamic_cast<CdSequenceX*>(Node))
+			{
+				ObjList[i] = static_cast<CdSequenceX*>(Node);
+			} else {
+				throw ErrGDSFmt("'node.names[[%d]]' should be array-based!", i+1);
+			}
+		}
+
+
+		// ***********************************************************
+		// get information
+
+		vector<int> DimCnt(nObject);
+		vector< vector<CoreArray::Int32> > DLen(nObject);
+		vector<TSVType> SVType(nObject);
+		// for -- loop
+		for (int i=0; i < nObject; i++)
+		{
+			SVType[i] = ObjList[i]->SVType();
+			if (!(COREARRAY_SV_INTEGER(SVType[i]) || COREARRAY_SV_FLOAT(SVType[i])))
+				throw ErrGDSFmt("Only support numeric data currently.");	
+			DimCnt[i] = ObjList[i]->DimCnt();
+			DLen[i].resize(DimCnt[i]);
+			ObjList[i]->GetDimLen(&(DLen[i][0]));
+		}
+
+
+		// ***********************************************************
+		// margin should be integer
+
+		vector<int> Margin(nObject);
+		for (int i=0; i < nObject; i++)
+		{
+			Margin[i] = DimCnt[i] - INTEGER(margins)[i];
+			if ((Margin[i] < 0) || (Margin[i] >= DimCnt[i]))
+				throw ErrGDSFmt("'margin' is not valid according to 'node.names[[i]]'!", i+1);
+		}
+
+
+		// ***********************************************************
+		// selection
+
+		vector< vector<CBOOL *> > array_sel(nObject);
+		vector< vector< vector<CBOOL> > > sel_list(nObject);
+		vector<CBOOL **> sel_ptr(nObject);
+
+		if (!isNull(selection))
+		{
+			if (Rf_length(selection) != nObject)
+				throw ErrGDSFmt("length(selection) should be equal to length(nodes).");
+
+			for (int i=0; i < nObject; i++)
+			{			
+				SEXP SelItem = VECTOR_ELT(selection, i);
+
+				if (!isNull(SelItem))
+				{
+					array_sel[i].resize(DimCnt[i]);
+					sel_ptr[i] = &(array_sel[i][0]);
+					sel_list[i].resize(DimCnt[i]);
+
+					for (int j=0; j < DimCnt[i]; j++)
+					{
+						sel_list[i][j].resize(DLen[i][j]);
+						array_sel[i][j] = &(sel_list[i][j][0]);
+					}
+
+					// check
+					if (!isNewList(SelItem))
+						throw ErrGDSFmt("'selection[[%d]]' must be NULL or a list.", i+1);
+					if (Rf_length(SelItem) != DimCnt[i])
+						throw ErrGDSFmt("length(selection[[%d]]) is not valid!", i+1);
+
+					SEXP elmt = R_NilValue;
+					for (R_len_t k = 0; k < Rf_length(SelItem); k ++)
+					{
+						int DimIdx = DimCnt[i] - k - 1;
+						elmt = VECTOR_ELT(SelItem, k);
+						if (isNull(elmt))
+						{
+							for (int j=0; j < DLen[i][DimIdx]; j++)
+								array_sel[i][DimIdx][j] = true;
+						} else if (isLogical(elmt))
+						{
+							if (Rf_length(elmt) != DLen[i][DimIdx])
+								throw ErrGDSFmt("Invalid length of selection[[%d]][%d]!", i+1, k+1);
+							int *p = LOGICAL(elmt);
+							for (int j=0; j < DLen[i][DimIdx]; j++)
+								array_sel[i][DimIdx][j] = (p[j]==TRUE);
+						} else {
+							throw ErrGDSFmt("The element of 'selection[[%d]]' should be a logical variable or NULL.",
+								i + 1);
+						}
+					}
+				} else {
+					sel_ptr[i] = NULL;
+				}
+			}
+		} else {
+			// no selection
+			for (int i=0; i < nObject; i++)
+			{
+				sel_ptr[i] = NULL;
+				sel_list[i].resize(DimCnt[i]);
+				for (int j=0; j < DimCnt[i]; j++)
+					sel_list[i][j].resize(DLen[i][j], 1);  // 1 -- TRUE
+			}
+		}
+
+
+		// *************************************************************
+		// initialize variables
+
+		// array read object
+		vector<CdArrayRead> Array(nObject);
+		for (int i=0; i < nObject; i++)
+		{
+			// do not allocate memory
+			if (COREARRAY_SV_INTEGER(SVType[i]))
+				Array[i].Init(*ObjList[i], Margin[i], svInt32, sel_ptr[i], false);
+			else if (COREARRAY_SV_FLOAT(SVType[i]))
+				Array[i].Init(*ObjList[i], Margin[i], svFloat64, sel_ptr[i], false);
+			else
+				throw ErrGDSFmt("not support in apply.gdsn");
+		}
+
+		// check the margin
+		CoreArray::Int32 MCnt = Array[0].Count();
+		for (int i=1; i < nObject; i++)
+		{
+			if (Array[i].Count() != MCnt)
+				throw ErrGDSFmt("nodes[[%d]] should have the same number of elements as nodes[[1]] marginally (margins[%d] = margins[1]).", i+1, i+1);
+		}
+
+
+		// *************************************************************
+		// fill returned value
+		for (int i=0; i < nObject; i++)
+		{
+			SEXP val, tmp;
+			PROTECT(val = NEW_LIST(DimCnt[i]));
+			nProtected ++;
+			SET_VECTOR_ELT(rv_ans, i, val);
+
+			for (int j=0; j < DimCnt[i]; j++)
+			{
+				PROTECT(tmp = NEW_LOGICAL(DLen[i][j]));
+				nProtected ++;
+				SET_VECTOR_ELT(val, DimCnt[i] - j - 1, tmp);
+
+				for (int k=0; k < DLen[i][j]; k++)
+					LOGICAL(tmp)[k] = sel_list[i][j][k];
+			}
+		}
+
+
+		//
+		UNPROTECT(nProtected);
+
+	CORECATCH(has_error=true);
+
+	if (has_error)
+		error(Init.LastError.c_str());
+
+	return(rv_ans);
 }
 
 

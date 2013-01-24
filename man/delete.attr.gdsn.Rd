@@ -9,7 +9,7 @@
 delete.attr.gdsn(node, name)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{name}{the name of an attribute}
 }
 \details{
@@ -22,4 +22,5 @@ delete.attr.gdsn(node, name)
 	\code{\link[gdsfmt]{put.attr.gdsn}}, \code{\link[gdsfmt]{get.attr.gdsn}}
 }
 
+\keyword{GDS}
 \keyword{utilities}

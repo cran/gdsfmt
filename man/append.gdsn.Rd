@@ -10,7 +10,7 @@ Structure (GDS) file.
 append.gdsn(node, val, check = TRUE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{val}{data to be appended}
 	\item{check}{whether a warning is given, when appended data can not match
 		the capability of data field}
@@ -59,4 +59,5 @@ read.gdsn(n, start=c(1, 102), count=c(-1, 1))
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}

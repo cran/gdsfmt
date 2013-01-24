@@ -10,7 +10,7 @@ Structure (GDS) file.
 compression.gdsn(node, compress = c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"))
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{compress}{specify the compression method}
 }
 \details{
@@ -28,4 +28,5 @@ correspond to different compression levels.
 	\code{\link[gdsfmt]{readmode.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
 }
 
+\keyword{GDS}
 \keyword{utilities}

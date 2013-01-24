@@ -1,5 +1,5 @@
-\name{gdsclass}
-\alias{gdsclass}
+\name{gds.class}
+\alias{gds.class}
 \title{the class of GDS file}
 \description{
 	The class of a GDS file, and its instance is returned from \link[gdsfmt]{openfn.gds} or
@@ -9,7 +9,7 @@
 	There are three components:
 	\item{filename}{the file name to be created.}
 	\item{id}{ID of GDS file, internal use.}
-	\item{root}{an object of class \code{\link[gdsfmt]{gdsn}}, the root of hierachical structure.}
+	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the root of hierachical structure.}
 	\item{readonly}{whether it is read-only or not}
 }
 
@@ -20,4 +20,5 @@
 	\code{\link[gdsfmt]{closefn.gds}}
 }
 
+\keyword{GDS}
 \keyword{utilities}

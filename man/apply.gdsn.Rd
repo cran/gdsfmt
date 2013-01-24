@@ -1,33 +1,29 @@
 \name{apply.gdsn}
 \alias{apply.gdsn}
-\title{Apply functions over matrix margins}
+\title{Apply functions over margins}
 \description{
-	Returns a vector or list of values obtained by applying a function to margins of a matrix,
-in a CoreArray Genomic Data Structure (GDS) file.
+	Returns a vector or list of values obtained by applying a function to margins of a
+matrix or array, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-apply.gdsn(node, margin=2, row.sel=NULL, col.sel=NULL, buf.size=1024, simplify=TRUE, FUN, ...)
+apply.gdsn(nodes, margins, FUN, selection=NULL,
+	as.is = c("list", "integer", "double", "character", "none"), ...)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn}}, a GDS node}
-	\item{margin}{an integer giving the subscripts which the function will be applied
+	\item{nodes}{an object of class \code{\link[gdsfmt]{gdsn.class}}, or a list of objects
+		of class \code{\link[gdsfmt]{gdsn.class}}}
+	\item{margins}{an integer giving the subscripts which the function will be applied
 		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
-	\item{row.sel}{a logical vector giving which rows will be used, or NULL for all rows}
-	\item{col.sel}{a logical vector giving which columns will be used, or NULL for all columns}
-	\item{buf.size}{the size of blocking buffer, the algorithm is optimized by blocking
-		the computations to exploit the high-speed memory instead of disk. See details}
-	\item{simplify}{if TRUE, the result will be simplified to a vector, matrix or higher
-		dimensional array if possible}
 	\item{FUN}{the function to be applied}
+	\item{selection}{a list or NULL; if a list, it is a list of logical vectors according
+		to dimensions indicating selection; if NULL, uses all data}
+	\item{as.is}{returned value: a list, an integer vector, etc}
 	\item{...}{optional arguments to \code{FUN}}
 }
 \details{
-	The algorithm of applying is optimized by blocking the computations to exploit the
-high-speed memory instead of disk. It loads \code{buf.size} of columns or rows each time,
-and then call \code{FUN}. In general, it is better to choose a large value of \code{buf.size},
-however, the value of \code{buf.size} should not make the internal buffer exceed the main
-memory.
+	The algorithm is optimized by blocking the computations to exploit the high-speed
+memory instead of disk.
 }
 \value{
 	A vector or list of values.
@@ -36,33 +32,76 @@ memory.
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 \seealso{
-	\code{\link[gdsfmt]{applylt.gdsn}},
 	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{readex.gdsn}},
-	\code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
-	\code{\link[gdsfmt]{add.gdsn}}
+	\code{\link[gdsfmt]{clusterApply.gdsn}}
 }
 
 \examples{
 # cteate the GDS file "test.gds"
 (f <- createfn.gds("test.gds"))
 
-(n <- add.gdsn(f, "matrix", val=matrix(as.character(1:(10*6)), nrow=10)))
+(n <- add.gdsn(f, "matrix", val=matrix(1:(10*6), nrow=10)))
 read.gdsn(index.gdsn(f, "matrix"))
 
 # Apply functions over rows of matrix
-tmp <- apply.gdsn(n, margin=1, buf.size=2, FUN=function(x) print(x))
+tmp <- apply.gdsn(n, margin=1, FUN=function(x) print(x))
 tmp <- apply.gdsn(n, margin=1,
-	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+	selection = list(rep(c(TRUE, FALSE), 5), rep(c(TRUE, FALSE), 3)),
 	FUN=function(x) print(x))
 
 # Apply functions over columns of matrix
 tmp <- apply.gdsn(n, margin=2, FUN=function(x) print(x))
 tmp <- apply.gdsn(n, margin=2,
-	row.sel=rep(c(TRUE, FALSE), 5), col.sel=rep(c(TRUE, FALSE), 3),
+	selection = list(rep(c(TRUE, FALSE), 5), rep(c(TRUE, FALSE), 3)),
+	FUN=function(x) print(x))
+
+# close
+closefn.gds(f)
+
+
+
+########################################################
+#
+# Multiple variables
+#
+
+# cteate the GDS file "test.gds"
+(f <- createfn.gds("test.gds"))
+
+X <- matrix(1:50, nrow=10)
+Y <- matrix((1:50)/100, nrow=10)
+Z1 <- factor(c(rep(c("ABC", "DEF", "ETD"), 3), "TTT"))
+Z2 <- c(TRUE, FALSE, TRUE, FALSE, TRUE)
+
+node.X <- add.gdsn(f, "X", X)
+node.Y <- add.gdsn(f, "Y", Y)
+node.Z1 <- add.gdsn(f, "Z1", Z1)
+node.Z2 <- add.gdsn(f, "Z2", Z2)
+
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), c(1, 1, 1),
+	FUN=function(x) { print(x) }, as.is="none")
+
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), c(2, 2, 1),
 	FUN=function(x) print(x))
 
 
+# with selection
+
+s1 <- rep(c(FALSE, TRUE), 5)
+s2 <- c(TRUE, FALSE, TRUE, FALSE, TRUE)
+
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), c(1, 1, 1),
+	selection = list(list(s1, s2), list(s1, s2), list(s1)),
+	FUN=function(x) print(x))
+
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), c(2, 2, 1),
+	selection = list(list(s1, s2), list(s1, s2), list(s2)),
+	FUN=function(x) print(x))
+
+
+# close
 closefn.gds(f)
 }
 
+\keyword{GDS}
 \keyword{utilities}
