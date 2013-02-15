@@ -13,7 +13,7 @@ objdesp.gdsn(node)
 }
 \value{
 	Returns a list:
-	\item{desp}{the description of data field}
+	\item{type}{the description of data field}
 	\item{name}{the variable name of a specified node}
 	\item{svtype}{the internal type of the specified node: 1 -- Int8, 2 -- UInt8,
 		3 -- Int16, 4 -- UInt16, 5 -- Int32, 6 -- UInt32, 7 -- Int64, 8 -- UInt64,

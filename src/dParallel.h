@@ -130,7 +130,7 @@ namespace CoreArray
 
 		class CParallelBase;
 
-		namespace Internal
+		namespace _Internal_
 		{
 			template<class TCLASS> struct _pThreadStructEx
 			{
@@ -194,11 +194,11 @@ namespace CoreArray
 					fThreads.resize(fnThread-1);
 					for (int i=0; i < fnThread-1; i++)
 					{
-						Internal::_pThreadStructEx<TCLASS> pd;
+						_Internal_::_pThreadStructEx<TCLASS> pd;
 						pd.obj = obj; pd.proc = Proc;
 						pd.ThreadIndex = i+1; pd.cpBase = this;
 						fThreads[i] = new CdThread;
-						fThreads[i]->BeginThread(Internal::_pDoThreadEx<TCLASS>, pd);
+						fThreads[i]->BeginThread(_Internal_::_pDoThreadEx<TCLASS>, pd);
 					}
 				}
 
@@ -346,7 +346,7 @@ namespace CoreArray
 			{
 				_IStructEx<TCLASS, TINDEX, OUTTYPE, THREADDATA> &Rec =
                 	*((_IStructEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>*)_ptr);
-                // Internal data for each thread
+                // _Internal_ data for each thread
 				THREADDATA ThreadData;
 				(Rec.Obj->*Rec.InternalFunc)(ThreadData, Thread, Index);
 
@@ -489,7 +489,7 @@ namespace CoreArray
 			{
 				_IStructEx<TCLASS, TINDEX, OUTTYPE, THREADDATA> &Rec =
                 	*((_IStructEx<TCLASS, TINDEX, OUTTYPE, THREADDATA>*)_ptr);
-                // Internal data for each thread
+                // _Internal_ data for each thread
 				THREADDATA ThreadData;
 				(Rec.Obj->*Rec.InternalFunc)(ThreadData, Thread, Index);
 
@@ -701,7 +701,7 @@ namespace CoreArray
 			{
 				_IStruct2<TCLASS, TINDEX, OUTTYPE, THREADDATA> &Rec =
 					*((_IStruct2<TCLASS, TINDEX, OUTTYPE, THREADDATA>*)_ptr);
-                // Internal data for each thread
+                // _Internal_ data for each thread
 				THREADDATA ThreadData;
 				(Rec.Obj->*Rec.InternalFunc)(ThreadData, Thread, Index);
 
@@ -954,7 +954,7 @@ namespace CoreArray
 			{
 				_IStruct2<TCLASS, TINDEX, OUTTYPE, THREADDATA> &Rec =
 					*((_IStruct2<TCLASS, TINDEX, OUTTYPE, THREADDATA>*)_ptr);
-                // Internal data for each thread
+                // _Internal_ data for each thread
 				THREADDATA ThreadData;
 				(Rec.Obj->*Rec.InternalFunc)(ThreadData, Thread, Index);
 

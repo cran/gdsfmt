@@ -54,9 +54,10 @@ static const char *rsInvalidBlockLen = "Invalid length of Block!";
 
 
 // CoreArray GDS Stream position mask
-static const Int64 FPosMask    = (Int64(0x7FFF) << 32) | Int64(0xFFFFFFFF);  // 0x7FFF,FFFFFFFF
-static const Int64 FPosMaskBit = (Int64(0x8000) << 32) | Int64(0x00000000);  // 0x8000,00000000
-static const Int64 FPosNMask   = (Int64(0xFFFF) << 32) | Int64(0xFFFFFFFF);  // 0xFFFF,FFFFFFFF
+const Int64 CoreArray::GDS_STREAM_POS_MASK =
+	(Int64(0x7FFF) << 32) | Int64(0xFFFFFFFF);  // 0x7FFF,FFFFFFFF
+const Int64 CoreArray::GDS_STREAM_POS_MASK_HEAD_BIT =
+	(Int64(0x8000) << 32) | Int64(0x00000000);  // 0x8000,00000000
 
 
 // ErrAllocator
@@ -1215,7 +1216,7 @@ CdZIPInflate::CdZIPInflate(CdStream* Source): CdBaseZStream(Source)
 	fZStream.next_in = fBuffer;
 	fZStream.avail_in = 0;
 	fBlockSize = 1024*1024; // 1024K
-	fRandomAccess = true;
+	fRandomAccess = false;
 	fBlockStart = fCurPos = 0;
 	ZCheck(inflateInit_(&fZStream, ZLIB_VERSION, sizeof(fZStream)));
 }
@@ -1226,7 +1227,7 @@ CdZIPInflate::CdZIPInflate(CdStream* Source, int windowBits):
 	fZStream.next_in = fBuffer;
 	fZStream.avail_in = 0;
 	fBlockSize = 1024*1024; // 1024K
-	fRandomAccess = true;
+	fRandomAccess = false;
 	fBlockStart = fCurPos = 0;
 	ZCheck(inflateInit2_(&fZStream, windowBits, ZLIB_VERSION, sizeof(fZStream)));
 }
@@ -1461,7 +1462,7 @@ void CdBlockStream::TBlockInfo::SetSize(CdStream &Stream, const TdPtr64 Size)
 	BlockSize = Size;
 	TdPtr64 L = Head ? (HeadSize+2*TdPosType::size) : (2*TdPosType::size);
 	Stream.SetPosition(StreamStart - L);
-	Stream << TdPosType((Size+L) | (Head ? FPosMaskBit : 0));
+	Stream << TdPosType((Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0));
 }
 
 void CdBlockStream::TBlockInfo::SetNext(CdStream &Stream, const TdPtr64 Next)
@@ -1478,7 +1479,7 @@ void CdBlockStream::TBlockInfo::SetSize2(CdStream &Stream,
 	BlockSize = Size;
 	TdPtr64 L = Head ? (HeadSize+2*TdPosType::size) : (2*TdPosType::size);
 	Stream.SetPosition(StreamStart - L);
-	Stream << TdPosType((Size+L) | (Head ? FPosMaskBit : 0))
+	Stream << TdPosType((Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0))
 		<< TdPosType(Next);
 }
 
@@ -1896,6 +1897,24 @@ bool CdBlockCollection::HaveID(TdBlockID id)
 	return false;
 }
 
+int CdBlockCollection::NumOfFragment()
+{
+	int Cnt = 0;
+
+	vector<CdBlockStream*>::const_iterator it;
+	for (it=fBlockList.begin(); it != fBlockList.end(); it++)
+		Cnt += (*it)->ListCount();
+
+	CdBlockStream::TBlockInfo *p = fUnuse;
+	while (p != NULL)
+	{
+		p = p->Next;
+		Cnt ++;
+	}
+
+	return Cnt;
+}
+
 void CdBlockCollection::LoadStream(CdStream *vStream, bool vReadOnly)
 {
 	if (fStream)
@@ -1917,12 +1936,12 @@ void CdBlockCollection::LoadStream(CdStream *vStream, bool vReadOnly)
 		TdPosType sSize, sNext;
 		*fStream >> sSize >> sNext;
 		TdPtr64 sPos = fStream->Position() +
-			(sSize & FPosMask) - 2*TdPosType::size;
+			(sSize & GDS_STREAM_POS_MASK) - 2*TdPosType::size;
 
 		CdBlockStream::TBlockInfo *n = new CdBlockStream::TBlockInfo;
-		n->Head = sSize & FPosMaskBit;
+		n->Head = (sSize & GDS_STREAM_POS_MASK_HEAD_BIT) != 0;
 		int L = n->Head ? CdBlockStream::TBlockInfo::HeadSize : 0;
-		n->BlockSize = (sSize & FPosMask) - L - 2*TdPosType::size;
+		n->BlockSize = (sSize & GDS_STREAM_POS_MASK) - L - 2*TdPosType::size;
 		n->StreamStart = fStream->Position() + L;
 		n->StreamNext = sNext;
 
@@ -2005,7 +2024,7 @@ void CdBlockCollection::Clear()
 		p->Release();
 		#endif
 	}
-    fBlockList.clear();
+	fBlockList.clear();
 
 	#ifdef COREARRAY_DEBUG_CODE
 	if (fStream->Release() != 0)

@@ -16,20 +16,19 @@ add.gdsn(node, name, val = NULL, storage = storage.mode(val), valdim = NULL,
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{name}{the variable name of the added node}
 	\item{val}{the R value can be \code{vector}, \code{list}, \code{data.frame}}
-	\item{storage}{to specify data type: integer (
+	\item{storage}{to specify data type (not case-sensitive): integer (
 		signed integer:
 			"int8", "int16", "int24", "int32", "int64",
 			"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8",
 			"sbit9", "sbit10", "sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16",
-			"sbit17", "sbit18", "sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24",
-			"sbit25", "sbit26", "sbit27", "sbit28", "sbit29", "sbit30", "sbit31", "sbit32" ;
+			"sbit24", "sbit32", "sbit64" ;
 		unsigned integer:
 			"uint8", "uint16", "uint24", "uint32", "uint64",
 			"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8",
 			"bit9", "bit10", "bit11", "bit12", "bit13", "bit14", "bit15", "bit16",
-			"bit17", "bit18", "bit19", "bit20", "bit21", "bit22", "bit23", "bit24",
-			"bit25", "bit26", "bit27", "bit28", "bit29", "bit30", "bit31", "bit32" );
-			float ("float32", "float64"), string ("string", "string16", "string32").
+			"bit24", "bit32", "bit64" );
+			float ("float32", "float64"), string (variable-length: "string", "string16",
+			"string32"; fixed-length: "fstring", "fstring16", "fstring32").
 			Or "integer" (="int32"), "float" (="float32"), "double" (="float64"),
 			"character" (="string"), "logical", "list", "factor", "folder"}
 	\item{valdim}{the dimension attribute for the array to be created, which is a
@@ -92,6 +91,7 @@ L <- -2500:2499
 add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP", closezip=TRUE)
 add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50))
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))
+add.gdsn(f, "character", val=c("int", "double", "logical", "factor"))
 add.gdsn(f, "logical", val=rep(c(TRUE, FALSE, NA), 50))
 add.gdsn(f, "factor", val=as.factor(c(letters, NA, "AA", "CC")))
 add.gdsn(f, "NA", val=rep(NA, 10))
@@ -112,6 +112,7 @@ addfile.gdsn(f, "tmp.RData", filename="tmp.RData")
 f
 
 read.gdsn(index.gdsn(f, "list"))
+read.gdsn(index.gdsn(f, "list/Y"))
 read.gdsn(index.gdsn(f, "data.frame"))
 
 
@@ -123,9 +124,6 @@ read.gdsn(index.gdsn(f, "n1"))
 
 n2 <- add.gdsn(f, "n2", val=matrix(1:100, 10, 10), valdim=c(15, 20))
 read.gdsn(index.gdsn(f, "n2"))
-
-n3 <- add.gdsn(f, "n3", val="ZXW", valdim=c(15, 20))
-read.gdsn(index.gdsn(f, "n3"))
 
 
 closefn.gds(f)

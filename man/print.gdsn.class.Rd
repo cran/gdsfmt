@@ -7,11 +7,12 @@ Structure (GDS) file.
 }
 
 \usage{
-\method{print}{gdsn.class}(x, expand = TRUE, ...)
+\method{print}{gdsn.class}(x, expand = TRUE, all=FALSE, ...)
 }
 \arguments{
 	\item{x}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
 	\item{expand}{whether enumerate all of child nodes}
+	\item{all}{if FALSE, hide GDS nodes with an attribute "R.invisible"}
 	\item{...}{the arguments passed to or from other methods}
 }
 

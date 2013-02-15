@@ -1,0 +1,26 @@
+\name{assign.gdsn}
+\alias{assign.gdsn}
+\title{Assign/append data to a GDS node}
+\description{
+	Assign data to a GDS node, or append data to a GDS node
+}
+
+\usage{
+assign.gdsn(dest.obj, src.obj, append)
+}
+\arguments{
+	\item{dest.obj}{an object of class \code{\link[gdsfmt]{gdsn.class}},
+		a destination GDS node}
+	\item{src.obj}{an object of class \code{\link[gdsfmt]{gdsn.class}},
+		a source GDS node}
+	\item{append}{if TRUE, append data; otherwise, replace the old one}
+}
+
+\references{\url{http://sourceforge.net/projects/corearray/}}
+\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\seealso{
+	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}}
+}
+
+\keyword{GDS}
+\keyword{utilities}

@@ -144,7 +144,7 @@ namespace CoreArray
 		bool fOffset;
 	};
 
-	namespace Internal
+	namespace _Internal_
 	{
 		// for TdTypeID::osShortRec
 		typedef struct { int Len; char Data[256]; } TShortRec;
@@ -225,13 +225,13 @@ static char PropNameMapStr[64] = {
 	'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
 	's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 
-void CoreArray::Internal::CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader,
+void CoreArray::_Internal_::CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader,
 	TdVersion Version)
 {
 	Obj.LoadStruct(Reader, Version);
 }
 
-void CoreArray::Internal::CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer,
+void CoreArray::_Internal_::CdObject_SaveStruct(CdObject &Obj, CdSerial &Writer,
 	bool IncludeName)
 {
     Obj.SaveStruct(Writer, IncludeName);
@@ -304,12 +304,12 @@ CdObject& CdObject::operator= (CdObject& m) { return *this; }
 
 // CdRef
 
-void CoreArray::Internal::DirectAddRef(CdRef &Obj)
+void CoreArray::_Internal_::DirectAddRef(CdRef &Obj)
 {
 	Obj.fReference++;
 }
 
-void CoreArray::Internal::DirectDecRef(CdRef &Obj)
+void CoreArray::_Internal_::DirectDecRef(CdRef &Obj)
 {
 	Obj.fReference--;
 }
@@ -1495,8 +1495,8 @@ bool CdSerial::rValue(TdTypeID Kind, const char *Name, void *OutBuf)
 				{
 					if (OutBuf)
 					{
-						CVar<Internal::TShortRec> *pi =
-							(CVar<Internal::TShortRec>*)(*it);
+						CVar<_Internal_::TShortRec> *pi =
+							(CVar<_Internal_::TShortRec>*)(*it);
 						memcpy(OutBuf, (void*)&pi->X.Data, pi->X.Len);
 					}
 					fPosition = (*it)->Start + 1;
@@ -1706,8 +1706,8 @@ bool CdSerial::rValue(TdTypeID Kind, const char *const Name, void *OutBuffer,
 				case osShortRec:
 					if (Kind == osShortRec)
 					{
-						CVar<Internal::TShortRec> *pi =
-							(CVar<Internal::TShortRec>*)(*it);
+						CVar<_Internal_::TShortRec> *pi =
+							(CVar<_Internal_::TShortRec>*)(*it);
 						L = pi->X.Len;
 						if (L != BufLen)
 						{
@@ -1757,7 +1757,7 @@ void CdSerial::wValue(TdTypeID Kind, const char * Name, const void * InBuf,
 		Write((void*)&Kind, 1);	// Save Kind to stream
 		wPropName(Name);		// Save property name to stream
 		Cur.VarCount++;
-		Cur.AddVar<Internal::EmptyT>(*this, Kind, fPosition, Name);
+		Cur.AddVar<_Internal_::EmptyT>(*this, Kind, fPosition, Name);
 
 		switch (Kind)
 		{
@@ -1933,7 +1933,7 @@ void CdSerial::rInitNameSpace()
 		{
 			case osRecord: case osNameSpace:
 				{
-					Cur.AddVar<Internal::EmptyT>(*this, Kind, fPosition, Name);
+					Cur.AddVar<_Internal_::EmptyT>(*this, Kind, fPosition, Name);
 					TdPosType PI; *this >> PI;
 					if (PI < TdPosType::size)
 						throw Err_dFilter(esInvalidStructLength);
@@ -1942,8 +1942,8 @@ void CdSerial::rInitNameSpace()
     	        break;
 			case osShortRec:
 				{
-					Internal::TShortRec &X =
-						Cur.AddVar<Internal::TShortRec>(
+					_Internal_::TShortRec &X =
+						Cur.AddVar<_Internal_::TShortRec>(
 						*this, Kind, fPosition, Name);
                 	X.Len = rUInt8();
                 	Read((void*)X.Data, X.Len);
@@ -2255,7 +2255,7 @@ CdObjRef* CdObjClassMgr::toObj(CdSerial &Reader, TdInit OnInit, void *Data)
 		{
 			Obj = OnCreate();
 			if (OnInit) OnInit(*this, Obj, Data);
-			Internal::CdObject_LoadStruct(*Obj, Reader, Version);
+			_Internal_::CdObject_LoadStruct(*Obj, Reader, Version);
 		} else
 			throw Err_dFilter(esInvalidStreamName, Name.c_str());
 	} catch (exception &E) {
@@ -3313,7 +3313,7 @@ CdSerial& CoreArray::operator<< (CdSerial &s, TdsAny &in)
 			if (in._R.obj)
 			{
 				s.wUInt8(1);
-				Internal::CdObject_SaveStruct(*in._R.obj, s, true);
+				_Internal_::CdObject_SaveStruct(*in._R.obj, s, true);
 			} else
 				s.wUInt8(0);
 			break;

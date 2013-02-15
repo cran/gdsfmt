@@ -405,19 +405,21 @@ namespace CoreArray
 		virtual void LoadFile(const char *fn, bool ReadOnly = true);
 		virtual void SaveAsFile(const UTF16String &fn);
 		virtual void SaveAsFile(const char *fn);
-		virtual void DuplicateFile(const UTF16String &fn);
-		virtual void DuplicateFile(const char *fn);
+		virtual void DuplicateFile(const UTF16String &fn, bool deep);
+		virtual void DuplicateFile(const char *fn, bool deep);
 
 		void SyncFile();
 		void CloseFile();
 
 		/// Clean up all fragments
-		void TidyUp();
+		void TidyUp(bool deep);
 
 		bool Modified();
 
 		/// Return file size of the CdGDSFile object
 		TdPtr64 GetFileSize();
+
+		int GetNumOfFragment();
 
 		/// Return the file name of the CdGDSFile object
 		COREARRAY_INLINE UTF16String &FileName() { return fFileName; }

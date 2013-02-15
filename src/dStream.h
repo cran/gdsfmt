@@ -141,6 +141,10 @@ namespace CoreArray
 		COREARRAY_INLINE UInt32 r32(const TdPtr64 I) { return _r32(*this, I); }
 		COREARRAY_INLINE UInt64 r64(const TdPtr64 I) { return _r64(*this, I); }
 
+		COREARRAY_INLINE void rChar(const TdPtr64 I, UTF8 &out) { out = _r8(*this, I); }
+		COREARRAY_INLINE void rChar(const TdPtr64 I, UTF16 &out) { out = _r16(*this, I); }
+		COREARRAY_INLINE void rChar(const TdPtr64 I, UTF32 &out) { out = _r32(*this, I); }
+
 		COREARRAY_INLINE void Write(const TdPtr64 I, void const* Buf, ssize_t Len)
 			{ _Write(*this, I, Buf, Len); }
 		COREARRAY_INLINE void w8(const TdPtr64 I, UInt8 val) { _w8(*this, I, val); }
@@ -177,6 +181,18 @@ namespace CoreArray
 		TdPtr64 Start, TdPtr64 Len);
 	void SaveAllocator(TdAllocator &Allocator, CBufdStream* Dest,
 		TdPtr64 Start, TdPtr64 Len);
+
+
+
+
+
+
+
+
+
+
+	// ******************************************************************** //
+	// ******************************************************************** //
 
 
 	/// Define the size of buffer, when saving, loading, or copying
@@ -420,6 +436,11 @@ namespace CoreArray
 
 	class CdBlockCollection;
 
+
+	extern const Int64 GDS_STREAM_POS_MASK;           //< 0x7FFF,FFFFFFFF
+	extern const Int64 GDS_STREAM_POS_MASK_HEAD_BIT;  //< 0x8000,00000000
+
+
 	///
 	class CdBlockStream: public CdStream
 	{
@@ -492,6 +513,8 @@ namespace CoreArray
     	void DeleteBlockStream(TdBlockID id);
 		CdBlockStream *operator[] (const TdBlockID &id); // always return an object
 		bool HaveID(TdBlockID id);
+
+		int NumOfFragment();
 
 		COREARRAY_INLINE CdStream &Stream() const { return *fStream; };
 		COREARRAY_INLINE CdObjClassMgr *ClassMgr() const { return fClassMgr; };

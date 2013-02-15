@@ -1070,7 +1070,7 @@ void CdGDSFolder::_LoadItem(TItem &I)
 			CdGDSNull *vObj = static_cast<CdGDSNull*>(I.Obj);
 
 			Reader->rBeginNameSpace();
-			Internal::CdObject_LoadStruct(*vObj, *Reader, 0x100);
+			_Internal_::CdObject_LoadStruct(*vObj, *Reader, 0x100);
 			Reader->rEndStruct();
 
 			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
@@ -1516,7 +1516,7 @@ void CdGDSFile::LoadStream(CdStream* Stream, bool ReadOnly)
 
 		TdAutoRef<CdSerial> Reader(new CdSerial(fRoot.fGDSStream));
 		Reader->rBeginNameSpace();
-		Internal::CdObject_LoadStruct(fRoot, *Reader, fVersion);
+		_Internal_::CdObject_LoadStruct(fRoot, *Reader, fVersion);
 		Reader->rEndStruct();
 	} else
 		throw ErrGDSFile(erEntryError, Entry.get());
@@ -1589,15 +1589,42 @@ void CdGDSFile::SaveAsFile(const char *fn)
 	SaveStream(F.get());
 }
 
-void CdGDSFile::DuplicateFile(const UTF16String &fn)
+void CdGDSFile::DuplicateFile(const UTF16String &fn, bool deep)
 {
-	CdGDSFile file(fn, CdGDSFile::dmCreate);
-	file.Root().AssignOneEx(Root());
+	if (deep)
+	{
+		CdGDSFile file(fn, CdGDSFile::dmCreate);
+		file.Root().AssignOneEx(Root());
+	} else {
+		// create a new file
+		TdAutoRef<CdStream> F(new CdFileStream(UTF16toUTF8(fn).c_str(),
+			CdFileStream::fmCreate));
+
+		// Save Prefix
+		F->WriteBuffer((void*)fPrefix, strlen(fPrefix));
+		// Save Version
+		F->wUInt8(fVersion & 0xFF);
+		F->wUInt8(fVersion >> 8);
+		// Save Entry ID
+		(*F) << fRoot.fGDSStream->ID();
+
+		// for-loop for all stream blocks
+		for (int i=0; i < (int)fBlockList.size(); i++)
+		{
+			TdPosType bSize = fBlockList[i]->Size();
+			TdPosType sSize = (2*TdPosType::size +
+				CdBlockStream::TBlockInfo::HeadSize + bSize) |
+				GDS_STREAM_POS_MASK_HEAD_BIT;
+			TdPosType sNext = 0;
+			(*F) << sSize << sNext << fBlockList[i]->ID() << bSize;
+			F->CopyFrom(*fBlockList[i]);
+		}
+	}
 }
 
-void CdGDSFile::DuplicateFile(const char *fn)
+void CdGDSFile::DuplicateFile(const char *fn, bool deep)
 {
-	DuplicateFile(PChartoUTF16(fn));
+	DuplicateFile(PChartoUTF16(fn), deep);
 }
 
 void CdGDSFile::CloseFile()
@@ -1614,13 +1641,12 @@ void CdGDSFile::CloseFile()
     }
 }
 
-void CdGDSFile::TidyUp()
+void CdGDSFile::TidyUp(bool deep)
 {
-	if (fReadOnly)
-    	throw ErrGDSFile("It is read-only.");
 	UTF16String fn, f;
-	fn = fFileName; f = fn + UTF8toUTF16(".tmp");
-	DuplicateFile(f);
+	fn = fFileName;
+	f = fn + UTF8toUTF16(".tmp");
+	DuplicateFile(f, deep);
 	CloseFile();
 	remove(UTF16toUTF8(fn).c_str());
 	rename(UTF16toUTF8(f).c_str(), UTF16toUTF8(fn).c_str());
@@ -1655,4 +1681,9 @@ bool CdGDSFile::Modified()
 TdPtr64 CdGDSFile::GetFileSize()
 {
     return fStreamSize;
+}
+
+int CdGDSFile::GetNumOfFragment()
+{
+	return CdBlockCollection::NumOfFragment();
 }

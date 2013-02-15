@@ -33,7 +33,7 @@ namespace CoreArray
 {
 	namespace Parallel
 	{
-		namespace Internal
+		namespace _Internal_
 		{
 			struct _pThreadStruct
 			{
@@ -209,13 +209,13 @@ void CParallelBase::DoThreads(CParallelBase::TProc Proc, void *param)
 		fThreads.resize(fnThread-1);
 		for (int i=0; i < fnThread-1; i++)
 		{
-			Internal::_pThreadStruct pd;
+			_Internal_::_pThreadStruct pd;
 			pd.proc = Proc;
 			pd.ThreadIndex = i+1;
 			pd.cpBase = this;
 			pd.Param = param;
 			fThreads[i] = new CdThread;
-			fThreads[i]->BeginThread(Internal::_pDoThread, pd);
+			fThreads[i]->BeginThread(_Internal_::_pDoThread, pd);
 		}
 	}
 

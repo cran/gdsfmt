@@ -6,10 +6,12 @@
 }
 
 \usage{
-cleanup.gds(fn, verbose=TRUE)
+cleanup.gds(fn, deep=FALSE, verbose=TRUE)
 }
 \arguments{
 	\item{fn}{the file name of a GDS file to be opened}
+	\item{deep}{if TRUE, performs a deep-construction strategy;
+		otherwise, performs fast construction}
 	\item{verbose}{if TRUE, show information}
 }
 \value{
@@ -42,7 +44,7 @@ f
 closefn.gds(f)
 
 # clean up fragments
-# cleanup.gds("test.gds")
+cleanup.gds("test.gds")
 
 # cteate the GDS file "test.gds"
 (f <- openfn.gds("test.gds"))

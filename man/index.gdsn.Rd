@@ -6,13 +6,15 @@
 }
 
 \usage{
-index.gdsn(node, index, silent=FALSE)
+index.gdsn(node, path=NULL, index=NULL, silent=FALSE)
 }
 \arguments{
 	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
-	\item{index}{a vector of integers or characters, specifying the path}
+	\item{path}{the path specifying a GDS node with '/' as a separator}
+	\item{index}{a vector of integers or characters, specifying the path; it has
+		effects when \code{path} is missing}
 	\item{silent}{if TRUE, return NULL if the specified path does not exist}
 }
 \details{
@@ -41,10 +43,11 @@ f <- createfn.gds(fn="test.gds")
 node <- add.gdsn(f, name="list", val=list(x=c(1,2), y=c("T", "B", "C"), z=TRUE))
 f
 
-index.gdsn(f, c("list", "x"))
-index.gdsn(f, c(1, 1))
+index.gdsn(f, "list/x")
+index.gdsn(f, index=c("list", "x"))
+index.gdsn(f, index=c(1, 1))
 
-index.gdsn(f, c("list", "z"))
+index.gdsn(f, index=c("list", "z"))
 
 closefn.gds(f)
 }

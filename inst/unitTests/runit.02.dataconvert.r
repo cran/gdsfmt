@@ -37,16 +37,15 @@ gds_read_write <- function(class.name, data.kind, zip="")
 #
 
 type.list <- c("int8", "int16", "int24", "int32", "int64",
-	"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8", "sbit9", "sbit10",
-	"sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16", "sbit17", "sbit18",
-	"sbit19", "sbit20", "sbit21", "sbit22", "sbit23", "sbit24", "sbit25", "sbit26",
-	"sbit27", "sbit28", "sbit29", "sbit30", "sbit31", "sbit32",
+
+	"sbit2", "sbit3", "sbit4", "sbit5", "sbit6", "sbit7", "sbit8", "sbit9",
+	"sbit10", "sbit11", "sbit12", "sbit13", "sbit14", "sbit15", "sbit16",
+	"sbit24", "sbit32", "sbit64",
 
 	"uint8", "uint16", "uint24", "uint32", "uint64",
-	"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8", "bit9", "bit10",
-	"bit11", "bit12", "bit13", "bit14", "bit15", "bit16", "bit17", "bit18", "bit19",
-	"bit20", "bit21", "bit22", "bit23", "bit24", "bit25", "bit26", "bit27", "bit28",
-	"bit29", "bit30", "bit31", "bit32",
+	"bit1", "bit2", "bit3", "bit4", "bit5", "bit6", "bit7", "bit8", "bit9",
+	"bit10", "bit11", "bit12", "bit13", "bit14", "bit15", "bit16", "bit24",
+	"bit32", "bit64",
 
 	"float32", "float64")
 

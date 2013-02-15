@@ -7,13 +7,13 @@ matrix or array, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-apply.gdsn(nodes, margins, FUN, selection=NULL,
+apply.gdsn(node, margin, FUN, selection=NULL,
 	as.is = c("list", "integer", "double", "character", "none"), ...)
 }
 \arguments{
-	\item{nodes}{an object of class \code{\link[gdsfmt]{gdsn.class}}, or a list of objects
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, or a list of objects
 		of class \code{\link[gdsfmt]{gdsn.class}}}
-	\item{margins}{an integer giving the subscripts which the function will be applied
+	\item{margin}{an integer giving the subscripts which the function will be applied
 		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
 	\item{FUN}{the function to be applied}
 	\item{selection}{a list or NULL; if a list, it is a list of logical vectors according
@@ -78,10 +78,10 @@ node.Y <- add.gdsn(f, "Y", Y)
 node.Z1 <- add.gdsn(f, "Z1", Z1)
 node.Z2 <- add.gdsn(f, "Z2", Z2)
 
-v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), c(1, 1, 1),
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), margin=c(1, 1, 1),
 	FUN=function(x) { print(x) }, as.is="none")
 
-v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), c(2, 2, 1),
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), margin=c(2, 2, 1),
 	FUN=function(x) print(x))
 
 
@@ -90,11 +90,11 @@ v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), c(2, 2, 1),
 s1 <- rep(c(FALSE, TRUE), 5)
 s2 <- c(TRUE, FALSE, TRUE, FALSE, TRUE)
 
-v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), c(1, 1, 1),
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z1), margin=c(1, 1, 1),
 	selection = list(list(s1, s2), list(s1, s2), list(s1)),
 	FUN=function(x) print(x))
 
-v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), c(2, 2, 1),
+v <- apply.gdsn(list(X=node.X, Y=node.Y, Z=node.Z2), margin=c(2, 2, 1),
 	selection = list(list(s1, s2), list(s1, s2), list(s2)),
 	FUN=function(x) print(x))
 

@@ -11,8 +11,8 @@ from 2007.
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.11\cr
-	Date: \tab 2013-01-24\cr
+	Version: \tab 0.9.12\cr
+	Date: \tab 2013-02-18\cr
 	License: \tab LGPL version 3\cr
 }
 	R interface of CoreArray GDS is based on the CoreArray project initiated and developed
@@ -46,6 +46,7 @@ add.gdsn(f, "int", val=as.integer(1:10000), compress="ZIP", closezip=TRUE)
 add.gdsn(f, "int.matrix", val=matrix(L, nrow=100, ncol=50))
 add.gdsn(f, "mat", val=matrix(1:(10*6), nrow=10))
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))
+add.gdsn(f, "character", val=c("int", "double", "logical", "factor"))
 add.gdsn(f, "logical", val=rep(c(TRUE, FALSE, NA), 50))
 add.gdsn(f, "factor", val=as.factor(c(letters, NA, "AA", "CC")))
 add.gdsn(f, "NA", val=rep(NA, 10))
@@ -63,6 +64,7 @@ addfile.gdsn(f, "tmp.RData", filename="tmp.RData")
 f
 
 read.gdsn(index.gdsn(f, "list"))
+read.gdsn(index.gdsn(f, "list/Y"))
 read.gdsn(index.gdsn(f, "data.frame"))
 read.gdsn(index.gdsn(f, "mat"))
 

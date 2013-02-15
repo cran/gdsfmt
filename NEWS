@@ -1,12 +1,28 @@
-0.9.11	23-Jan-2013	Xiuwen Zheng <zhengx@u.washington.edu>
+0.9.12	18-Feb-2013	Xiuwen Zheng <zhengx@u.washington.edu>
 
-	* bug fix -- add a folder using 'add.gdsn'
+	* support variable-length string ****
+	* add an argument 'path' to the function 'index.gdsn', which uses '/' as a separator ****
+	* support a faster defragmentation algorithm in 'cleanup.gds'
+	* 'character' in the function 'add.gdsn' refers to variable-length string by default
+	* fixed-length strings are "fstring", "fstring16" and "fstring32" in the function 'add.gdsn'
+	* variable-length string are 'string', 'string16' and 'string32' in the function 'add.gdsn'
+	* support the 'R.invisible' attribute to hide a GDS node, until adding 'all=TRUE' to 'print.gds.class' or 'print.gdsn.class'
+	* improve the display of hierarchical structure
+	* the argument "storage" in the function 'add.gdsn' is not case-sensitive now
+	* bug fix in 'readex.gdsn'
+
+
+0.9.11	25-Jan-2013	Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* bug fix: add a folder using 'add.gdsn'
 	* it is more efficient to store a factor variable
-	* 'put.attr.gds' allows a vector with more than one elements
+	* 'put.attr.gdsn' allows a vector with more than one elements
 	* 'apply.gdsn' is recoded in C
 	* improve 'clusterApply.gdsn'
 	* the function 'applylt.gdsn' is merged into 'apply.gdsn' now
 	* the function 'clusterApplylt.gdsn' is merged into 'clusterApply.gdsn' now
+	* the class name 'gdsclass' is replaced by 'gds.class'
+	* the class name 'gdsn' is replaced by 'gdsn.class'
 
 
 0.9.10	25-Aug-2012	Xiuwen Zheng <zhengx@u.washington.edu>

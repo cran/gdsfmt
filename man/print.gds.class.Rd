@@ -5,10 +5,11 @@
 	Displays an object of class "gds.class", in a CoreArray Genomic Data Structure (GDS) file.
 }
 \usage{
-\method{print}{gds.class}(x, ...)
+\method{print}{gds.class}(x, all=FALSE, ...)
 }
 \arguments{
 	\item{x}{an object of class \code{\link[gdsfmt]{gds.class}}, a CoreArray GDS file}
+	\item{all}{if FALSE, hide GDS nodes with an attribute "R.invisible"}
 	\item{...}{the arguments passed to or from other methods}
 }
 

@@ -32,7 +32,6 @@
  *	\date     2007 - 2013
  *	\brief    Functions for independent platforms
  *	\details
- *	\todo     Big endianness is not supported currently
  *  \todo     Need to improve: UTF8toUTF32
 **/
 
@@ -493,7 +492,7 @@ namespace CoreArray
 
 	typedef int (*TdThreadProc)(CdThread *Thread, void *Data);
 
-	namespace Internal
+	namespace _Internal_
 	{
 		class CdThBasic {
         public:
@@ -521,8 +520,8 @@ namespace CoreArray
 
 		template<typename Tx>
 		int _pTdThreadEx(CdThread *Thread, void *Data) {
-			CdThBasicEx< Internal::TdThreadDataEx<Tx> > *p =
-				(CdThBasicEx< Internal::TdThreadDataEx<Tx> >*)Data;
+			CdThBasicEx< _Internal_::TdThreadDataEx<Tx> > *p =
+				(CdThBasicEx< _Internal_::TdThreadDataEx<Tx> >*)Data;
 			return (*p->Data.proc)(Thread, p->Data.Data);
 		}
 	}
@@ -552,10 +551,10 @@ namespace CoreArray
 		template<typename Tx>
 			void BeginThread(int (*proc)(CdThread *, Tx), Tx val)
 		{
-        	Internal::CdThBasicEx< Internal::TdThreadDataEx<Tx> > *p =
-				new Internal::CdThBasicEx< Internal::TdThreadDataEx<Tx> >;
+        	_Internal_::CdThBasicEx< _Internal_::TdThreadDataEx<Tx> > *p =
+				new _Internal_::CdThBasicEx< _Internal_::TdThreadDataEx<Tx> >;
 			p->Data.proc = proc; p->Data.Data = val;
-			vData.thread = this; vData.proc = Internal::_pTdThreadEx<Tx>;
+			vData.thread = this; vData.proc = _Internal_::_pTdThreadEx<Tx>;
 			vPrivate = p; vData.Data = (void*)p;
 			_BeginThread();
 		}
@@ -575,11 +574,11 @@ namespace CoreArray
 		int fExitCode;
 		std::string fErrorInfo;
 		bool terminated;
-		Internal::TdThreadData vData;
+		_Internal_::TdThreadData vData;
 		void _BeginThread(); // need vData
 
 	private:
-		Internal::CdThBasic *vPrivate;
+		_Internal_::CdThBasic *vPrivate;
 		void Done();
 	};
 
@@ -687,7 +686,7 @@ namespace CoreArray
 
 
 
-	namespace Internal
+	namespace _Internal_
 	{
 		// Type Convert
 
@@ -946,7 +945,7 @@ namespace CoreArray
 	**/
 	template<typename DestT, typename SourceT>
 	COREARRAY_FORCE_INLINE DestT ValCvt(const SourceT &val)
-		{ return Internal::TValCvt<DestT, SourceT>::Cvt(val); }
+		{ return _Internal_::TValCvt<DestT, SourceT>::Cvt(val); }
 
 	/// Conversion from SourceT to DestT
 	/** \tparam  DestT    type of destination
@@ -954,7 +953,7 @@ namespace CoreArray
 	**/
 	template<typename DestT, typename SourceT>
 	COREARRAY_FORCE_INLINE void ValCvtArray(DestT *p, SourceT *s, ssize_t L)
-		{ Internal::TValCvt<DestT, SourceT>::Array(p, s, L); }
+		{ _Internal_::TValCvt<DestT, SourceT>::Array(p, s, L); }
 
 
 	// Endian
@@ -980,7 +979,7 @@ namespace CoreArray
 		#endif
 
 
-		namespace Internal
+		namespace _Internal_
 		{
 			// Endianness Conversion
 			template<typename TYPE> struct TEndianValCvt
@@ -1055,11 +1054,11 @@ namespace CoreArray
 
 		template<typename TYPE>
 		COREARRAY_FORCE_INLINE TYPE COREARRAY_ENDIAN_VAL(const TYPE &val)
-			{ return Internal::TEndianValCvt<TYPE>::Cvt(val); }
+			{ return _Internal_::TEndianValCvt<TYPE>::Cvt(val); }
 
 		template<typename TYPE>
 		COREARRAY_FORCE_INLINE void COREARRAY_ENDIAN_ARRAY(TYPE *p, ssize_t L)
-			{ return Internal::TEndianValCvt<TYPE>::Array(p, L); }
+			{ return _Internal_::TEndianValCvt<TYPE>::Array(p, L); }
 
 	#else
 	#  error "Unknown endianness"

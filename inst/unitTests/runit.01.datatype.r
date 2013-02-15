@@ -39,14 +39,14 @@ test.datatype <- function()
 	checkEquals(class.nbit("uint64"), 64, "numeric type: uint64")
 
 	# sbit??
-	for (n in 2:32)
+	for (n in 2:16)
 	{
 		cn <- sprintf("sbit%d", n)
 		checkEquals(class.nbit(cn), n, sprintf("numeric type: %s", cn))
 	}
 
 	# bit??
-	for (n in 1:32)
+	for (n in 1:16)
 	{
 		cn <- sprintf("bit%d", n)
 		checkEquals(class.nbit(cn), n, sprintf("numeric type: %s", cn))
@@ -63,6 +63,10 @@ test.datatype <- function()
 	checkEquals(class.nbit("string"), 8, "numeric type: string")
 	checkEquals(class.nbit("string16"), 16, "numeric type: string16")
 	checkEquals(class.nbit("string32"), 32, "numeric type: string32")
+
+	checkEquals(class.nbit("fstring"), 8, "numeric type: string")
+	checkEquals(class.nbit("fstring16"), 16, "numeric type: string16")
+	checkEquals(class.nbit("fstring32"), 32, "numeric type: string32")
 
 	# others
 	checkEquals(class.nbit("logical"), 32, "numeric type: logical")

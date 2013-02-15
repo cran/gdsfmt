@@ -7,16 +7,15 @@ matrix in parallel, in a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-clusterApply.gdsn(cl, gds.fn, node.names, margins, FUN, selection=NULL,
+clusterApply.gdsn(cl, gds.fn, node.name, margin, FUN, selection=NULL,
 	as.is = c("list", "integer", "double", "character", "none"), ...)
 }
 \arguments{
 	\item{cl}{a cluster object, created by this package or by the package
 		\link[parallel]{parallel} or \href{http://CRAN.R-project.org/package=snow}{snow}}
 	\item{gds.fn}{the file name of a GDS file}
-	\item{node.names}{a character vector or a list of character vector indicating the
-		GDS nodes}
-	\item{margins}{an integer giving the subscripts which the function will be applied
+	\item{node.name}{a character vector indicating GDS node path}
+	\item{margin}{an integer giving the subscripts which the function will be applied
 		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
 	\item{FUN}{the function to be applied}
 	\item{selection}{a list or NULL; if a list, it is a list of logical vectors according
@@ -94,12 +93,13 @@ clusterApply.gdsn(cl, "test1.gds", "matrix", margin=2,
 
 
 
-# Apply functions over rows or columns of matrix
+# Apply functions over rows or columns of multiple data sets
 
-clusterApply.gdsn(cl, "test2.gds", list(X="X", Y="Y", Z="Z1"), c(1, 1, 1),
+clusterApply.gdsn(cl, "test2.gds", c("X", "Y", "Z1"), margin=c(1, 1, 1),
 	FUN=function(x) x)
 
-clusterApply.gdsn(cl, "test2.gds", list(X="X", Y="Y", Z="Z2"), c(2, 2, 1),
+# with variable names
+clusterApply.gdsn(cl, "test2.gds", c(X="X", Y="Y", Z="Z2"), margin=c(2, 2, 1),
 	FUN=function(x) x)
 }
 

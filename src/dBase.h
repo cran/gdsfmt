@@ -142,7 +142,7 @@ namespace CoreArray
 	class CdSerial;
 	class CdObjClassMgr;
 
-	namespace Internal
+	namespace _Internal_
 	{
 		/// Access CdObject::LoadStruct
 		void CdObject_LoadStruct(CdObject &Obj, CdSerial &Reader, TdVersion Version);
@@ -163,10 +163,10 @@ namespace CoreArray
 	{
 	public:
 		/// Access CdObject::LoadStruct
-		friend void Internal::CdObject_LoadStruct(CdObject &Obj,
+		friend void _Internal_::CdObject_LoadStruct(CdObject &Obj,
 			CdSerial &Reader, TdVersion Version);
 		/// Access CdObject::SaveStruct
-		friend void Internal::CdObject_SaveStruct(CdObject &Obj,
+		friend void _Internal_::CdObject_SaveStruct(CdObject &Obj,
 			CdSerial &Writer, bool IncludeName);
 
 		/// Constructor, do nothing
@@ -235,7 +235,7 @@ namespace CoreArray
 
 	class CdRef;
 
-	namespace Internal
+	namespace _Internal_
 	{
 		/// Increase the reference of Obj immediately, without any checking
 		void DirectAddRef(CdRef &Obj);
@@ -249,9 +249,9 @@ namespace CoreArray
 	{
 	public:
 		/// Increase the reference of Obj immediately, without any checking
-		friend void Internal::DirectAddRef(CdRef &Obj);
+		friend void _Internal_::DirectAddRef(CdRef &Obj);
 		/// Decrease the reference of Obj immediately, without any checking
-		friend void Internal::DirectDecRef(CdRef &Obj);
+		friend void _Internal_::DirectDecRef(CdRef &Obj);
 
 		/// Constructor, setting Reference = 0
 		CdRef();
@@ -1708,7 +1708,7 @@ namespace CoreArray
 			struct {
 				UInt8 Reserved[7];
 				union {  // 8-byte aligned
-					int ptr;
+					void *Align;
 					UTF8String *ptrStr8;
 					UTF16String *ptrStr16;
 					UTF32String *ptrStr32;
@@ -1740,12 +1740,12 @@ namespace CoreArray
 
 		template<typename TYPE> TYPE & VAL()
 			{
-				void *tmp = &_R.ptr;
+				void *tmp = &_R.Align;
 				return *static_cast<TYPE*>(tmp);
 			}
 		template<typename TYPE> const TYPE & VAL() const
 			{
-				const void *tmp = &_R.ptr;
+				const void *tmp = &_R.Align;
 				return *static_cast<const TYPE*>(tmp);
 			}
 

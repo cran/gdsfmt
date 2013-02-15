@@ -84,7 +84,7 @@ namespace CoreArray
 
 using namespace std;
 using namespace CoreArray;
-using namespace CoreArray::Internal;
+using namespace CoreArray::_Internal_;
 
 
 template<typename TClass> static CdObjRef * OnObjCreate()
@@ -98,10 +98,10 @@ void CoreArray::RegisterClass()
 
 	#define REG_CLASS(T, CLASS, CType, Desp)	\
 		dObjManager().AddClass(TdTraits< T >::StreamName(), \
-		OnObjCreate< CLASS >, CdObjClassMgr::CType, Desp)
+			OnObjCreate< CLASS >, CdObjClassMgr::CType, Desp)
 	#define REG_CLASS_EX(Name, CLASS, CType, Desp)	\
 		dObjManager().AddClass(Name, OnObjCreate< CLASS >, \
-		CdObjClassMgr::CType, Desp)
+			CdObjClassMgr::CType, Desp)
 
 	// signed integer
 
@@ -128,27 +128,9 @@ void CoreArray::RegisterClass()
 	REG_CLASS(Int16, CdInt16, ctArray, "signed integer of 16 bits");
 	REG_CLASS_EX("dSBit16", CdSBit16, ctArray, "signed integer of 16 bits");
 
-#ifndef COREARRAY_LIMIT
-	REG_CLASS(BITS<-17>, CdSBit17, ctArray, "signed integer of 17 bits");
-	REG_CLASS(BITS<-18>, CdSBit18, ctArray, "signed integer of 18 bits");
-	REG_CLASS(BITS<-19>, CdSBit19, ctArray, "signed integer of 19 bits");
-	REG_CLASS(BITS<-20>, CdSBit20, ctArray, "signed integer of 20 bits");
-	REG_CLASS(BITS<-21>, CdSBit21, ctArray, "signed integer of 21 bits");
-	REG_CLASS(BITS<-22>, CdSBit22, ctArray, "signed integer of 22 bits");
-	REG_CLASS(BITS<-23>, CdSBit23, ctArray, "signed integer of 23 bits");
-#endif
 	REG_CLASS(BITS<-24>, CdSBit24, ctArray, "signed integer of 24 bits");
 	REG_CLASS_EX("dInt24", CdSBit24, ctArray, "signed integer of 24 bits");
 
-#ifndef COREARRAY_LIMIT
-	REG_CLASS(BITS<-25>, CdSBit25, ctArray, "signed integer of 25 bits");
-	REG_CLASS(BITS<-26>, CdSBit26, ctArray, "signed integer of 26 bits");
-	REG_CLASS(BITS<-27>, CdSBit27, ctArray, "signed integer of 27 bits");
-	REG_CLASS(BITS<-28>, CdSBit28, ctArray, "signed integer of 28 bits");
-	REG_CLASS(BITS<-29>, CdSBit29, ctArray, "signed integer of 29 bits");
-	REG_CLASS(BITS<-30>, CdSBit30, ctArray, "signed integer of 30 bits");
-	REG_CLASS(BITS<-31>, CdSBit31, ctArray, "signed integer of 31 bits");
-#endif
 	REG_CLASS(Int32, CdInt32, ctArray, "signed integer of 32 bits");
 	REG_CLASS_EX("dSBit32", CdSBit32, ctArray, "signed integer of 32 bits");
 
@@ -178,27 +160,9 @@ void CoreArray::RegisterClass()
 	REG_CLASS(UInt16, CdUInt16, ctArray, "unsigned integer of 16 bits");
 	REG_CLASS_EX("dBit16", CdBit16, ctArray, "unsigned integer of 16 bits");
 
-#ifndef COREARRAY_LIMIT
-	REG_CLASS(BITS<17>, CdBit17, ctArray, "unsigned integer of 17 bits");
-	REG_CLASS(BITS<18>, CdBit18, ctArray, "unsigned integer of 18 bits");
-	REG_CLASS(BITS<19>, CdBit19, ctArray, "unsigned integer of 19 bits");
-	REG_CLASS(BITS<20>, CdBit20, ctArray, "unsigned integer of 20 bits");
-	REG_CLASS(BITS<21>, CdBit21, ctArray, "unsigned integer of 21 bits");
-	REG_CLASS(BITS<22>, CdBit22, ctArray, "unsigned integer of 22 bits");
-	REG_CLASS(BITS<23>, CdBit23, ctArray, "unsigned integer of 23 bits");
-#endif
 	REG_CLASS(BITS<24>, CdBit24, ctArray, "unsigned integer of 24 bits");
 	REG_CLASS_EX("dUInt24", CdBit24, ctArray, "unsigned integer of 24 bits");
 
-#ifndef COREARRAY_LIMIT
-	REG_CLASS(BITS<25>, CdBit25, ctArray, "unsigned integer of 25 bits");
-	REG_CLASS(BITS<26>, CdBit26, ctArray, "unsigned integer of 26 bits");
-	REG_CLASS(BITS<27>, CdBit27, ctArray, "unsigned integer of 27 bits");
-	REG_CLASS(BITS<28>, CdBit28, ctArray, "unsigned integer of 28 bits");
-	REG_CLASS(BITS<29>, CdBit29, ctArray, "unsigned integer of 29 bits");
-	REG_CLASS(BITS<30>, CdBit30, ctArray, "unsigned integer of 30 bits");
-	REG_CLASS(BITS<31>, CdBit31, ctArray, "unsigned integer of 31 bits");
-#endif
 	REG_CLASS(UInt32, CdUInt32, ctArray, "unsigned integer of 32 bits");
 	REG_CLASS_EX("dBit32", CdBit32, ctArray, "unsigned integer of 32 bits");
 	REG_CLASS(UInt64, CdUInt64, ctArray, "unsigned integer of 64 bits");
@@ -206,14 +170,19 @@ void CoreArray::RegisterClass()
 	// float
 	REG_CLASS(Float32, CdFloat32, ctArray, "float  32");
 	REG_CLASS(Float64, CdFloat64, ctArray, "float  64");
-	#ifndef COREARRAY_NO_EXTENDED_TYPES
+#ifndef COREARRAY_NO_EXTENDED_TYPES
 	REG_CLASS(Float128, CdFloat128, ctArray, "float 128");
-	#endif
+#endif
 
 	// string
-	REG_CLASS(UTF8*, CdFStr8, ctArray, "UTF-08 string");
-	REG_CLASS(UTF16*, CdFStr16, ctArray, "UTF-16 string");
-	REG_CLASS(UTF32*, CdFStr32, ctArray, "UTF-32 string");
+	REG_CLASS(FIXED_LENGTH<UTF8*>,  CdFStr8, ctArray,  "Fixed-length UTF-8 string");
+	REG_CLASS(FIXED_LENGTH<UTF16*>, CdFStr16, ctArray, "Fixed-length UTF-16 string");
+	REG_CLASS(FIXED_LENGTH<UTF32*>, CdFStr32, ctArray, "Fixed-length UTF-32 string");
+
+	// string
+	REG_CLASS(VARIABLE_LENGTH<UTF8*>,  CdVStr8, ctArray,  "Variable-length UTF-8 string");
+	REG_CLASS(VARIABLE_LENGTH<UTF16*>, CdVStr16, ctArray, "Variable-length UTF-16 string");
+	REG_CLASS(VARIABLE_LENGTH<UTF32*>, CdVStr32, ctArray, "Variable-length UTF-32 string");
 
 	// stream container
 	dObjManager().AddClass("dStream", OnObjCreate<CdGDSStreamContainer>,

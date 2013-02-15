@@ -32,7 +32,7 @@
 
 namespace CoreArray
 {
-	namespace Internal
+	namespace _Internal_
 	{
 		template<typename T> struct _Seq
 		{
@@ -80,7 +80,7 @@ namespace CoreArray
 
 using namespace std;
 using namespace CoreArray;
-using namespace CoreArray::Internal;
+using namespace CoreArray::_Internal_;
 
 
 static const char *rsErrReadCell = "No more string can be read.";
@@ -556,7 +556,7 @@ CdGDSObj *CdContainer::NewOne(void *Param)
 	throw ErrSequence("Invalid New operation.");
 }
 
-void CdContainer::AssignOne(CdGDSObj &Source, void *Param)
+void CdContainer::AssignOne(CdGDSObj &Source, bool Append, void *Param)
 {
 	_RaiseInvalidAssign(string(dName()) + " := " + Source.dName());
 }
@@ -751,13 +751,14 @@ CdSequenceX::CdSequenceX() { }
 
 CdSequenceX::~CdSequenceX() { }
 
-void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
+void CdSequenceX::AssignOne(CdGDSObj &Source, bool Append, void *Param)
 {
 	if (dynamic_cast<CdSequenceX*>(&Source))
 	{
 		CdSequenceX &Seq = *static_cast<CdSequenceX*>(&Source);
 		Seq.CloseWriter();
-		Seq.xAssignToDim(*this);
+		if (!Append)
+			Seq.xAssignToDim(*this);
 
 		Int64 Cnt = Seq.Count();
 		size_t BufSize = min(Int64(65536), Cnt);
@@ -772,7 +773,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				size_t L = (Cnt > 65536) ? 65536 : Cnt;
 				L = it.rData(buf.get(), L, svInt64);
 				if (L == 0) break;
-				Append(buf.get(), L, svInt64);
+				this->Append(buf.get(), L, svInt64);
 				Cnt -= L;
 			}
 		} else if (COREARRAY_SV_UINT(sv))
@@ -783,7 +784,7 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				size_t L = (Cnt > 65536) ? 65536 : Cnt;
 				L = it.rData(buf.get(), L, svUInt64);
 				if (L == 0) break;
-				Append(buf.get(), L, svUInt64);
+				this->Append(buf.get(), L, svUInt64);
 				Cnt -= L;
 			}
 		} else if (COREARRAY_SV_FLOAT(sv))
@@ -794,25 +795,26 @@ void CdSequenceX::AssignOne(CdGDSObj &Source, void *Param)
 				size_t L = (Cnt > 65536) ? 65536 : Cnt;
 				L = it.rData(buf.get(), L, svFloat64);
 				if (L == 0) break;
-				Append(buf.get(), L, svFloat64);
+				this->Append(buf.get(), L, svFloat64);
 				Cnt -= L;
 			}
 		} else if (COREARRAY_SV_STRING(sv))
 		{
-			auto_ptr<UTF16String> buf(new UTF16String[BufSize]);
+			vector<UTF16String> buf(BufSize);
 			while (Cnt > 0)
 			{
 				size_t L = (Cnt > 65536) ? 65536 : Cnt;
-				L = it.rData(buf.get(), L, svStrUTF16);
+				L = it.rData(&(buf[0]), L, svStrUTF16);
 				if (L == 0) break;
-                Append(buf.get(), L, svStrUTF16);
+				this->Append(&(buf[0]), L, svStrUTF16);
 				Cnt -= L;
 			}
 		}
 
-		CloseWriter();
+		if (!Append)
+			CloseWriter();
 	} else
-		CdContainer::AssignOne(Source, Param);
+		CdContainer::AssignOne(Source, Append, Param);
 }
 
 void CdSequenceX::rData(Int32 const* Start, Int32 const* Length,
@@ -1191,7 +1193,7 @@ void CdSequenceX::SaveDirect(CdSerial &Writer)
 	Notify64(mcSaved, Cnt);
 }
 
-void CdSequenceX::xCheckRect(const Int32 *Start, const Int32 *Length) const
+void CdSequenceX::xCheckRect(const Int32 Start[], const Int32 Length[]) const
 {
 	if ((Start==NULL) || (Length==NULL))
 		throw ErrSequence(errCheckRect);
@@ -1290,6 +1292,33 @@ void CdSequenceX::GetInfoSelection(const CBOOL *const Selection[],
 			Int32 L = GetDLen(i);
 			if (OutValidCnt) OutValidCnt[i] = L;
 			if (OutBlockLen) OutBlockLen[i] = L;
+		}
+	}
+}
+
+void CdSequenceX::GetInfoSelection(const Int32 Start[], const Int32 Length[],
+	const CBOOL *const Selection[],
+	Int32 OutStart[], Int32 OutBlockLen[], Int32 OutValidCnt[])
+{
+	// no need a memory buffer
+	if (Selection)
+	{
+		// with selection
+		for (int i=0; i < DimCnt(); i++)
+		{
+			Int32 S, L, C;
+			fill_selection(Length[i], Selection[i], S, L, C);
+			if (OutStart) OutStart[i] = Start[i]+S;
+			if (OutBlockLen) OutBlockLen[i] = L;
+			if (OutValidCnt) OutValidCnt[i] = C;
+		}
+	} else {
+		// no selection, using all data
+		for (int i=0; i < DimCnt(); i++)
+		{
+			if (OutStart) OutStart[i] = Start[i];
+			if (OutBlockLen) OutBlockLen[i] = Length[i];
+			if (OutValidCnt) OutValidCnt[i] = Length[i];
 		}
 	}
 }
@@ -2696,7 +2725,7 @@ bool CdArrayRead::Eof()
 
 
 
-void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead array[], int n,
+void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead *array[], int n,
 	Int64 buffer_size)
 {
 	if (n <= 0)
@@ -2709,7 +2738,7 @@ void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead array[], int n,
 	vector<double> Mem(n);
 	for (int i=0; i < n; i++)
 	{
-		Mem[i] = (array[i].Margin() > 0) ? (double)array[i].MarginSize() : 0.0;
+		Mem[i] = (array[i]->Margin() > 0) ? (double)array[i]->MarginSize() : 0.0;
 	}
 
 	// compute ratio
@@ -2723,7 +2752,16 @@ void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead array[], int n,
 		if (Mem[i] > 0)
 		{
 			Int64 size = (Int64)(buffer_size * Mem[i]);
-			array[i].AllocBuffer(size);
+			array[i]->AllocBuffer(size);
 		}
 	}
+}
+
+void CoreArray::Balance_ArrayRead_Buffer(CdArrayRead array[], int n,
+	Int64 buffer_size)
+{
+	vector<CdArrayRead*> list(n);
+	for (int i=0; i < n; i++)
+		list[i] = &array[i];
+	Balance_ArrayRead_Buffer(&list[0], n, buffer_size);
 }

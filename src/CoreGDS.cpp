@@ -525,10 +525,10 @@ extern "C"
 		CORECATCH(-1);
 	}
 
-	COREARRAY_DLLEXPORT bool gds_FileTidyUp(CdGDSFile *Handle)
+	COREARRAY_DLLEXPORT bool gds_FileTidyUp(CdGDSFile *Handle, bool deep)
 	{
 		CORETRY
-			Handle->TidyUp();
+			Handle->TidyUp(deep);
 			return true;
 		CORECATCH(false);
 	}
@@ -574,7 +574,7 @@ extern "C"
 	COREARRAY_DLLEXPORT CdGDSObj *gds_NodePath(CdGDSFolder *Node, const char *Path)
 	{
 		CORETRY
-		return Node->Path(Path);
+			return Node->Path(Path);
 		CORECATCH(NULL);
 	}
 
@@ -884,74 +884,121 @@ extern "C"
 
 	// Functions for CdContainer - TdIterator
 
-	COREARRAY_DLLEXPORT CdContainer* gds_IterGetHandle(TdIterator *Iter)
-	{
-		return Iter->Handler;
-	}
-
-	COREARRAY_DLLEXPORT bool gds_IterAdvance(TdIterator *Iter)
+	COREARRAY_DLLEXPORT bool gds_IterGetStart(CdContainer *Node, TdIterator &Out)
 	{
 		CORETRY
-			++Iter;
+			Out = Node->atStart();
 			return true;
 		CORECATCH(false);
 	}
 
-	COREARRAY_DLLEXPORT bool gds_IterPrevious(TdIterator *Iter)
+	COREARRAY_DLLEXPORT bool gds_IterGetEnd(CdContainer *Node, TdIterator &Out)
 	{
 		CORETRY
-			--Iter;
+			Out = Node->atEnd();
 			return true;
 		CORECATCH(false);
 	}
 
-	COREARRAY_DLLEXPORT int gds_IterInt(TdIterator *Iter)
+	COREARRAY_DLLEXPORT CdContainer* gds_IterGetHandle(TdIterator &Iter)
+	{
+		return Iter.Handler;
+	}
+
+	COREARRAY_DLLEXPORT bool gds_IterAdv(TdIterator &Iter)
 	{
 		CORETRY
-			return Iter->toInt();
+			++ Iter;
+			return true;
+		CORECATCH(false);
+	}
+
+	COREARRAY_DLLEXPORT bool gds_IterAdvEx(TdIterator &Iter, const ssize_t offset)
+	{
+		CORETRY
+			Iter += offset;
+			return true;
+		CORECATCH(false);
+	}
+
+	COREARRAY_DLLEXPORT bool gds_IterPrev(TdIterator &Iter)
+	{
+		CORETRY
+			-- Iter;
+			return true;
+		CORECATCH(false);
+	}
+
+	COREARRAY_DLLEXPORT bool gds_IterPrevEx(TdIterator &Iter, const ssize_t offset)
+	{
+		CORETRY
+			Iter -= offset;
+			return true;
+		CORECATCH(false);
+	}
+
+	COREARRAY_DLLEXPORT int gds_IterInt(TdIterator &Iter)
+	{
+		CORETRY
+			return Iter.toInt();
 		CORECATCH(-1);
 	}
 
-	COREARRAY_DLLEXPORT double gds_IterFloat(TdIterator *Iter)
+	COREARRAY_DLLEXPORT double gds_IterFloat(TdIterator &Iter)
 	{
 		CORETRY
-			return Iter->toFloat();
+			return Iter.toFloat();
 		CORECATCH(NaN);
 	}
 
-	COREARRAY_DLLEXPORT int gds_IterStr(TdIterator *Iter, char *OutStr, int OutBufLen)
+	COREARRAY_DLLEXPORT int gds_IterStr(TdIterator &Iter, char *OutStr, int OutBufLen)
 	{
 		CORETRY
-			UTF8String s = UTF16toUTF8(Iter->toStr());
+			UTF8String s = UTF16toUTF8(Iter.toStr());
 			if (OutStr)
 				strncpy(OutStr, s.c_str(), OutBufLen);
 			return s.length();
 		CORECATCH(-1);
 	}
 
-	COREARRAY_DLLEXPORT bool gds_IterIntTo(TdIterator *Iter, int val)
+	COREARRAY_DLLEXPORT bool gds_IterIntTo(TdIterator &Iter, int val)
 	{
 		CORETRY
-			Iter->IntTo(val);
+			Iter.IntTo(val);
 			return true;
 		CORECATCH(false);
 	}
 
-	COREARRAY_DLLEXPORT bool gds_IterFloatTo(TdIterator *Iter, double val)
+	COREARRAY_DLLEXPORT bool gds_IterFloatTo(TdIterator &Iter, double val)
 	{
 		CORETRY
-			Iter->FloatTo(val);
+			Iter.FloatTo(val);
 			return true;
 		CORECATCH(false);
 	}
 
-	COREARRAY_DLLEXPORT bool gds_IterStrTo(TdIterator *Iter, const char *Str)
+	COREARRAY_DLLEXPORT bool gds_IterStrTo(TdIterator &Iter, const char *Str)
 	{
 		CORETRY
-			Iter->StrTo(PChartoUTF16(Str));
+			Iter.StrTo(PChartoUTF16(Str));
 			return true;
 		CORECATCH(false);
 	}
+
+	COREARRAY_DLLEXPORT size_t gds_IterRData(TdIterator &Iter, void *OutBuf, size_t Cnt, TSVType OutSV)
+	{
+		CORETRY
+			return Iter.rData(OutBuf, Cnt, OutSV);
+		CORECATCH((size_t)-1);
+	}
+
+	COREARRAY_DLLEXPORT size_t gds_IterWData(TdIterator &Iter, const void *InBuf, size_t Cnt, TSVType InSV)
+	{
+		CORETRY
+			return Iter.wData(InBuf, Cnt, InSV);
+		CORECATCH((size_t)-1);
+	}
+
 
 
 	// Functions for CdSequenceX
@@ -1088,7 +1135,8 @@ extern "C"
 		CORECATCH(false);
 	}
 	COREARRAY_DLLEXPORT bool gds_rDataEx(CdSequenceX *obj, Int32 const* Start,
-		Int32 const* Length, CBOOL *Selection[], void *OutBuf, TSVType OutSV)
+		Int32 const* Length, const CBOOL *const Selection[], void *OutBuf,
+		TSVType OutSV)
 	{
 		CORETRY
 			obj->rDataEx(Start, Length, Selection, OutBuf, OutSV);
@@ -1107,12 +1155,39 @@ extern "C"
 		CORECATCH(false);
 	}
 
+
 	// CdSequenceX -- append
 
 	COREARRAY_DLLEXPORT bool gds_AppendData(CdSequenceX *obj, int Cnt, const void *InBuf, TSVType InSV)
 	{
+		if (Cnt < 0) return false;
 		CORETRY
 			obj->Append(InBuf, Cnt, InSV);
+			return true;
+		CORECATCH(false);
+	}
+
+	COREARRAY_DLLEXPORT bool gds_AppendString(CdSequenceX *obj, int Cnt, const char *buffer[])
+	{
+		if (Cnt < 0) return false;
+		CORETRY
+			UTF8String *Buf = new UTF8String[Cnt];
+			UTF8String *d = Buf;
+			const char **s = buffer;
+			for (int i=0; i < Cnt; i++) *d++ = *s++;
+			obj->Append(Buf, Cnt, svStrUTF8);
+			delete [] Buf;
+			return true;
+		CORECATCH(false);
+	}
+
+
+	// CdSequenceX -- Assign
+
+	COREARRAY_DLLEXPORT bool gds_Assign(CdSequenceX *dest_obj, CdSequenceX *src_obj, bool append)
+	{
+		CORETRY
+			dest_obj->AssignOne(*src_obj, append);
 			return true;
 		CORECATCH(false);
 	}
@@ -1361,6 +1436,59 @@ extern "C"
 		CORETRY
 			_ParallelBase.SetnThread(nThread);
 			_ParallelBase.DoThreads((CParallelBase::TProc)Proc, param);
+			return true;
+		CORECATCH(false);
+	}
+
+
+	// ******************************************************************
+	// ****	 the functions for block read
+	//
+
+	/// read an array-oriented object margin by margin
+	COREARRAY_DLLEXPORT CdArrayRead* gds_ArrayRead_Init(CdSequenceX *Obj,
+		int Margin, TSVType SVType, const CBOOL *const Selection[],
+		bool buf_if_need=true)
+	{
+		CORETRY
+			CdArrayRead *rv = new CdArrayRead;
+			rv->Init(*Obj, Margin, SVType, Selection, buf_if_need);
+			return rv;
+		CORECATCH(NULL);
+	}
+
+	/// free a 'CdArrayRead' object
+	COREARRAY_DLLEXPORT bool gds_ArrayRead_Free(CdArrayRead *Obj)
+	{
+		CORETRY
+			if (Obj) delete Obj;
+			return true;
+		CORECATCH(false);
+	}
+
+	/// read data
+	COREARRAY_DLLEXPORT bool gds_ArrayRead_Read(CdArrayRead *Obj, void *Buffer)
+	{
+		CORETRY
+			Obj->Read(Buffer);
+			return true;
+		CORECATCH(false);
+	}
+
+	/// return true, if it is of the end
+	COREARRAY_DLLEXPORT bool gds_ArrayRead_Eof(CdArrayRead *Obj)
+	{
+		CORETRY
+			return Obj->Eof();
+		CORECATCH(true);
+	}
+
+	/// reallocate the buffer with specified size with respect to array
+	COREARRAY_DLLEXPORT bool gds_Balance_ArrayRead_Buffer(CdArrayRead *array[],
+		int n, Int64 buffer_size=-1)
+	{
+		CORETRY
+			Balance_ArrayRead_Buffer(array, n, buffer_size);
 			return true;
 		CORECATCH(false);
 	}
