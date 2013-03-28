@@ -578,6 +578,7 @@ extern "C"
 		CORECATCH(NULL);
 	}
 
+	/// remove a GDS node
 	COREARRAY_DLLEXPORT bool gds_NodeDelete(CdGDSObj *Node)
 	{
 		CORETRY

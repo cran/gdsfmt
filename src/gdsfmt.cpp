@@ -515,15 +515,15 @@ DLLEXPORT void gdsTidyUp(char **FileName, LongBool *Deep,
 		if (*verbose)
 		{
 			Rprintf("Clean up the fragments of GDS file:\n");
-			Rprintf("\topen the file '%s' (size: %s).\n", *FileName,
+			Rprintf("\topen the file \"%s\" (size: %s).\n", *FileName,
 				IntToStr(file.GetFileSize()).c_str());
 			Rprintf("\t# of fragments in total: %d.\n", file.GetNumOfFragment());
-			Rprintf("\tsave it to '%s.tmp'.\n", *FileName);
+			Rprintf("\tsave it to \"%s.tmp\".\n", *FileName);
 		}
 		file.TidyUp(*Deep == TRUE);
 		if (*verbose)
 		{
-			Rprintf("\trename '%s.tmp' (size: %s).\n", *FileName,
+			Rprintf("\trename \"%s.tmp\" (size: %s).\n", *FileName,
 				IntToStr(file.GetFileSize()).c_str());
 			Rprintf("\t# of fragments in total: %d.\n", file.GetNumOfFragment());
 		}

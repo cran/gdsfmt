@@ -2307,24 +2307,24 @@ void TdsAny::_Done()
 	switch (dsType)
 	{
 		case dvtStr8:
-			if (_R.ptrStr8) delete _R.ptrStr8;
-			_R.ptrStr8 = NULL;
+			if (aR.ptrStr8) delete aR.ptrStr8;
+			aR.ptrStr8 = NULL;
 			break;
 		case dvtStr16:
-			if (_R.ptrStr16) delete _R.ptrStr16;
-			_R.ptrStr16 = NULL;
+			if (aR.ptrStr16) delete aR.ptrStr16;
+			aR.ptrStr16 = NULL;
 			break;
 		case dvtStr32:
-			if (_R.ptrStr32) delete _R.ptrStr32;
-			_R.ptrStr32 = NULL;
+			if (aR.ptrStr32) delete aR.ptrStr32;
+			aR.ptrStr32 = NULL;
 			break;
 		case dvtArray:
-			if (_P.ptr) delete[] _P.ptr;
-			_P.Length = 0; _P.ptr = NULL;
+			if (aArray.ArrayPtr) delete[] aArray.ArrayPtr;
+			aArray.ArrayLength = 0; aArray.ArrayPtr = NULL;
 			break;
 		case dvtObjRef:
-			if (_R.obj) _R.obj->Release();
-			_R.obj = NULL;
+			if (aR.obj) aR.obj->Release();
+			aR.obj = NULL;
 			break;
 	}
 	dsType = dvtNULL;
@@ -2417,17 +2417,17 @@ const char *TdsAny::dvtNames(int index)
 
 #define DSDATA_STR(TYPE) \
 	case dvtSString8: \
-		return ValCvt<TYPE, UTF8String>(UTF8String(&_S8.SStr8[0], &_S8.SStr8[_S8.SStrLen8])); \
+		return ValCvt<TYPE, UTF8String>(UTF8String(&aS8.SStr8[0], &aS8.SStr8[aS8.SStrLen8])); \
 	case dvtSString16: \
-		return ValCvt<TYPE, UTF16String>(UTF16String(&_S16.SStr16[0], &_S16.SStr16[_S16.SStrLen16])); \
+		return ValCvt<TYPE, UTF16String>(UTF16String(&aS16.SStr16[0], &aS16.SStr16[aS16.SStrLen16])); \
 	case dvtSString32: \
-		return ValCvt<TYPE, UTF32String>(UTF32String(&_S32.SStr32[0], &_S32.SStr32[_S32.SStrLen32])); \
+		return ValCvt<TYPE, UTF32String>(UTF32String(&aS32.SStr32[0], &aS32.SStr32[aS32.SStrLen32])); \
 	case dvtStr8: \
-		return ValCvt<TYPE, UTF8String>(*_R.ptrStr8); \
+		return ValCvt<TYPE, UTF8String>(*aR.ptrStr8); \
 	case dvtStr16: \
-		return ValCvt<TYPE, UTF16String>(*_R.ptrStr16); \
+		return ValCvt<TYPE, UTF16String>(*aR.ptrStr16); \
 	case dvtStr32: \
-		return ValCvt<TYPE, UTF32String>(*_R.ptrStr32);
+		return ValCvt<TYPE, UTF32String>(*aR.ptrStr32);
 
 // TdsAny : others
 
@@ -2440,8 +2440,8 @@ const char *TdsAny::dvtNames(int index)
 	case dvtBoolean: \
 		return ValCvt<TYPE, UTF8String>(VAL<int>() ? "TRUE" : "FLASE"); \
 	case dvtObjRef: \
-		if (_R.obj != NULL) \
-			return ValCvt<TYPE, UTF8String>(_R.obj->dTraitName()); \
+		if (aR.obj != NULL) \
+			return ValCvt<TYPE, UTF8String>(aR.obj->dTraitName()); \
 		else \
 			return ValCvt<TYPE, UTF8String>("[NULL]"); \
 	default: \
@@ -2644,11 +2644,11 @@ bool TdsAny::getBool() const
 	}
 }
 
-void *TdsAny::getPtr() const
+const void *TdsAny::getPtr() const
 {
 	if (dsType == dvtPointer)
 	{
-		return _P.ptr;
+		return aR.const_ptr;
 	} else
 		throw Err_dsAny(dsType, dvtPointer);
 }
@@ -2657,7 +2657,7 @@ const TdsAny *TdsAny::getArray() const
 {
 	if (dsType == dvtArray)
 	{
-		return _P.ptr;
+		return aArray.ArrayPtr;
 	} else
 		throw Err_dsAny(dsType, dvtArray);
 }
@@ -2666,7 +2666,7 @@ UInt32 TdsAny::getArrayLength() const
 {
 	if (dsType == dvtArray)
 	{
-		return _P.Length;
+		return aArray.ArrayLength;
 	} else
 		throw Err_dsAny(dsType, dvtArray);
 }
@@ -2674,7 +2674,7 @@ UInt32 TdsAny::getArrayLength() const
 CdObjRef *TdsAny::getObj() const
 {
 	if (dsType == dvtObjRef)
-		return _R.obj;
+		return aR.obj;
 	else
 		throw Err_dsAny(dsType, dvtObjRef);
 }
@@ -2786,11 +2786,11 @@ void TdsAny::setStr8(const UTF8String &val)
 	if (val.size() <= 22)
 	{
 		dsType = dvtSString8;
-		_S8.SStrLen8 = val.size();
-		memcpy(_S8.SStr8, val.c_str(), val.size());
+		aS8.SStrLen8 = val.size();
+		memcpy(aS8.SStr8, val.c_str(), val.size());
 	} else {
 		dsType = dvtStr8;
-        _R.ptrStr8 = new UTF8String(val);
+        aR.ptrStr8 = new UTF8String(val);
     }
 }
 
@@ -2800,11 +2800,11 @@ void TdsAny::setStr16(const UTF16String &val)
 	if (val.size() <= 11)
 	{
 		dsType = dvtSString16;
-		_S16.SStrLen16 = val.size();
-		memcpy(_S16.SStr16, val.c_str(), val.size()*2);
+		aS16.SStrLen16 = val.size();
+		memcpy(aS16.SStr16, val.c_str(), val.size()*2);
 	} else {
 		dsType = dvtStr16;
-        _R.ptrStr16 = new UTF16String(val);
+        aR.ptrStr16 = new UTF16String(val);
     }
 }
 
@@ -2814,11 +2814,11 @@ void TdsAny::setStr32(const UTF32String &val)
 	if (val.size() <= 5)
 	{
 		dsType = dvtSString32;
-		_S32.SStrLen32 = val.size();
-		memcpy(_S32.SStr32, val.c_str(), val.size()*4);
+		aS32.SStrLen32 = val.size();
+		memcpy(aS32.SStr32, val.c_str(), val.size()*4);
 	} else {
 		dsType = dvtStr32;
-        _R.ptrStr32 = new UTF32String(val);
+        aR.ptrStr32 = new UTF32String(val);
     }
 }
 
@@ -2833,47 +2833,47 @@ void TdsAny::setPtr(const void *ptr)
 {
 	_Done();
 	dsType = dvtPointer;
-	_P.const_ptr = ptr;
+	aR.const_ptr = ptr;
 }
 
 void TdsAny::setArray(Int32 *ptr, UInt32 size)
 {
 	_Done();
 	dsType = dvtArray;
-	_P.Length = size;
-	_P.ptr = new TdsAny[size];
+	aArray.ArrayLength = size;
+	aArray.ArrayPtr = new TdsAny[size];
 	for (UInt32 i=0; i < size; i++)
-		_P.ptr[i] = ptr[i];
+		aArray.ArrayPtr[i] = ptr[i];
 }
 
 void TdsAny::setArray(Int64 *ptr, UInt32 size)
 {
 	_Done();
 	dsType = dvtArray;
-	_P.Length = size;
-	_P.ptr = new TdsAny[size];
+	aArray.ArrayLength = size;
+	aArray.ArrayPtr = new TdsAny[size];
 	for (UInt32 i=0; i < size; i++)
-		_P.ptr[i] = ptr[i];
+		aArray.ArrayPtr[i] = ptr[i];
 }
 
 void TdsAny::setArray(Float64 *ptr, UInt32 size)
 {
 	_Done();
 	dsType = dvtArray;
-	_P.Length = size;
-	_P.ptr = new TdsAny[size];
+	aArray.ArrayLength = size;
+	aArray.ArrayPtr = new TdsAny[size];
 	for (UInt32 i=0; i < size; i++)
-		_P.ptr[i] = ptr[i];
+		aArray.ArrayPtr[i] = ptr[i];
 }
 
 void TdsAny::setArray(const char* const ptr[], UInt32 size)
 {
 	_Done();
 	dsType = dvtArray;
-	_P.Length = size;
-	_P.ptr = new TdsAny[size];
+	aArray.ArrayLength = size;
+	aArray.ArrayPtr = new TdsAny[size];
 	for (UInt32 i=0; i < size; i++)
-		_P.ptr[i] = UTF8String(ptr[i]);
+		aArray.ArrayPtr[i] = UTF8String(ptr[i]);
 }
 
 void TdsAny::setObj(CdObjRef *obj)
@@ -3111,19 +3111,19 @@ TdsAny & TdsAny::operator= (const TdsAny &_Right)
 		{
 			case dvtObjRef:
 				memcpy((void*)this, (void*)&_Right, sizeof(TdsAny));
-				_R.obj->AddRef();
+				aR.obj->AddRef();
 				break;
 			case dvtStr8:
 				dsType = dvtStr8;
-				_R.ptrStr8 = new UTF8String(*_Right._R.ptrStr8);
+				aR.ptrStr8 = new UTF8String(*_Right.aR.ptrStr8);
 				break;
 			case dvtStr16:
 				dsType = dvtStr16;
-				_R.ptrStr16 = new UTF16String(*_Right._R.ptrStr16);
+				aR.ptrStr16 = new UTF16String(*_Right.aR.ptrStr16);
 				break;
 			case dvtStr32:
 				dsType = dvtStr32;
-				_R.ptrStr32 = new UTF32String(*_Right._R.ptrStr32);
+				aR.ptrStr32 = new UTF32String(*_Right.aR.ptrStr32);
 				break;
 			default:
 				memcpy(this, &_Right, sizeof(TdsAny));
@@ -3175,31 +3175,31 @@ CdSerial& CoreArray::operator>> (CdSerial &s, TdsAny& out)
 
 		// string
 		case TdsAny::dvtSString8:
-			out._S8.SStrLen8 = s.rUInt8();
-			if (out._S8.SStrLen8 > 22)
-            	throw Err_dsAny("Invalid length (%d) for dvtSString8", out._S8.SStrLen8);
-			s.Read((void*)out._S8.SStr8, out._S8.SStrLen8);
+			out.aS8.SStrLen8 = s.rUInt8();
+			if (out.aS8.SStrLen8 > 22)
+            	throw Err_dsAny("Invalid length (%d) for dvtSString8", out.aS8.SStrLen8);
+			s.Read((void*)out.aS8.SStr8, out.aS8.SStrLen8);
 			break;
 		case TdsAny::dvtSString16:
-			out._S16.SStrLen16 = s.rUInt8();
-			if (out._S16.SStrLen16 > 11)
-            	throw Err_dsAny("Invalid length (%d) for dvtSString16", out._S16.SStrLen16);
-			s.Read((void*)out._S16.SStr16, out._S16.SStrLen16*2);
+			out.aS16.SStrLen16 = s.rUInt8();
+			if (out.aS16.SStrLen16 > 11)
+            	throw Err_dsAny("Invalid length (%d) for dvtSString16", out.aS16.SStrLen16);
+			s.Read((void*)out.aS16.SStr16, out.aS16.SStrLen16*2);
 			break;
 		case TdsAny::dvtSString32:
-			out._S32.SStrLen32 = s.rUInt8();
-			if (out._S32.SStrLen32 > 5)
-            	throw Err_dsAny("Invalid length (%d) for dvtSString32", out._S32.SStrLen32);
-			s.Read((void*)out._S32.SStr32, out._S32.SStrLen32*4);
+			out.aS32.SStrLen32 = s.rUInt8();
+			if (out.aS32.SStrLen32 > 5)
+            	throw Err_dsAny("Invalid length (%d) for dvtSString32", out.aS32.SStrLen32);
+			s.Read((void*)out.aS32.SStr32, out.aS32.SStrLen32*4);
         	break;
 		case TdsAny::dvtStr8:
-            out._R.ptrStr8 = new UTF8String(s.rStrUTF8());
+            out.aR.ptrStr8 = new UTF8String(s.rStrUTF8());
 			break;
 		case TdsAny::dvtStr16:
-			out._R.ptrStr16 = new UTF16String(s.rStrUTF16());
+			out.aR.ptrStr16 = new UTF16String(s.rStrUTF16());
 			break;
 		case TdsAny::dvtStr32:
-			out._R.ptrStr32 = new UTF32String(s.rStrUTF32());
+			out.aR.ptrStr32 = new UTF32String(s.rStrUTF32());
 			break;
 
 		// other extended type
@@ -3209,24 +3209,24 @@ CdSerial& CoreArray::operator>> (CdSerial &s, TdsAny& out)
 
 		// pointer
 		case TdsAny::dvtPointer:
-			out._P.const_ptr = NULL;
+			out.aR.const_ptr = NULL;
 			break;
 		// array
 		case TdsAny::dvtArray:
-			out._P.Length = s.rUInt32();
-			out._P.ptr = new TdsAny[out._P.Length];
-			for (UInt32 i=0; i < out._P.Length; i++)
-				s >> out._P.ptr[i];
+			out.aArray.ArrayLength = s.rUInt32();
+			out.aArray.ArrayPtr = new TdsAny[out.aArray.ArrayLength];
+			for (UInt32 i=0; i < out.aArray.ArrayLength; i++)
+				s >> out.aArray.ArrayPtr[i];
 			break;
 
 		// CdObjRef
 		case TdsAny::dvtObjRef:
 			if (s.rUInt8())
 			{
-				out._R.obj = dObjMgr.toObj(s);
-				out._R.obj->AddRef();
+				out.aR.obj = dObjMgr.toObj(s);
+				out.aR.obj->AddRef();
 			} else
-				out._R.obj = NULL;
+				out.aR.obj = NULL;
 			break;
 	}
 	return s;
@@ -3272,25 +3272,25 @@ CdSerial& CoreArray::operator<< (CdSerial &s, TdsAny &in)
 
 		// string
 		case TdsAny::dvtSString8:
-			s.wUInt8(in._S8.SStrLen8);
-			s.Write((void*)in._S8.SStr8, in._S8.SStrLen8);
+			s.wUInt8(in.aS8.SStrLen8);
+			s.Write((void*)in.aS8.SStr8, in.aS8.SStrLen8);
 			break;
 		case TdsAny::dvtSString16:
-			s.wUInt8(in._S16.SStrLen16);
-			s.Write((void*)in._S16.SStr16, in._S16.SStrLen16*2);
+			s.wUInt8(in.aS16.SStrLen16);
+			s.Write((void*)in.aS16.SStr16, in.aS16.SStrLen16*2);
 			break;
 		case TdsAny::dvtSString32:
-			s.wUInt8(in._S32.SStrLen32);
-			s.Write((void*)in._S32.SStr32, in._S32.SStrLen32*4);
+			s.wUInt8(in.aS32.SStrLen32);
+			s.Write((void*)in.aS32.SStr32, in.aS32.SStrLen32*4);
         	break;
 		case TdsAny::dvtStr8:
-			s.wStrUTF8(in._R.ptrStr8->c_str());
+			s.wStrUTF8(in.aR.ptrStr8->c_str());
 			break;
 		case TdsAny::dvtStr16:
-			s.wStrUTF16(in._R.ptrStr16->c_str());
+			s.wStrUTF16(in.aR.ptrStr16->c_str());
 			break;
 		case TdsAny::dvtStr32:
-        	s.wStrUTF32(in._R.ptrStr32->c_str());
+        	s.wStrUTF32(in.aR.ptrStr32->c_str());
 			break;
 
 		// other extended type
@@ -3303,17 +3303,17 @@ CdSerial& CoreArray::operator<< (CdSerial &s, TdsAny &in)
 			break;
 		// array
 		case TdsAny::dvtArray:
-			s.wUInt32(in._P.Length);
-			for (UInt32 i=0; i < in._P.Length; i++)
-				s << in._P.ptr[i];
+			s.wUInt32(in.aArray.ArrayLength);
+			for (UInt32 i=0; i < in.aArray.ArrayLength; i++)
+				s << in.aArray.ArrayPtr[i];
 			break;
 
 		// CdObjRef
 		case TdsAny::dvtObjRef:
-			if (in._R.obj)
+			if (in.aR.obj)
 			{
 				s.wUInt8(1);
-				_Internal_::CdObject_SaveStruct(*in._R.obj, s, true);
+				_Internal_::CdObject_SaveStruct(*in.aR.obj, s, true);
 			} else
 				s.wUInt8(0);
 			break;

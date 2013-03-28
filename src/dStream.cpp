@@ -1457,30 +1457,31 @@ TdPtr64 CdBlockStream::TBlockInfo::AbsStart()
 	return StreamStart - (Head ? (HeadSize+2*TdPosType::size) : (2*TdPosType::size));
 }
 
-void CdBlockStream::TBlockInfo::SetSize(CdStream &Stream, const TdPtr64 Size)
+void CdBlockStream::TBlockInfo::SetSize(CdStream &Stream, const TdPtr64 _Size)
 {
-	BlockSize = Size;
-	TdPtr64 L = Head ? (HeadSize+2*TdPosType::size) : (2*TdPosType::size);
+	BlockSize = _Size;
+	TdPtr64 L = Head ? (HeadSize + 2*TdPosType::size) : (2*TdPosType::size);
 	Stream.SetPosition(StreamStart - L);
-	Stream << TdPosType((Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0));
+	Stream << TdPosType((_Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0));
 }
 
-void CdBlockStream::TBlockInfo::SetNext(CdStream &Stream, const TdPtr64 Next)
+void CdBlockStream::TBlockInfo::SetNext(CdStream &Stream, const TdPtr64 _Next)
 {
-	StreamNext = Next;
+	StreamNext = _Next;
 	Stream.SetPosition(StreamStart -
 		(Head ? (HeadSize+TdPosType::size) : TdPosType::size));
-	Stream << TdPosType(Next);
+	Stream << TdPosType(_Next);
 }
 
 void CdBlockStream::TBlockInfo::SetSize2(CdStream &Stream,
-	const TdPtr64 Size, const TdPtr64 Next)
+	const TdPtr64 _Size, const TdPtr64 _Next)
 {
-	BlockSize = Size;
-	TdPtr64 L = Head ? (HeadSize+2*TdPosType::size) : (2*TdPosType::size);
+	BlockSize = _Size;
+	StreamNext = _Next;
+	TdPtr64 L = Head ? (HeadSize + 2*TdPosType::size) : (2*TdPosType::size);
 	Stream.SetPosition(StreamStart - L);
-	Stream << TdPosType((Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0))
-		<< TdPosType(Next);
+	Stream << TdPosType((_Size+L) | (Head ? GDS_STREAM_POS_MASK_HEAD_BIT : 0))
+		<< TdPosType(_Next);
 }
 
 

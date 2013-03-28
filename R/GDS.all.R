@@ -35,6 +35,8 @@
 #
 createfn.gds <- function(fn)
 {
+	stopifnot(is.character(fn) & (length(fn)==1))
+
 	r <- .C("gdsCreateGDS", filename=as.character(fn), id=integer(1),
 		root=integer(2), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -44,6 +46,7 @@ createfn.gds <- function(fn)
 	} else {
 		class(r$root) <- "gdsn.class"
 		r$readonly <- FALSE
+		r$filename <- normalizePath(r$filename)
 		class(r) <- "gds.class"
 		return(r)
 	}
@@ -55,6 +58,9 @@ createfn.gds <- function(fn)
 #
 openfn.gds <- function(fn, readonly=TRUE)
 {
+	stopifnot(is.character(fn) & (length(fn)==1))
+	stopifnot(is.logical(readonly) & (length(readonly)==1))
+
 	r <- .C("gdsOpenGDS", filename=as.character(fn[1]), id=integer(1),
 		root=integer(2), readonly=as.integer(readonly), err=integer(1),
 		NAOK=TRUE, PACKAGE="gdsfmt")
@@ -65,6 +71,7 @@ openfn.gds <- function(fn, readonly=TRUE)
 	} else {
 		class(r$root) <- "gdsn.class"
 		r$readonly <- readonly
+		r$filename <- normalizePath(r$filename)
 		class(r) <- "gds.class"
 		return(r)
 	}
@@ -76,7 +83,7 @@ openfn.gds <- function(fn, readonly=TRUE)
 #
 closefn.gds <- function(gds)
 {
-	stopifnot(class(gds)=="gds.class")
+	stopifnot(inherits(gds, "gds.class"))
 	r <- .C("gdsCloseGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 		stop(lasterr.gds())
@@ -89,7 +96,7 @@ closefn.gds <- function(gds)
 #
 sync.gds <- function(gds)
 {
-	stopifnot(class(gds)=="gds.class")
+	stopifnot(inherits(gds, "gds.class"))
 	r <- .C("gdsSyncGDS", as.integer(gds$id), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
 		stop(lasterr.gds())
@@ -126,7 +133,7 @@ cleanup.gds <- function(fn, deep=FALSE, verbose=TRUE)
 #
 cnt.gdsn <- function(node)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsNodeChildCnt", as.integer(node), cnt=as.integer(1), NAOK=TRUE,
 		PACKAGE="gdsfmt")
 	if (r$cnt < 0)
@@ -140,7 +147,7 @@ cnt.gdsn <- function(node)
 #
 name.gdsn <- function(node, fullname=FALSE)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsNodeName", as.integer(node), name=character(1),
 		as.integer(fullname), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0) {
@@ -155,7 +162,7 @@ name.gdsn <- function(node, fullname=FALSE)
 #
 rename.gdsn <- function(node, newname)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsRenameNode", as.integer(node), as.character(newname),
 		err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -169,9 +176,10 @@ rename.gdsn <- function(node, newname)
 #
 ls.gdsn <- function(node)
 {
-	if (class(node)=="gds.class")
+	if (inherits(node, "gds.class"))
 		node <- node$root
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
+
 	cnt <- cnt.gdsn(node)
 	r <- .C("gdsNodeEnumName", as.integer(node), names=character(cnt),
 		err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
@@ -229,7 +237,7 @@ index.gdsn <- function(node, path=NULL, index=NULL, silent=FALSE)
 #
 objdesp.gdsn <- function(node)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	cnt <- cnt.gdsn(node)
 	r <- .C("gdsNodeObjDesp", as.integer(node), type=character(1), name=character(1),
 		sv=integer(1), arr=logical(1), dimcnt=integer(1), dimeach=integer(1024),
@@ -259,9 +267,9 @@ add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NUL
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max"),
 	closezip=FALSE)
 {
-	if (class(node)=="gds.class")
+	if (inherits(node, "gds.class"))
 		node <- node$root
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 
 	if (missing(name))
 		name <- paste("Item", cnt.gdsn(node)+1, sep="")
@@ -358,10 +366,10 @@ add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val), valdim=NUL
 addfile.gdsn <- function(node, name, filename,
 	compress=c("ZIP", "ZIP.fast", "ZIP.default", "ZIP.max", ""))
 {
-	if (class(node)=="gds.class")
+	if (inherits(node, "gds.class"))
 		node <- node$root
-	stopifnot(class(node)=="gdsn.class")
-	stopifnot(is.character(filename))
+	stopifnot(inherits(node, "gdsn.class"))
+	stopifnot(is.character(filename) & (length(filename)==1))
 
 	if (missing(name))
 		name <- paste("Item", cnt.gdsn(node)+1, sep="")
@@ -380,7 +388,7 @@ addfile.gdsn <- function(node, name, filename,
 #
 delete.gdsn <- function(node)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsDeleteNode", node=as.integer(node), err=integer(1),
 		NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -401,7 +409,7 @@ delete.gdsn <- function(node)
 #
 put.attr.gdsn <- function(node, name, val=NULL)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	name <- as.character(name)
 	if (name != "")
 	{
@@ -427,7 +435,7 @@ put.attr.gdsn <- function(node, name, val=NULL)
 #
 get.attr.gdsn <- function(node)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsAttrCnt", as.integer(node), Cnt=integer(1), err=integer(1),
 		NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0) stop(lasterr.gds())
@@ -468,7 +476,7 @@ get.attr.gdsn <- function(node)
 #
 delete.attr.gdsn <- function(node, name)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsDeleteAttr", as.integer(node), as.character(name),
 		err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -490,7 +498,7 @@ delete.attr.gdsn <- function(node, name)
 compression.gdsn <- function(node,
 	compress=c("", "ZIP", "ZIP.fast", "ZIP.default", "ZIP.max") )
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsObjCompress", as.integer(node), as.character(compress[1]),
 		err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -504,7 +512,7 @@ compression.gdsn <- function(node,
 #
 readmode.gdsn <- function(node)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsObjPackClose", as.integer(node), err=integer(1),
 		NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -518,7 +526,7 @@ readmode.gdsn <- function(node)
 #
 setdim.gdsn <- function(node, valdim)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	r <- .C("gdsObjSetDim", as.integer(node), length(valdim),
 		rev(as.integer(valdim)), err=integer(1), NAOK=TRUE, PACKAGE="gdsfmt")
 	if (r$err != 0)
@@ -532,7 +540,7 @@ setdim.gdsn <- function(node, valdim)
 #
 append.gdsn <- function(node, val, check=TRUE)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	if (is.character(val))
 	{
 		val[is.na(val)] <- ""
@@ -570,7 +578,7 @@ append.gdsn <- function(node, val, check=TRUE)
 #
 read.gdsn <- function(node, start, count)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 
 	if (missing(start))
 	{
@@ -673,7 +681,7 @@ read.gdsn <- function(node, start, count)
 #
 readex.gdsn <- function(node, sel=NULL)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	stopifnot(is.null(sel) | is.logical(sel) | is.list(sel))
 
 	if (!is.null(sel))
@@ -787,11 +795,11 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin, FUN, selection=NULL
 	#########################################################
 	# library
 	#
-    if (!require(parallel))
-    {
-	    if (!require(snow))
-			stop("the `parallel' or `snow' package is needed.")
-    }
+	if (!require(parallel))
+	{
+		if (!require(snow))
+			stop("the `parallel' or `snow' package should be installed.")
+	}
 
 
 	#########################################################
@@ -915,7 +923,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin, FUN, selection=NULL
 #
 write.gdsn <- function(node, val, start, count)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	stopifnot(!missing(val))
 
 	if (missing(start))
@@ -992,7 +1000,7 @@ assign.gdsn <- function(dest.obj, src.obj, append)
 #
 getfile.gdsn <- function(node, out.filename)
 {
-	stopifnot(class(node)=="gdsn.class")
+	stopifnot(inherits(node, "gdsn.class"))
 	stopifnot(is.character(out.filename))
 
 	r <- .C("gdsGetFile", as.integer(node), out.filename, err=integer(1),

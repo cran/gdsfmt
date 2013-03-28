@@ -459,9 +459,9 @@ namespace CoreArray
 
 			TBlockInfo();
 			TdPtr64 AbsStart();
-			void SetSize(CdStream &Stream, const TdPtr64 Size);
-			void SetNext(CdStream &Stream, const TdPtr64 Next);
-			void SetSize2(CdStream &Stream, const TdPtr64 Size, const TdPtr64 Next);
+			void SetSize(CdStream &Stream, const TdPtr64 _Size);
+			void SetNext(CdStream &Stream, const TdPtr64 _Next);
+			void SetSize2(CdStream &Stream, const TdPtr64 _Size, const TdPtr64 _Next);
 		};
 
 		CdBlockStream(CdBlockCollection &vCollection);

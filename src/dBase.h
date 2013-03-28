@@ -1558,11 +1558,11 @@ namespace CoreArray
 		bool getBool() const;  ///< get boolean, throw an exception if fail
 
 		// pointer
-		void *getPtr() const;  ///< get a pointer, throw an exception if fail
+		const void *getPtr() const;  ///< get a pointer, throw an exception if fail
 
 		// array
 		const TdsAny *getArray() const;  ///< get a pointer
-		UInt32 getArrayLength() const;  ///< get the length of array
+		UInt32 getArrayLength() const;   ///< get the length of array
 
 		// others
 		CdObjRef* getObj() const; ///< get CdObjRef, throw an exception if fail
@@ -1713,39 +1713,37 @@ namespace CoreArray
 					UTF16String *ptrStr16;
 					UTF32String *ptrStr32;
 					CdObjRef *obj;
+					const void *const_ptr;
 				};
-			} _R;
+			} aR;
 			struct {
-				unsigned char SStrLen8;
+				UInt8 SStrLen8;
 				UTF8 SStr8[22];
-			} _S8;
+			} aS8;
 			struct {
-				unsigned char SStrLen16;
+				UInt8 SStrLen16;
 				UTF16 SStr16[11];
-			} _S16;
+			} aS16;
 			struct {
-				unsigned char Reserved1, SStrLen32, Reserved2;
+				UInt8 Reserved1, SStrLen32, Reserved2;
 				UTF32 SStr32[5];
-			} _S32;
+			} aS32;
 			struct {
 				TdsType dsArray;
-				UInt8 Reserved[2];
-				UInt32 Length;
-				union {
-					const void *const_ptr;
-					TdsAny *ptr;
-				};
-			} _P;
+				UInt8 ReservedArray1, ReservedArray2;
+				UInt32 ArrayLength;
+				TdsAny *ArrayPtr;
+			} aArray;
 		};
 
 		template<typename TYPE> TYPE & VAL()
 			{
-				void *tmp = &_R.Align;
+				void *tmp = &aR.Align;
 				return *static_cast<TYPE*>(tmp);
 			}
 		template<typename TYPE> const TYPE & VAL() const
 			{
-				const void *tmp = &_R.Align;
+				const void *tmp = &aR.Align;
 				return *static_cast<const TYPE*>(tmp);
 			}
 
