@@ -9,12 +9,13 @@
 	There are three components:
 	\item{filename}{the file name to be created.}
 	\item{id}{ID of GDS file, internal use.}
-	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the root of hierachical structure.}
+	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}},
+		the root of hierachical structure.}
 	\item{readonly}{whether it is read-only or not}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{openfn.gds}},
 	\code{\link[gdsfmt]{closefn.gds}}

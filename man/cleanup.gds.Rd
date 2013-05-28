@@ -19,7 +19,7 @@ cleanup.gds(fn, deep=FALSE, verbose=TRUE)
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{openfn.gds}}, \code{\link[gdsfmt]{createfn.gds}},
 	\code{\link[gdsfmt]{closefn.gds}}

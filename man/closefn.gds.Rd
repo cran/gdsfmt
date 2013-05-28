@@ -23,7 +23,7 @@ or opened would be automatically closed.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{openfn.gds}},
 	\code{\link[gdsfmt]{sync.gds}}

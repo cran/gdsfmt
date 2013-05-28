@@ -14,7 +14,7 @@ gdsUnitTest()
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 
 \keyword{GDS}
 \keyword{utilities}

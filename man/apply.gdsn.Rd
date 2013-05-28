@@ -30,7 +30,7 @@ memory instead of disk.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{readex.gdsn}},
 	\code{\link[gdsfmt]{clusterApply.gdsn}}

@@ -15,7 +15,7 @@ put.attr.gdsn(node, name, val = NULL)
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{get.attr.gdsn}}, \code{\link[gdsfmt]{delete.attr.gdsn}}
 }

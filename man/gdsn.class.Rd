@@ -7,7 +7,7 @@ returned from \code{\link[gdsfmt]{add.gdsn}} or \code{\link[gdsfmt]{index.gdsn}}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}
 }

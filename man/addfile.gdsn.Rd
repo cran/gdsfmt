@@ -6,16 +6,19 @@
 }
 
 \usage{
-addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", "ZIP.max", ""))
+addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default",
+	"ZIP.max", ""))
 }
 
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or \code{\link[gdsfmt]{gds.class}}:
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or
+		\code{\link[gdsfmt]{gds.class}}:
 		"gdsn" -- the node of hierarchical structure;
 		"gdsclass" -- the root of hieracrchical structure}
 	\item{name}{the variable name of the added node}
 	\item{filename}{the file name of input stream.}
-	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast", "ZIP.default", or "ZIP.max".}
+	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast",
+		"ZIP.default", or "ZIP.max".}
 }
 
 \details{
@@ -34,7 +37,7 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default", 
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
 	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},

@@ -17,7 +17,7 @@ Structure (GDS) file.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{\code{\link[gdsfmt]{print.gds.class}}}
 
 \keyword{GDS}

@@ -24,7 +24,7 @@ with the leftmost subscript moving fastest.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{readex.gdsn}}, \code{\link[gdsfmt]{append.gdsn}},
 	\code{\link[gdsfmt]{write.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}

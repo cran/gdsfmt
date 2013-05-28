@@ -23,7 +23,7 @@ correspond to different compression levels.
 }
 
 \references{ \url{http://sourceforge.net/projects/corearray/}, \url{http://zlib.net/} }
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{readmode.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
 }

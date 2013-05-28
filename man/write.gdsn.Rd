@@ -27,7 +27,7 @@ the data field.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{read.gdsn}},
 	\code{\link[gdsfmt]{add.gdsn}}

@@ -29,7 +29,7 @@ including hierachical structure, variable names, data field, etc.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}
 }

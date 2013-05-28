@@ -1,3 +1,8 @@
+0.9.14	28-May-2013 Xiuwen Zheng <zhengx@u.washington.edu>
+
+	* fixes an error in the CITATION file
+
+
 0.9.13	19-May-2013 Xiuwen Zheng <zhengx@u.washington.edu>
 
 	* compiler issue fix: Solaris 10

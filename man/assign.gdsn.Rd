@@ -17,7 +17,7 @@ assign.gdsn(dest.obj, src.obj, append)
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
-\author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
+\author{Xiuwen Zheng}
 \seealso{
 	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}}
 }
