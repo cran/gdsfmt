@@ -565,7 +565,7 @@ append.gdsn <- function(node, val, check=TRUE)
 	if (r$err == 0)
 	{
 		if (r$CntWarn != 0)
-			warning("No a complete sub-dataset.");
+			warning("Not a complete subset of data.");
 	} else {
 		stop(lasterr.gds())
 	}
@@ -796,10 +796,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin, FUN, selection=NULL
 	# library
 	#
 	if (!require(parallel))
-	{
-		if (!require(snow))
-			stop("the `parallel' or `snow' package should be installed.")
-	}
+		stop("the `parallel' package should be installed.")
 
 
 	#########################################################

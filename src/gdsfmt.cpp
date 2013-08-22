@@ -2436,64 +2436,68 @@ DLLEXPORT SEXP gds_Read_SEXP(CdSequenceX *Obj, CoreArray::Int32 const* Start,
 			for (int i=0; i < Obj->DimCnt(); i++)
 				TotalCount *= ValidCnt[i];
 
-			void *buffer;
-			TSVType SV;
-			if (COREARRAY_SV_INTEGER(Obj->SVType()))
+			if (TotalCount > 0)
 			{
-				if (gds_Is_R_Logical(*Obj))
+				void *buffer;
+				TSVType SV;
+				if (COREARRAY_SV_INTEGER(Obj->SVType()))
 				{
-					PROTECT(rv_ans = NEW_LOGICAL(TotalCount));
-					buffer = LOGICAL(rv_ans);
-				} else {
-					PROTECT(rv_ans = NEW_INTEGER(TotalCount));
-					nProtected += gds_Set_If_R_Factor(*Obj, rv_ans);
-					buffer = INTEGER(rv_ans);
-				}
-				SV = svInt32;
-			} else if (COREARRAY_SV_FLOAT(Obj->SVType()))
-			{
-				PROTECT(rv_ans = NEW_NUMERIC(TotalCount));
-				buffer = REAL(rv_ans);
-				SV = svFloat64;
-			} else if (COREARRAY_SV_STRING(Obj->SVType()))
-			{
-				PROTECT(rv_ans = NEW_CHARACTER(TotalCount));
-				buffer = NULL;
-				SV = svStrUTF8;
-			} else
-				throw ErrGDSFmt("Invalid SVType of array-oriented object.");
-			nProtected ++;
-
-			// init dim
-			if (Obj->DimCnt() > 1)
-			{
-				SEXP dim;
-				PROTECT(dim = NEW_INTEGER(Obj->DimCnt()));
+					if (gds_Is_R_Logical(*Obj))
+					{
+						PROTECT(rv_ans = NEW_LOGICAL(TotalCount));
+						buffer = LOGICAL(rv_ans);
+					} else {
+						PROTECT(rv_ans = NEW_INTEGER(TotalCount));
+						nProtected += gds_Set_If_R_Factor(*Obj, rv_ans);
+						buffer = INTEGER(rv_ans);
+					}
+					SV = svInt32;
+				} else if (COREARRAY_SV_FLOAT(Obj->SVType()))
+				{
+					PROTECT(rv_ans = NEW_NUMERIC(TotalCount));
+					buffer = REAL(rv_ans);
+					SV = svFloat64;
+				} else if (COREARRAY_SV_STRING(Obj->SVType()))
+				{
+					PROTECT(rv_ans = NEW_CHARACTER(TotalCount));
+					buffer = NULL;
+					SV = svStrUTF8;
+				} else
+					throw ErrGDSFmt("Invalid SVType of array-oriented object.");
 				nProtected ++;
-				int I = 0;
-				for (int k=Obj->DimCnt()-1; k >= 0; k--)
-					INTEGER(dim)[ I++ ] = ValidCnt[k];
-				SET_DIM(rv_ans, dim);
+
+				// init dim
+				if (Obj->DimCnt() > 1)
+				{
+					SEXP dim;
+					PROTECT(dim = NEW_INTEGER(Obj->DimCnt()));
+					nProtected ++;
+					int I = 0;
+					for (int k=Obj->DimCnt()-1; k >= 0; k--)
+						INTEGER(dim)[ I++ ] = ValidCnt[k];
+					SET_DIM(rv_ans, dim);
+				}
+
+				if (buffer != NULL)
+				{
+					if (!Selection)
+						Obj->rData(Start, Length, buffer, SV);
+					else
+						Obj->rDataEx(Start, Length, Selection, buffer, SV);
+				} else {
+					vector<string> strbuf(TotalCount);
+					if (!Selection)
+						Obj->rData(Start, Length, &strbuf[0], SV);
+					else
+						Obj->rDataEx(Start, Length, Selection, &strbuf[0], SV);
+					for (int i=0; i < (int)strbuf.size(); i++)
+						SET_STRING_ELT(rv_ans, i, mkChar(strbuf[i].c_str()));
+				}
 			}
 
-			if (buffer != NULL)
-			{
-				if (!Selection)
-					Obj->rData(Start, Length, buffer, SV);
-				else
-					Obj->rDataEx(Start, Length, Selection, buffer, SV);
-			} else {
-				vector<string> strbuf(TotalCount);
-				if (!Selection)
-					Obj->rData(Start, Length, &strbuf[0], SV);
-				else
-					Obj->rDataEx(Start, Length, Selection, &strbuf[0], SV);
-				for (int i=0; i < (int)strbuf.size(); i++)
-					SET_STRING_ELT(rv_ans, i, mkChar(strbuf[i].c_str()));
-			}
-
-			//
-			UNPROTECT(nProtected);
+			// unprotect the object
+			if (nProtected > 0)
+				UNPROTECT(nProtected);
 		}
 
 	CORECATCH(has_error=true);

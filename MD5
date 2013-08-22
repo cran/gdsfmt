@@ -1,12 +1,11 @@
 a2af64ae30d88299d462a1e6d817dce3 *COPYING
-ade0aa4643f6216af40ea81ada120a5f *DESCRIPTION
+d0f3674056be17d1ae39b0e96bc5f97e *DESCRIPTION
 45be4f0dd08fb9250b49493befb042ba *NAMESPACE
-08d09abc83e954a1f045e82fa256d0f0 *NEWS
-92c4da0637b2575e1fd8d7caa5dbf081 *R/GDS.all.R
+4911ce2e1e2f38e8e5d5e9e4b3281ceb *NEWS
+6e487431777bf28b3c9628cf9711e518 *R/GDS.all.R
 f28ba0b29089ba42c2bc2c50bfcdd6fe *inst/CITATION
-7f81c9179c9f8e10a59282105f2e60fa *inst/doc/CoreArrayTutorial.R
 5fcde42f2069e84424f4f502e0fddd83 *inst/doc/CoreArrayTutorial.Rnw
-bbf411d654ce2b87e8b18d748d875cf3 *inst/doc/CoreArrayTutorial.pdf
+7c7a26e5df28eb7dca9c6243b484393d *inst/doc/CoreArrayTutorial.pdf
 9ec805de4858f05bd733ea96162f0915 *inst/unitTests/runit.01.datatype.r
 abdd335674491382ad66c5aa110e9c2f *inst/unitTests/runit.02.dataconvert.r
 ecfdeb0ffbc702b27e2c52362134dec6 *inst/unitTests/runit.03.dimension.r
@@ -21,7 +20,7 @@ eefba2780690dbcbd3adf8cefb3d358b *man/apply.gdsn.Rd
 6ad4fdefb4d1fa7b3a1440a49c9a60f5 *man/assign.gdsn.Rd
 2d428f61b01171a749aa447bfbb189f9 *man/cleanup.gds.Rd
 e80281bf296eaa8e08ceebc4d86f1134 *man/closefn.gds.Rd
-c31d3315c67e65684552632298ca511f *man/clusterApply.gdsn.Rd
+e6261352a0bc82c07c75b2fff52510ac *man/clusterApply.gdsn.Rd
 99e0f3a10de0a0ccb0a4061d5d1143ac *man/cnt.gdsn.Rd
 76a48d5bdddaedf7d34d7e3569d12847 *man/compression.gdsn.Rd
 3d69b3555241626ccd42cf76c2cda9a6 *man/createfn.gds.Rd
@@ -55,7 +54,7 @@ acad3790f69edefd122b1484e7b39220 *man/setdim.gdsn.Rd
 e2b04717b0e80f595f3c6e2a3f708773 *src/Makevars.win
 7db36f08e0b6ce6f9ba8bff265c7d3ec *src/dBase.cpp
 a98bffed7f73bb5423f48ee8a47279da *src/dBase.h
-65c22b87bcabdc2e39eade2b713e0cec *src/dFile.cpp
+200fa2797e9adce629a59d44a12cce45 *src/dFile.cpp
 02f09e9e94dfb4dc97fe3e761e509461 *src/dFile.h
 2ad6927d4b4c0974428fe7b0df4c5e9c *src/dParallel.cpp
 9459a5151e24951018b7813d43b5f807 *src/dParallel.h
@@ -66,9 +65,9 @@ fb64faf986bcbd11d4b1e657de2e709d *src/dSeq.cpp
 4d46a30ff6f9e8bb01fa570ce3d79311 *src/dStream.cpp
 3afa9d97213de9107dfd80f313fe5195 *src/dStream.h
 4c4759d6e3f2f546ee44ccd4d2b8f075 *src/dStruct.cpp
-82fd9bb65f5ebe8d93c7b9146fc875eb *src/dStruct.h
+c7f844268abe110274fb93b92cffffce *src/dStruct.h
 cffa6b30f0e4732fd3a3f686e67f54aa *src/dType.h
-e5b7b233ee46c46039fb1c319307e4fd *src/gdsfmt.cpp
+db356ab2ca62cc72f768c6588ed76fc5 *src/gdsfmt.cpp
 663b256b763425ecceeb1d5bd807c215 *tests/runTests.R
 3fae1ccc0eca1432150d5eed6a19d748 *vignettes/CoreArray-Module-A.png
 79a658b0b10c2c5e9a0a9b4e1cc91a6f *vignettes/CoreArray-Module-B.png

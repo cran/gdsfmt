@@ -94,7 +94,7 @@ namespace CoreArray
 	/** sizeof(TdIterator) = 32 **/
 	struct TdIterator
 	{
-        /// the handler of this iterator
+		/// the handler of this iterator
 		CdContainer* Handler;
         /// a pointer
 		union
@@ -825,24 +825,23 @@ namespace CoreArray
 				DFor[0] = Start[0]; DForLen[0] = Length[0];
 				while (ForI >= 0)
 				{
-					if ((ForI >= ForEnd) || Sel[ForI][*ForP - *Start])
+					if (*ForLenP > 0)
 					{
-						if (*ForLenP > 0)
+						if (ForI >= ForEnd)
 						{
-							if (ForI < ForEnd)
-							{
-								++ForI; *(++ForP) = *(++Start);
-								*(++ForLenP) = *(++Length);
-								continue;
-							} else {
-								Rec.p64 = Rec.Seq->IndexPtr(DFor);
-								Functor(Rec, Selection);
-							}
+							Rec.p64 = Rec.Seq->IndexPtr(DFor);
+							Functor(Rec, Selection);
+						} else if (Sel[ForI][*ForP - *Start])
+						{
+							++ForI; *(++ForP) = *(++Start);
+							*(++ForLenP) = *(++Length);
+							continue;
+						} else {
+							++(*ForP); --(*ForLenP);
+							continue;
 						}
-					} else {
-						++(*ForP); --(*ForLenP);
-						if (*ForLenP > 0) continue;
 					}
+
 					--ForP; --ForLenP; --Start; --Length; --ForI;
 					if (ForI >= 0)
 						{ ++(*ForP); --(*ForLenP); }

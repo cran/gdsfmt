@@ -101,14 +101,14 @@ namespace CoreArray
 		{ CdZIPDeflate::zcDefault, CdZIPDeflate::zcFastest,
 		  CdZIPDeflate::zcDefault, CdZIPDeflate::zcMax };
 
-	class TdPipeZIP: public CdPipeMgrItem
+	class CdPipeZIP: public CdPipeMgrItem
 	{
 	public:
-		TdPipeZIP(CdZIPDeflate::TZLevel level = CdZIPDeflate::zcDefault)
+		CdPipeZIP(CdZIPDeflate::TZLevel level = CdZIPDeflate::zcDefault)
 			{ vLevel = level; fSizeInfo_Ptr = -1; }
 
 		virtual CdPipeMgrItem *NewOne()
-			{ return new TdPipeZIP(vLevel); }
+			{ return new CdPipeZIP(vLevel); }
 		virtual const char *Coder() const
 			{ return "ZIP"; };
 		virtual const char *Description() const
@@ -134,7 +134,7 @@ namespace CoreArray
 		{
 			int i = Which(Mode, ZIPStrings, 4);
 			if (i >= 0)
-				return new TdPipeZIP(ZIPLevels[i]);
+				return new CdPipeZIP(ZIPLevels[i]);
 			else
 				return NULL;
 		}
@@ -252,7 +252,7 @@ bool CdPipeMgrItem::EqualStrNoCase(const char *s1, const char *s2)
 
 CdStreamPipeMgr::CdStreamPipeMgr()
 {
-	Register(new TdPipeZIP);
+	Register(new CdPipeZIP);
 }
 
 CdStreamPipeMgr::~CdStreamPipeMgr()
@@ -274,7 +274,8 @@ CdPipeMgrItem *CdStreamPipeMgr::Match(CdGDSObj &Obj, const char *Mode)
 	vector<CdPipeMgrItem*>::iterator it;
 	for (it = fRegList.begin(); it != fRegList.end(); it++)
 	{
-		if (CdPipeMgrItem *rv = (*it)->Match(Mode))
+		CdPipeMgrItem *rv = (*it)->Match(Mode);
+		if (rv)
 		{
         	rv->fOwner = &Obj;
 			return rv;
@@ -482,6 +483,7 @@ CdGDSObj::CdGDSObj(CdGDSFolder *vFolder): fAttr(*this)
 
 CdGDSObj::~CdGDSObj()
 {
+	if (fPipeInfo) delete fPipeInfo;
 	fGDSStream->Release();
 }
 

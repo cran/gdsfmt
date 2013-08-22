@@ -2,8 +2,9 @@
 \alias{clusterApply.gdsn}
 \title{Apply functions over matrix margins in parallel}
 \description{
-	Returns a vector or list of values obtained by applying a function to margins of a
-matrix in parallel, in a CoreArray Genomic Data Structure (GDS) file.
+	Returns a vector or list of values obtained by applying a function to
+margins of a matrix in parallel, in a CoreArray Genomic Data Structure
+(GDS) file.
 }
 
 \usage{
@@ -12,20 +13,20 @@ clusterApply.gdsn(cl, gds.fn, node.name, margin, FUN, selection=NULL,
 }
 \arguments{
 	\item{cl}{a cluster object, created by this package or by the package
-		\link[parallel]{parallel} or \href{http://CRAN.R-project.org/package=snow}{snow}}
+		\link[parallel]{parallel}}
 	\item{gds.fn}{the file name of a GDS file}
 	\item{node.name}{a character vector indicating GDS node path}
-	\item{margin}{an integer giving the subscripts which the function will be applied
-		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
+	\item{margin}{an integer giving the subscripts which the function will be
+		applied over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
 	\item{FUN}{the function to be applied}
-	\item{selection}{a list or NULL; if a list, it is a list of logical vectors according
-		to dimensions indicating selection; if NULL, uses all data}
+	\item{selection}{a list or NULL; if a list, it is a list of logical vectors
+		according to dimensions indicating selection; if NULL, uses all data}
 	\item{as.is}{returned value: a list, an integer vector, etc}
 	\item{...}{optional arguments to \code{FUN}}
 }
 \details{
-	The algorithm of applying is optimized by blocking the computations to exploit the
-high-speed memory instead of disk.
+	The algorithm of applying is optimized by blocking the computations to
+exploit the high-speed memory instead of disk.
 }
 \value{
 	A vector or list of values.
