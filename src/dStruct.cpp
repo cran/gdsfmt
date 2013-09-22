@@ -98,7 +98,7 @@ static const char *errElmSize = "Invalid ElmSize (%d)";
 static const char *errCheckRect = "Invalid selection!";
 static const char *errDimIndexValue = "Invalid Dimension Len (%d)!";
 static const char *errLoadModeError = "Only allow to change load mode in a read-only file.";
-static const char *errPackedMode = "Invalid packed mode '%s'.";
+static const char *errPackedMode = "Invalid compression method '%s'.";
 
 #define pnCnt		0
 #define pnDATA		1
@@ -1525,6 +1525,15 @@ void CdVectorX::DeleteDim()
 		Notify(mcDimChanged);
 		fChanged = true;
 		if (fGDSStream) SaveToBlockStream();
+	}
+}
+
+void CdVectorX::ClearDim()
+{
+	if (!fDims.empty())
+	{
+		Clear();
+		fDims.clear();
 	}
 }
 

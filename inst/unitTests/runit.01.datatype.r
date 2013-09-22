@@ -70,5 +70,4 @@ test.datatype <- function()
 
 	# others
 	checkEquals(class.nbit("logical"), 32, "numeric type: logical")
-	checkEquals(class.nbit("factor"), 32, "numeric type: factor")
 }

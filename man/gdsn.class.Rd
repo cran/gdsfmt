@@ -1,15 +1,17 @@
 \name{gdsn.class}
+\docType{class}
 \alias{gdsn.class}
-\title{the class of a node of GDS file}
+
+\title{the class of variable node in the GDS file}
 \description{
-	The class of the node of hierarchical structure from a GDS file, and its instance is
-returned from \code{\link[gdsfmt]{add.gdsn}} or \code{\link[gdsfmt]{index.gdsn}}.
+	The class of variable node in the GDS file.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{createfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}
+	\code{\link{add.gdsn}}, \code{\link{read.gdsn}},
+	\code{\link{write.gdsn}}
 }
 
 \keyword{GDS}

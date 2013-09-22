@@ -1,15 +1,15 @@
 \name{put.attr.gdsn}
 \alias{put.attr.gdsn}
-\title{Add an attribute into a GDS file}
+\title{Add an attribute into a GDS node}
 \description{
-	Adds an attribute to a GDS node, in a CoreArray Genomic Data Structure (GDS) file.
+	Add an attribute to a GDS node.
 }
 
 \usage{
-put.attr.gdsn(node, name, val = NULL)
+put.attr.gdsn(node, name, val=NULL)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
 	\item{name}{the name of an attribute}
 	\item{val}{the value of an attribute}
 }
@@ -17,17 +17,23 @@ put.attr.gdsn(node, name, val = NULL)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{get.attr.gdsn}}, \code{\link[gdsfmt]{delete.attr.gdsn}}
+	\code{\link{get.attr.gdsn}}, \code{\link{delete.attr.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 node <- add.gdsn(f, "int", val=as.integer(1:10000))
 put.attr.gdsn(node, "missing.value", 10000)
+put.attr.gdsn(node, "one.value", 1L)
+put.attr.gdsn(node, "string", c("ABCDEF", "THIS"))
+put.attr.gdsn(node, "bool", c(TRUE, TRUE, FALSE))
 
 f
+get.attr.gdsn(node)
+
+delete.attr.gdsn(node, "one.value")
 get.attr.gdsn(node)
 
 closefn.gds(f)

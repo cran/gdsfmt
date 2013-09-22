@@ -265,8 +265,14 @@ namespace CoreArray
 		CdGDSObj *AddObj(const char *Name, CdGDSObj *val=NULL)
         	{ return AddObj(PChartoUTF16(Name), val); }
 
-		void DeleteObj(int Index);
-		void DeleteObj(CdGDSObj *val);
+		CdGDSObj *InsertObj(int index, const UTF16String &Name,
+			CdGDSObj *val=NULL);
+		CdGDSObj *InsertObj(int index, const char *Name, CdGDSObj *val=NULL)
+        	{ return InsertObj(index, PChartoUTF16(Name), val); }
+
+		void DeleteObj(int Index, bool force=true);
+		void DeleteObj(CdGDSObj *val, bool force=true);
+		void ClearObj(bool force=true);
 
 		CdGDSFolder &DirItem(int Index);
 		CdGDSFolder &DirItem(const UTF16String &Name);
@@ -299,6 +305,8 @@ namespace CoreArray
 
 		static void SplitPath(const UTF16String &FullName, UTF16String &Path,
         	UTF16String &Name);
+
+		int IndexObj(CdGDSObj *Obj);
 
 		bool HasChild(CdGDSObj *Obj, bool SubFolder = true);
 

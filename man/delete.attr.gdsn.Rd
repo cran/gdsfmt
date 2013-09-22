@@ -2,14 +2,14 @@
 \alias{delete.attr.gdsn}
 \title{Delete an attribute}
 \description{
-	Removes an attribute of a GDS node.
+	Remove an attribute of a GDS node.
 }
 
 \usage{
 delete.attr.gdsn(node, name)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
 	\item{name}{the name of an attribute}
 }
 \details{
@@ -19,7 +19,7 @@ delete.attr.gdsn(node, name)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{put.attr.gdsn}}, \code{\link[gdsfmt]{get.attr.gdsn}}
+	\code{\link{put.attr.gdsn}}, \code{\link{get.attr.gdsn}}
 }
 
 \keyword{GDS}

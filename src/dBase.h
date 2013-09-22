@@ -52,7 +52,7 @@ namespace CoreArray
 	/// A macro of CoreArray library version
 	/** You can use COREARRAY_VERSION in $if expressions to test the runtime
 	 *  library version level independently of the compiler version level.
-	 *  For example:  {$if COREARRAY_VERSION >= 0x0100} ... {$endif}
+	 *  For example:  #if (COREARRAY_VERSION >= 0x0100) ... #endif
 	**/
 	#define COREARRAY_VERSION        0x0100
 
@@ -1529,48 +1529,48 @@ namespace CoreArray
 
 
 		// integer
-		Int8 getInt8() const;       ///< get Int8, throw an exception if fail
-		UInt8 getUInt8() const;     ///< get UInt8, throw an exception if fail
-		Int16 getInt16() const;     ///< get Int16, throw an exception if fail
-		UInt16 getUInt16() const;   ///< get UInt16, throw an exception if fail
-		Int32 getInt32() const;     ///< get Int32, throw an exception if fail
-		UInt32 getUInt32() const;   ///< get UInt32, throw an exception if fail
-		Int64 getInt64() const;     ///< get Int64, throw an exception if fail
-		UInt64 getUInt64() const;   ///< get UInt64, throw an exception if fail
+		Int8 GetInt8() const;       ///< get Int8, throw an exception if fail
+		UInt8 GetUInt8() const;     ///< get UInt8, throw an exception if fail
+		Int16 GetInt16() const;     ///< get Int16, throw an exception if fail
+		UInt16 GetUInt16() const;   ///< get UInt16, throw an exception if fail
+		Int32 GetInt32() const;     ///< get Int32, throw an exception if fail
+		UInt32 GetUInt32() const;   ///< get UInt32, throw an exception if fail
+		Int64 GetInt64() const;     ///< get Int64, throw an exception if fail
+		UInt64 GetUInt64() const;   ///< get UInt64, throw an exception if fail
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		Int128 getInt128() const;   ///< get Int128, throw an exception if fail
-		UInt128 getUInt128() const; ///< get UInt128, throw an exception if fail
+		Int128 GetInt128() const;   ///< get Int128, throw an exception if fail
+		UInt128 GetUInt128() const; ///< get UInt128, throw an exception if fail
 		#endif
 
 		// float number
-		Float32 getFloat32() const;   ///< get Float32, throw an exception if fail
-		Float64 getFloat64() const;   ///< get Float64, throw an exception if fail
+		Float32 GetFloat32() const;   ///< get Float32, throw an exception if fail
+		Float64 GetFloat64() const;   ///< get Float64, throw an exception if fail
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		Float128 getFloat128() const; ///< get Float128, throw an exception if fail
+		Float128 GetFloat128() const; ///< get Float128, throw an exception if fail
 		#endif
 
 		// string
-		UTF8String getStr8() const;   ///< get UTF8String, throw an exception if fail
-		UTF16String getStr16() const; ///< get UTF16String, throw an exception if fail
-		UTF32String getStr32() const; ///< get UTF32String, throw an exception if fail
+		UTF8String GetStr8() const;   ///< get UTF8String, throw an exception if fail
+		UTF16String GetStr16() const; ///< get UTF16String, throw an exception if fail
+		UTF32String GetStr32() const; ///< get UTF32String, throw an exception if fail
 
 		// other extended type
-		bool getBool() const;  ///< get boolean, throw an exception if fail
+		bool GetBool() const;  ///< get boolean, throw an exception if fail
 
 		// pointer
-		const void *getPtr() const;  ///< get a pointer, throw an exception if fail
+		const void *GetPtr() const;  ///< get a pointer, throw an exception if fail
 
 		// array
-		const TdsAny *getArray() const;  ///< get a pointer
-		UInt32 getArrayLength() const;   ///< get the length of array
+		const TdsAny *GetArray() const;  ///< get a pointer
+		UInt32 GetArrayLength() const;   ///< get the length of array
 
 		// others
-		CdObjRef* getObj() const; ///< get CdObjRef, throw an exception if fail
+		CdObjRef* GetObj() const; ///< get CdObjRef, throw an exception if fail
 
 
-		/// define a 'get' method
+		/// define a generic 'Get' method
 		template<typename FUNC, typename TYPE, TYPE DEFAULT>
-			TYPE get()
+			TYPE Get()
 		{
 			try {
 				return FUNC();
@@ -1580,47 +1580,49 @@ namespace CoreArray
 		}
 
 
-		void setEmpty();    ///< set Empty
+		void SetEmpty();    ///< set Empty
 		// integer
-		void setInt8(Int8 val);       ///< set Int8
-		void setUInt8(UInt8 val);     ///< set UInt8
-		void setInt16(Int16 val);     ///< set Int16
-		void setUInt16(UInt16 val);   ///< set UInt16
-		void setInt32(Int32 val);     ///< set Int32
-		void setUInt32(UInt32 val);   ///< set UInt32
-		void setInt64(Int64 val);     ///< set Int64
-		void setUInt64(UInt64 val);   ///< set UInt64
+		void SetInt8(Int8 val);       ///< set Int8
+		void SetUInt8(UInt8 val);     ///< set UInt8
+		void SetInt16(Int16 val);     ///< set Int16
+		void SetUInt16(UInt16 val);   ///< set UInt16
+		void SetInt32(Int32 val);     ///< set Int32
+		void SetUInt32(UInt32 val);   ///< set UInt32
+		void SetInt64(Int64 val);     ///< set Int64
+		void SetUInt64(UInt64 val);   ///< set UInt64
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		void setInt128(const Int128 &val);   ///< set Int128
-		void setUInt128(const UInt128 &val); ///< set UInt128
+		void SetInt128(const Int128 &val);   ///< set Int128
+		void SetUInt128(const UInt128 &val); ///< set UInt128
 		#endif
 
 		// float number
-		void setFloat32(Float32 val);   ///< set Float32
-		void setFloat64(Float64 val);   ///< set Float64
+		void SetFloat32(Float32 val);   ///< set Float32
+		void SetFloat64(Float64 val);   ///< set Float64
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		void setFloat128(const Float128 &val); ///< set Float128
+		void SetFloat128(const Float128 &val); ///< set Float128
 		#endif
 
 		// string
-		void setStr8(const UTF8String &val);   ///< set UTF8String
-		void setStr16(const UTF16String &val); ///< set UTF16String
-		void setStr32(const UTF32String &val); ///< set UTF32String
+		void SetStr8(const UTF8String &val);   ///< set UTF8String
+		void SetStr16(const UTF16String &val); ///< set UTF16String
+		void SetStr32(const UTF32String &val); ///< set UTF32String
 
 		// other extended type
-		void setBool(bool val);     ///< set boolean
+		void SetBool(bool val);     ///< set boolean
 
 		// pointer
-		void setPtr(const void *ptr);  ///< set a pointer
+		void SetPtr(const void *ptr);  ///< set a pointer
 
 		// array
-		void setArray(Int32 *ptr, UInt32 size);  ///< set an int32 array
-		void setArray(Int64 *ptr, UInt32 size);  ///< set an int64 array
-		void setArray(Float64 *ptr, UInt32 size);  ///< set an double array
-		void setArray(const char* const ptr[], UInt32 size);  ///< set a character array
+		void SetArray(const Int32 ptr[], UInt32 size);  ///< set an int32 array
+		void SetArray(const Int64 ptr[], UInt32 size);  ///< set an int64 array
+		void SetArray(const Float64 ptr[], UInt32 size);  ///< set a double array
+		void SetArray(const char* const ptr[], UInt32 size);  ///< set a string array
+		void SetArray(const std::string ptr[], UInt32 size);  ///< set a string array
+		void SetArray(const bool ptr[], UInt32 size);  ///< set a boolean array
 
 		// CdObjRef
-		void setObj(CdObjRef *obj); ///< set a CdObjRef object
+		void SetObj(CdObjRef *obj); ///< set a CdObjRef object
 
 
 		void Assign(const UTF8String &val); ///< auto determine data type
@@ -1651,55 +1653,55 @@ namespace CoreArray
 
 
 		// operator
-        COREARRAY_INLINE operator Int8() { return getInt8(); }
-        COREARRAY_INLINE operator UInt8() { return getUInt8(); }
-		COREARRAY_INLINE operator Int16() { return getInt16(); }
-		COREARRAY_INLINE operator UInt16() { return getUInt16(); }
-		COREARRAY_INLINE operator Int32() { return getInt32(); }
-		COREARRAY_INLINE operator UInt32() { return getUInt32(); }
-		COREARRAY_INLINE operator Int64() { return getInt64(); }
-		COREARRAY_INLINE operator UInt64() { return getUInt64(); }
+        COREARRAY_INLINE operator Int8() { return GetInt8(); }
+        COREARRAY_INLINE operator UInt8() { return GetUInt8(); }
+		COREARRAY_INLINE operator Int16() { return GetInt16(); }
+		COREARRAY_INLINE operator UInt16() { return GetUInt16(); }
+		COREARRAY_INLINE operator Int32() { return GetInt32(); }
+		COREARRAY_INLINE operator UInt32() { return GetUInt32(); }
+		COREARRAY_INLINE operator Int64() { return GetInt64(); }
+		COREARRAY_INLINE operator UInt64() { return GetUInt64(); }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		COREARRAY_INLINE operator Int128() { return getInt128(); }
-		COREARRAY_INLINE operator UInt128() { return getUInt128(); }
+		COREARRAY_INLINE operator Int128() { return GetInt128(); }
+		COREARRAY_INLINE operator UInt128() { return GetUInt128(); }
 		#endif
 
-		COREARRAY_INLINE operator Float32() { return getFloat32(); }
-		COREARRAY_INLINE operator Float64() { return getFloat64(); }
+		COREARRAY_INLINE operator Float32() { return GetFloat32(); }
+		COREARRAY_INLINE operator Float64() { return GetFloat64(); }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		COREARRAY_INLINE operator Float128() { return getFloat128(); }
+		COREARRAY_INLINE operator Float128() { return GetFloat128(); }
 		#endif
 
-		COREARRAY_INLINE operator UTF8String() { return getStr8(); }
-		COREARRAY_INLINE operator UTF16String() { return getStr16(); }
-		COREARRAY_INLINE operator UTF32String() { return getStr32(); }
+		COREARRAY_INLINE operator UTF8String() { return GetStr8(); }
+		COREARRAY_INLINE operator UTF16String() { return GetStr16(); }
+		COREARRAY_INLINE operator UTF32String() { return GetStr32(); }
 
 		/// an operator of assignment
 		TdsAny & operator= (const TdsAny &_Right);
-		TdsAny & operator= (const Int8 val) { setInt8(val); return *this; }
-		TdsAny & operator= (const UInt8 val) { setUInt8(val); return *this; }
-		TdsAny & operator= (const Int16 val) { setInt16(val); return *this; }
-		TdsAny & operator= (const UInt16 val) { setUInt16(val); return *this; }
-		TdsAny & operator= (const Int32 val) { setInt32(val); return *this; }
-		TdsAny & operator= (const UInt32 val) { setUInt32(val); return *this; }
-		TdsAny & operator= (const Int64 val) { setInt64(val); return *this; }
-		TdsAny & operator= (const UInt64 val) { setUInt64(val); return *this; }
+		TdsAny & operator= (const Int8 val) { SetInt8(val); return *this; }
+		TdsAny & operator= (const UInt8 val) { SetUInt8(val); return *this; }
+		TdsAny & operator= (const Int16 val) { SetInt16(val); return *this; }
+		TdsAny & operator= (const UInt16 val) { SetUInt16(val); return *this; }
+		TdsAny & operator= (const Int32 val) { SetInt32(val); return *this; }
+		TdsAny & operator= (const UInt32 val) { SetUInt32(val); return *this; }
+		TdsAny & operator= (const Int64 val) { SetInt64(val); return *this; }
+		TdsAny & operator= (const UInt64 val) { SetUInt64(val); return *this; }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		TdsAny & operator= (const Int128 &val) { setInt128(val); return *this; }
-		TdsAny & operator= (const UInt128 &val) { setUInt128(val); return *this; }
+		TdsAny & operator= (const Int128 &val) { SetInt128(val); return *this; }
+		TdsAny & operator= (const UInt128 &val) { SetUInt128(val); return *this; }
 		#endif
 
-		TdsAny & operator= (const Float32 val) { setFloat32(val); return *this; }
-		TdsAny & operator= (const Float64 val) { setFloat64(val); return *this; }
+		TdsAny & operator= (const Float32 val) { SetFloat32(val); return *this; }
+		TdsAny & operator= (const Float64 val) { SetFloat64(val); return *this; }
 		#ifndef COREARRAY_NO_EXTENDED_TYPES
-		TdsAny & operator= (const Float128 &val) { setFloat128(val); return *this; }
+		TdsAny & operator= (const Float128 &val) { SetFloat128(val); return *this; }
 		#endif
 
-		TdsAny & operator= (const UTF8String &val) { setStr8(val); return *this; }
-		TdsAny & operator= (const UTF16String &val) { setStr16(val); return *this; }
-		TdsAny & operator= (const UTF32String &val) { setStr32(val); return *this; }
+		TdsAny & operator= (const UTF8String &val) { SetStr8(val); return *this; }
+		TdsAny & operator= (const UTF16String &val) { SetStr16(val); return *this; }
+		TdsAny & operator= (const UTF32String &val) { SetStr32(val); return *this; }
 
-		TdsAny & operator= (const void *val) { setPtr(val); return *this; }
+		TdsAny & operator= (const void *val) { SetPtr(val); return *this; }
 
 	private:
 

@@ -2,17 +2,19 @@
 \alias{readex.gdsn}
 \title{Read data field of a GDS node with a selection}
 \description{
-	Gets data from a GDS node with subset selection, in a CoreArray Genomic
-Data Structure (GDS) file.
+	Get data from a GDS node with subset selection.
 }
 
 \usage{
-readex.gdsn(node, sel=NULL)
+readex.gdsn(node, sel=NULL, simplify=TRUE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, the GDS node}
-	\item{sel}{a list of m logical vectors, where m is the number of dimensions of \code{node}
-		and each logical vector should have the same size of dimension in \code{node}}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
+	\item{sel}{a list of \code{m} logical vectors, where \code{m} is the
+		number of dimensions of \code{node} and each logical vector should
+		have the same size of dimension in \code{node}}
+	\item{simplify}{if \code{TRUE}, the results are reduced to a vector
+		if possible}
 }
 \value{
 	Return an array.
@@ -21,16 +23,16 @@ readex.gdsn(node, sel=NULL)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{append.gdsn}},
-	\code{\link[gdsfmt]{write.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
+	\code{\link{read.gdsn}}, \code{\link{append.gdsn}},
+	\code{\link{write.gdsn}}, \code{\link{add.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
-add.gdsn(f, "vector", val=1:128)
-add.gdsn(f, "matrix", val=matrix(as.character(1:(10*6)), nrow=10))
+add.gdsn(f, "vector", 1:128)
+add.gdsn(f, "matrix", matrix(as.character(1:(10*6)), nrow=10))
 f
 
 # read vector

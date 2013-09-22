@@ -2,40 +2,42 @@
 \alias{createfn.gds}
 \title{Create a GDS file}
 \description{
-	Creates a new CoreArray Genomic Data Structure (GDS) file.
+	Create a new CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-createfn.gds(fn)
+createfn.gds(filename)
 }
 \arguments{
-	\item{fn}{the file name of a new GDS file to be created}
+	\item{filename}{the file name of a new GDS file to be created}
 }
 \details{
 	Keep in mind that the new file may not actually be written to disk until
-\code{\link[gdsfmt]{closefn.gds}} or \code{\link[gdsfmt]{sync.gds}} is called.
+\code{\link{closefn.gds}} or \code{\link{sync.gds}} is called.
 }
 \value{
-	Return an object of class \code{\link[gdsfmt]{gds.class}}:
-	\item{filename}{the file name to be created.}
-	\item{id}{ID of GDS file, internal use.}
-	\item{root}{an object of class \code{\link[gdsfmt]{gdsn.class}},
-		the root of hierachical structure.}
+	Return an object of class \code{\link{gds.class}}:
+	\item{filename}{the file name to be created}
+	\item{id}{internal file id}
+	\item{root}{an object of class \code{\link{gdsn.class}},
+		the root of hierachical structure}
 	\item{readonly}{whether it is read-only or not}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{openfn.gds}}, \code{\link[gdsfmt]{closefn.gds}}
+	\code{\link{openfn.gds}}, \code{\link{closefn.gds}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-f <- createfn.gds(fn="test.gds")
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 # add a list to "test.gds"
 node <- add.gdsn(f, val=list(x=c(1,2), y=c("T", "B", "C"), z=TRUE))
+
+f
 
 closefn.gds(f)
 }

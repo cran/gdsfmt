@@ -1,17 +1,21 @@
-Changes in 0.9.15:
+Changes in 1.0.0:
+
+	* support long vectors (>= R v3.0)
+	* ~20x speedup for reading characters from a GDS file
+	* speed improvement for other primitive data types
+	* replace all '.C' by '.Call'
+	* improve the function 'objdesp.gdsn'
+	* add a new argument 'replace' in 'add.gdsn', which allows replacing the existing variable by a new one
+	* a warning is given, when a variable with missing characters is written to a GDS object
+	* fix a bug in 'delete.gdsn'
+	* add a new argument 'simplify' to the functions 'read.gdsn' and 'readex.gdsn'
+
+
+Changes in 0.9.13 - 0.9.15:
 
 	* fix an issue of memory leak when a compressor or decompressor is loaded
-
-
-Changes in 0.9.14:
-
 	* fixes an error in the CITATION file
-
-
-Changes in 0.9.13:
-
 	* compiler issue fix: Solaris 10
-	* fixes an error in the CITATION file
 	* uses 'inherits' to check the inheritance of object install 'class() =='
 
 
@@ -54,23 +58,10 @@ Changes in 0.9.10:
 	* change 'dwstring' to 'string32' in add.gdsn
 
 
-Changes in 0.9.9:
+Changes in 0.9.1-0.9.9:
 
 	* to support GCC4.7 compiler
-
-
-Changes in 0.9.8:
-
-	* fix minor bugs
-
-
-Changes in 0.9.7:
-
 	* add two functions to support the parallel package (R 2.14.0): 'clusterApply.gdsn', 'clusterApplylt.gdsn'
-
-
-Changes in 0.9.1-0.9.6:
-
 	* fix minor bugs
 
 

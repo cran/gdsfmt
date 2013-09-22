@@ -2,19 +2,17 @@
 \alias{addfile.gdsn}
 \title{Add a GDS node with a file}
 \description{
-	Adds a GDS node with a file, in a CoreArray Genomic Data Structure (GDS) file.
+	Add a file to a GDS file as a node.
 }
 
 \usage{
-addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default",
-	"ZIP.max", ""))
+addfile.gdsn(node, name, filename,
+	compress=c("ZIP", "ZIP.fast", "ZIP.default", "ZIP.max", ""))
 }
 
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}} or
-		\code{\link[gdsfmt]{gds.class}}:
-		"gdsn" -- the node of hierarchical structure;
-		"gdsclass" -- the root of hieracrchical structure}
+	\item{node}{an object of class \code{\link{gdsn.class}} or
+		\code{\link{gds.class}}}
 	\item{name}{the variable name of the added node}
 	\item{filename}{the file name of input stream.}
 	\item{compress}{the compression method can be "", "ZIP", "ZIP.fast",
@@ -22,27 +20,25 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default",
 }
 
 \details{
-	\code{name}  if missing, ``Item n'' is assigned to \code{name}, where \code{n} is
-		the number of child nodes + 1.
+	\code{name}  if missing, ``Item n'' is assigned to \code{name}, where
+		\code{n} is the number of child nodes + 1.
 
-	\code{compress}  Z compression algorithm can be used to deflate the data stored in
-		the GDS file. "ZIP" option is equivalent to "ZIP.default". "ZIP.fast", "ZIP.default"
-		and "ZIP.max" correspond to different compression levels. In the comprssion mode, you
-		can not change the non-first dimension and read data field. Call
-		\code{\link[gdsfmt]{readmode.gdsn}} to return read mode.
+	\code{compress}  Z compression algorithm can be used to deflate the data
+		stored in the GDS file. "ZIP" option is equivalent to "ZIP.default".
+		"ZIP.fast", "ZIP.default" and "ZIP.max" correspond to different
+		compression levels. In the comprssion mode, you can not change the
+		non-first dimension and read data field. Call
+		\code{\link{readmode.gdsn}} to return read mode.
 }
 
 \value{
-	An object of class \code{\link[gdsfmt]{gdsn.class}} of the added node.
+	An object of class \code{\link{gdsn.class}}.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}},
-	\code{\link[gdsfmt]{getfile.gdsn}}
+	\code{\link{getfile.gdsn}}, \code{\link{add.gdsn}}
 }
 
 \examples{
@@ -50,7 +46,7 @@ addfile.gdsn(node, name, filename, compress=c("ZIP", "ZIP.fast", "ZIP.default",
 obj <- list(X=1:10, Y=seq(1, 10, 0.1))
 save(obj, file="tmp.RData")
 
-# cteate a GDS file "test.gds"
+# cteate a GDS file
 f <- createfn.gds("test.gds")
 
 add.gdsn(f, "double", val=seq(1, 1000, 0.4))

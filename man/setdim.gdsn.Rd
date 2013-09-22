@@ -2,17 +2,17 @@
 \alias{setdim.gdsn}
 \title{Set the dimension of data field}
 \description{
-	Assigns a new dimension to the data field of a GDS node, in a CoreArray
-Genomic Data Structure (GDS) file.
+	Assign new dimensions to the data field of a GDS node.
 }
 
 \usage{
 setdim.gdsn(node, valdim)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
-	\item{valdim}{the new dimension for the array to be created, which is a
-		vector of length one or more giving the maximal indices in each dimension}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
+	\item{valdim}{the new dimension(s) for the array to be created, which
+		is a vector of length one or more giving the maximal indices in
+		each dimension}
 }
 \value{
 	Returns \code{node}.
@@ -21,17 +21,20 @@ setdim.gdsn(node, valdim)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
-	\code{\link[gdsfmt]{append.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
+	\code{\link{read.gdsn}}, \code{\link{write.gdsn}},
+	\code{\link{append.gdsn}}, \code{\link{add.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
+
 n <- add.gdsn(f, "int", val=as.integer(1:100))
 f
+
 setdim.gdsn(n, c(120, 4))
 f
+
 closefn.gds(f)
 }
 

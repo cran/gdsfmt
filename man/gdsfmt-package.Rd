@@ -4,42 +4,43 @@
 \docType{package}
 \title{CoreArray Genomic Data Structure (GDS) R Interface}
 \description{
-	R interface of CoreArray GDS is based on the CoreArray project initiated and
-developed from 2007.
+	R interface of CoreArray GDS is based on the CoreArray project initiated
+and developed from 2007.
 }
 \details{
 \tabular{ll}{
 	Package: \tab gdsfmt\cr
 	Type: \tab Package\cr
-	Version: \tab 0.9.12\cr
-	Date: \tab 2013-05-28\cr
+	Version: \tab 1.0.0\cr
 	License: \tab LGPL version 3\cr
 }
-	R interface of CoreArray GDS is based on the CoreArray project initiated and
-developed by Xiuwen Zheng from 2007. The CoreArray project is to develop portable,
-scalable, bioinformatics data visualization and storage technologies.
+	R interface of CoreArray GDS is based on the CoreArray project initiated
+and developed from 2007 (\url{http://corearray.sourceforge.net}). The CoreArray
+project is to develop portable, scalable, bioinformatics data visualization
+and storage technologies.
 
-	R is the most popular statistical environment, but one not necessarily optimized
-for high performance or parallel computing which ease the burden of large-scale
-calculations. To support efficient data management in parallel for numerical genomic
-data, we developed the Genomic Data Structure (GDS) file format. \code{gdsfmt} provides
-fundamental functions to support accessing data in parallel, and allows future R
-packages to call these functions.
+	R is the most popular statistical environment, but one not necessarily
+optimized for high performance or parallel computing which ease the burden of
+large-scale calculations. To support efficient data management in parallel for
+numerical genomic data, we developed the Genomic Data Structure (GDS) file
+format. \code{gdsfmt} provides fundamental functions to support accessing data
+in parallel, and allows future R packages to call these functions.
 
 	Forums:	\url{http://sourceforge.net/projects/corearray/forums}
 }
 \references{
 	\url{http://corearray.sourceforge.net}
 
-	Xiuwen Zheng, David Levine, Jess Shen, Stephanie M. Gogarten, Cathy Laurie,
-Bruce S. Weir. A High-performance Computing Toolset for Relatedness and Principal
-Component Analysis of SNP Data. Bioinformatics 2012; doi: 10.1093/bioinformatics/bts606
+	Xiuwen Zheng, David Levine, Jess Shen, Stephanie M. Gogarten,
+Cathy Laurie, Bruce S. Weir. A High-performance Computing Toolset for
+Relatedness and Principal Component Analysis of SNP Data.
+Bioinformatics 2012; doi: 10.1093/bioinformatics/bts606
 }
 \author{Xiuwen Zheng \email{zhengx@u.washington.edu}}
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 L <- -2500:2499
 
 # commom types

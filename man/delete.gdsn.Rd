@@ -2,34 +2,39 @@
 \alias{delete.gdsn}
 \title{Delete a GDS node}
 \description{
-	Deletes a specified node, in a CoreArray Genomic Data Structure (GDS) file.
+	Delete a specified GDS node.
 }
 
 \usage{
-delete.gdsn(node)
+delete.gdsn(node, force=FALSE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
+	\item{force}{if \code{FALSE}, it is not allowed to delete a non-empty
+		folder}
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{index.gdsn}},
-	\code{\link[gdsfmt]{name.gdsn}}, \code{\link[gdsfmt]{add.gdsn}}
+	\code{\link{add.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-f <- createfn.gds(fn="test.gds")
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 # add a list to "test.gds"
 node <- add.gdsn(f, name="list", val=list(x=c(1,2), y=c("T", "B", "C"), z=TRUE))
 f
 
-# delete "node"
+\dontrun{
+# delete "node", but an error occurs
 delete.gdsn(node)
+}
+
+# delete "node"
+delete.gdsn(node, TRUE)
 
 closefn.gds(f)
 }

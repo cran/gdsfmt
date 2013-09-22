@@ -164,6 +164,18 @@ namespace CoreArray
 		ErrAllocator(TAllocLevel OldLevel, TAllocLevel NewLevel);
 	};
 
+	class ErrAllocRead: public ErrAllocator
+	{
+	public:
+		ErrAllocRead(): ErrAllocator(eaRead) {}
+	};
+
+	class ErrAllocWrite: public ErrAllocator
+	{
+	public:
+		ErrAllocWrite(): ErrAllocator(eaWrite) {}
+	};
+
 
 	void InitAllocator(TdAllocator &Allocator, bool CanRead, bool CanWrite,
 		TAllocLevel vLevel=blChunkMemory, CBufdStream* BufFilter=NULL);

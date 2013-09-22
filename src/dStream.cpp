@@ -86,108 +86,108 @@ ErrAllocator::ErrAllocator(TAllocLevel OldLevel, TAllocLevel NewLevel)
 static COREARRAY_FASTCALL void InvalidRead(TdAllocator &obj, const TdPtr64 I,
 	void *Buf, ssize_t Len)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL int InvalidCompare(TdAllocator &obj, const TdPtr64 I,
 	const void *Buf, ssize_t Len)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL UInt8 InvalidRead8(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL UInt16 InvalidRead16(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL UInt32 InvalidRead32(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL UInt64 InvalidRead64(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL float InvalidRead32f(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL double InvalidRead64f(TdAllocator &obj, const TdPtr64 I)
 {
-	throw ErrAllocator(ErrAllocator::eaRead);
+	throw ErrAllocRead();
 }
 
 static COREARRAY_FASTCALL void InvalidCapacity(TdAllocator &obj, const TdPtr64 Size)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite(TdAllocator &obj, const TdPtr64 I,
 	void const* Buf, ssize_t Len)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidFill(TdAllocator &obj, const TdPtr64 I,
 	const TdPtr64 Len, UInt8 Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidMove(TdAllocator &obj, const TdPtr64 Source,
 	const TdPtr64 Dest, const TdPtr64 Len)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidSwap(TdAllocator &obj, const TdPtr64 I1,
 	const TdPtr64 I2, const TdPtr64 Len)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite8(TdAllocator &obj, const TdPtr64 I,
 	UInt8 Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite16(TdAllocator &obj, const TdPtr64 I,
 	UInt16 Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite32(TdAllocator &obj, const TdPtr64 I,
 	UInt32 Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite64(TdAllocator &obj, const TdPtr64 I,
 	const UInt64 Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite32f(TdAllocator &obj, const TdPtr64 I,
 	const float Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 static COREARRAY_FASTCALL void InvalidWrite64f(TdAllocator &obj, const TdPtr64 I,
 	const double Value)
 {
-	throw ErrAllocator(ErrAllocator::eaWrite);
+	throw ErrAllocWrite();
 }
 
 // blChunkMemory

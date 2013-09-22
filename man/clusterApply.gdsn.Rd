@@ -2,9 +2,8 @@
 \alias{clusterApply.gdsn}
 \title{Apply functions over matrix margins in parallel}
 \description{
-	Returns a vector or list of values obtained by applying a function to
-margins of a matrix in parallel, in a CoreArray Genomic Data Structure
-(GDS) file.
+	Return a vector or list of values obtained by applying a function to
+margins of a GDS matrix in parallel.
 }
 
 \usage{
@@ -35,14 +34,14 @@ exploit the high-speed memory instead of disk.
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{apply.gdsn}}
+	\code{\link{apply.gdsn}}
 }
 
 \examples{
 ###########################################################
 # prepare a GDS file
 
-# cteate the GDS file "test1.gds"
+# cteate a GDS file
 f <- createfn.gds("test1.gds")
 
 (n <- add.gdsn(f, "matrix", val=matrix(1:(10*6), nrow=10)))

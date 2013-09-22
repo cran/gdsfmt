@@ -2,17 +2,17 @@
 \alias{cleanup.gds}
 \title{Clean up fragments}
 \description{
-	Cleans up the fragments of a CoreArray Genomic Data Structure (GDS) file.
+	Clean up the fragments of a CoreArray Genomic Data Structure (GDS) file.
 }
 
 \usage{
-cleanup.gds(fn, deep=FALSE, verbose=TRUE)
+cleanup.gds(filename, deep=FALSE, verbose=TRUE)
 }
 \arguments{
-	\item{fn}{the file name of a GDS file to be opened}
-	\item{deep}{if TRUE, performs a deep-construction strategy;
+	\item{filename}{the file name of a GDS file to be opened}
+	\item{deep}{if \code{TRUE}, performs a deep-construction strategy;
 		otherwise, performs fast construction}
-	\item{verbose}{if TRUE, show information}
+	\item{verbose}{if \code{TRUE}, show information}
 }
 \value{
 	None.
@@ -21,13 +21,13 @@ cleanup.gds(fn, deep=FALSE, verbose=TRUE)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{openfn.gds}}, \code{\link[gdsfmt]{createfn.gds}},
-	\code{\link[gdsfmt]{closefn.gds}}
+	\code{\link{openfn.gds}}, \code{\link{createfn.gds}},
+	\code{\link{closefn.gds}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 # commom types
 add.gdsn(f, "int", val=as.integer(1:10000))
@@ -43,10 +43,12 @@ f
 
 closefn.gds(f)
 
+
 # clean up fragments
 cleanup.gds("test.gds")
 
-# cteate the GDS file "test.gds"
+
+# open ...
 (f <- openfn.gds("test.gds"))
 closefn.gds(f)
 }

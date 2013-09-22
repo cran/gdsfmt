@@ -2,21 +2,23 @@
 \alias{append.gdsn}
 \title{Append data to a specified variable}
 \description{
-	Appends data to the data field of a GDS node, in a CoreArray Genomic Data
-Structure (GDS) file.
+	Append new data to the data field of a GDS node.
 }
 
 \usage{
-append.gdsn(node, val, check = TRUE)
+append.gdsn(node, val, check=TRUE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
-	\item{val}{data to be appended}
-	\item{check}{whether a warning is given, when appended data can not match
-		the capability of data field}
+	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}}
+	\item{val}{new data to be appended}
+	\item{check}{whether a warning is given, when appended data can not
+		match the capability of data field; if \code{val} is character-type,
+		a warning will be shown if there is any \code{NA} in \code{val}}
 }
 \details{
-	\code{storage.mode(val)} should be "integer", "double", "character", or "logical".
+	\code{storage.mode(val)} should be "integer", "double", "character"
+or "logical". GDS format does not support missing characters \code{NA},
+and any \code{NA} will be converted to a blank string \code{""}.
 }
 \value{
 	None.
@@ -25,13 +27,13 @@ append.gdsn(node, val, check = TRUE)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}},
-	\code{\link[gdsfmt]{add.gdsn}}
+	\code{\link{read.gdsn}}, \code{\link{write.gdsn}},
+	\code{\link{add.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 # commom types
 n <- add.gdsn(f, "int", val=matrix(as.integer(1:10000), nrow=100, ncol=100),
@@ -49,11 +51,19 @@ f
 append.gdsn(n, -51:-100)
 f
 
-# you should call "readmode.gdsn", before reading
+# you should call "readmode.gdsn" before reading, since compress="ZIP"
 readmode.gdsn(n)
 
 # check the last column
 read.gdsn(n, start=c(1, 102), count=c(-1, 1))
+
+
+# characters
+n <- add.gdsn(f, "string", val=as.character(1:100))
+append.gdsn(n, as.character(rep(NA, 25)))
+
+read.gdsn(n)
+
 
 # close the gds file
 closefn.gds(f)

@@ -9,9 +9,9 @@
 assign.gdsn(dest.obj, src.obj, append)
 }
 \arguments{
-	\item{dest.obj}{an object of class \code{\link[gdsfmt]{gdsn.class}},
+	\item{dest.obj}{an object of class \code{\link{gdsn.class}},
 		a destination GDS node}
-	\item{src.obj}{an object of class \code{\link[gdsfmt]{gdsn.class}},
+	\item{src.obj}{an object of class \code{\link{gdsn.class}},
 		a source GDS node}
 	\item{append}{if TRUE, append data; otherwise, replace the old one}
 }
@@ -19,7 +19,7 @@ assign.gdsn(dest.obj, src.obj, append)
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{write.gdsn}}
+	\code{\link{read.gdsn}}, \code{\link{write.gdsn}}
 }
 
 \keyword{GDS}

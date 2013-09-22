@@ -677,7 +677,7 @@ void CdGDSObj::_GDSObjInitProc(CdObjClassMgr &Sender, CdObject *dObj, void *Data
 
 // CdGDSFolder
 
-static const char *erNameExist = "Name \"%s\" exists.";
+static const char *erNameExist = "The name \"%s\" exists.";
 static const char *erFolderItem = "Invalid index %d.";
 static const char *erFolderName = "Invalid name \"%s\".";
 static const char *erNoFolderName = "There is not a folder named \"%s\".";
@@ -739,6 +739,15 @@ CdGDSFolder &CdGDSFolder::AddFolder(const UTF16String &Name)
 
 CdGDSObj *CdGDSFolder::AddObj(const UTF16String &Name, CdGDSObj *val)
 {
+	return InsertObj(-1, Name, val);
+}
+
+CdGDSObj *CdGDSFolder::InsertObj(int index, const UTF16String &Name,
+	CdGDSObj *val)
+{
+	if ((index < -1) || (index > (int)fList.size()))
+		throw ErrGDSObj("CdGDSFolder::InsertObj, invalid 'index' %d.", index);
+
 	_CheckGDSStream();
 
 	if (_HasName(Name))
@@ -769,13 +778,16 @@ CdGDSObj *CdGDSFolder::AddObj(const UTF16String &Name, CdGDSObj *val)
 	val->fFolder = this;
 
 	I.Name = Name; I.Obj = val;
-	fList.push_back(I);
+	if (index < 0)
+		fList.push_back(I);
+	else
+		fList.insert(fList.begin()+index, I);
 	fChanged = true;
 
 	return val;
 }
 
-void CdGDSFolder::DeleteObj(int Index)
+void CdGDSFolder::DeleteObj(int Index, bool force)
 {
 	if ((Index < 0) || (Index >= (int)fList.size()))
 		throw ErrGDSObj(erObjItem, Index);
@@ -783,22 +795,38 @@ void CdGDSFolder::DeleteObj(int Index)
 	vector<TItem>::iterator it = fList.begin() + Index;
 	if (it->Obj != NULL)
 	{
-		CdBlockStream *s = it->Obj->fGDSStream;
-		#ifdef COREARRAY_DEBUG_CODE
+		CdBlockStream *stream = it->Obj->fGDSStream;
+
+		// check whether it is a folder
+		if (dynamic_cast<CdGDSFolder*>(it->Obj))
+		{
+			CdGDSFolder *folder = static_cast<CdGDSFolder*>(it->Obj);
+			if (!force && (folder->Count()>0))
+			{
+				throw ErrGDSObj(
+					"Please delete the item(s) in the folder before removing it.");
+			}
+			folder->ClearObj(force);
+		}
+
+	#ifdef COREARRAY_DEBUG_CODE
 		if (it->Obj->Release() != 0)
-			throw ErrGDSObj("Object Release() should return ZERO.");
-		#else
+		{
+			throw ErrGDSObj(
+				"Internal Error: Object 'Release()' should return ZERO.");
+		}
+	#else
 		it->Obj->Release();
-		#endif
-		if (fGDSStream && s)
-        	fGDSStream->Collection().DeleteBlockStream(s->ID());
+	#endif
+		if (fGDSStream && stream)
+			fGDSStream->Collection().DeleteBlockStream(stream->ID());
 	}
     fList.erase(it);
 
 	fChanged = true;
 }
 
-void CdGDSFolder::DeleteObj(CdGDSObj *val)
+void CdGDSFolder::DeleteObj(CdGDSObj *val, bool force)
 {
 	if (val == NULL) return;
 
@@ -808,11 +836,21 @@ void CdGDSFolder::DeleteObj(CdGDSObj *val)
 	{
 		if (it->Obj == val)
 		{
-			DeleteObj(Index);
+			DeleteObj(Index, force);
 			return;
 		}
 	}
 	throw ErrGDSObj();
+}
+
+void CdGDSFolder::ClearObj(bool force)
+{
+	vector<CdGDSObj *> lst;
+	for (size_t i=0; i < fList.size(); i++)
+		lst.push_back(ObjItem(i));
+
+	for (size_t i=0; i < lst.size(); i++)
+		DeleteObj(lst[i], force);	
 }
 
 CdGDSFolder & CdGDSFolder::DirItem(int Index)
@@ -924,6 +962,17 @@ void CdGDSFolder::SplitPath(const UTF16String &FullName, UTF16String &Path,
 		Path = FullName.substr(0, pos);
         Name = FullName.substr(pos+1, FullName.size()-pos-1);
     }
+}
+
+int CdGDSFolder::IndexObj(CdGDSObj *Obj)
+{
+	vector<CdGDSObj*> lst;
+	for (size_t i=0; i < fList.size(); i++)
+	{
+		if (Obj == ObjItem(i))
+			return i;
+	}
+	return -1;
 }
 
 bool CdGDSFolder::HasChild(CdGDSObj *Obj, bool SubFolder)
@@ -1276,6 +1325,8 @@ TdPtr64 CdGDSStreamContainer::GetSize()
 
 void CdGDSStreamContainer::SetPackedMode(const char *Mode)
 {
+	static const char *erMethod = "Invalid compression method '%s'.";
+
 	if (fPipeInfo ? (!fPipeInfo->Equal(Mode)) : true)
 	{
 		if (vAlloc_Stream && fGDSStream)
@@ -1285,7 +1336,7 @@ void CdGDSStreamContainer::SetPackedMode(const char *Mode)
 			if (fPipeInfo) delete fPipeInfo;
 			fPipeInfo = dStreamPipeMgr.Match(*this, Mode);
 			if ((fPipeInfo==NULL) && (*Mode!=0))
-				throw ErrGDSStreamContainer("Invalid packed mode '%s'.", Mode);
+				throw ErrGDSStreamContainer(erMethod, Mode);
 
 			{
 				TdAutoRef<CdTempStream> Temp(new CdTempStream(""));
@@ -1315,7 +1366,7 @@ void CdGDSStreamContainer::SetPackedMode(const char *Mode)
 				delete fPipeInfo;
 			fPipeInfo = dStreamPipeMgr.Match(*this, Mode);
 			if ((fPipeInfo==NULL) && (*Mode!=0))
-				throw ErrGDSStreamContainer("Invalid packed mode '%s'.", Mode);
+				throw ErrGDSStreamContainer(erMethod, Mode);
 		}
 	}
 }

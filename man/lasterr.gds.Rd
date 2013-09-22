@@ -1,8 +1,9 @@
 \name{lasterr.gds}
 \alias{lasterr.gds}
-\title{Return the last error}
+\title{Return the last error message}
 \description{
-	Gets the last error of gdsfmt.
+	Get the last error message and clear the error message(s) in the
+gdsfmt package.
 }
 
 \usage{

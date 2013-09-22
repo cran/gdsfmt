@@ -2,39 +2,41 @@
 \alias{name.gdsn}
 \title{Return the variable name of a node}
 \description{
-	Gets the variable name of a node, in a CoreArray Genomic Data Structure (GDS) file.
+	Get the variable name of a GDS node.
 }
 
 \usage{
-name.gdsn(node, fullname = FALSE)
+name.gdsn(node, fullname=FALSE)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, a GDS node}
-	\item{fullname}{if FALSE, return the node name (by default), otherwise the full name}
+	\item{node}{an object of class \code{\link{gdsn.class}}, a GDS node}
+	\item{fullname}{if \code{FALSE}, return the node name (by default);
+		otherwise the name with a full path}
 }
 \value{
-	A vector of charactors.
+	Charactors.
 }
 
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{cnt.gdsn}}, \code{\link[gdsfmt]{objdesp.gdsn}},
-	\code{\link[gdsfmt]{ls.gdsn}}, \code{\link[gdsfmt]{rename.gdsn}}
+	\code{\link{cnt.gdsn}}, \code{\link{objdesp.gdsn}},
+	\code{\link{ls.gdsn}}, \code{\link{rename.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
+# cteate a GDS file
 f <- createfn.gds("test.gds")
 
 # add a list to "test.gds"
-node <- add.gdsn(f, name="list", val=list(x=c(1,2), y=c("T", "B", "C"), z=TRUE))
+add.gdsn(f, name="list", val=list(x=c(1,2), y=c("T","B","C"), z=TRUE))
+node <- index.gdsn(f, "list/x")
 
 name.gdsn(node)
-# "list"
+# "x"
 
 name.gdsn(node, fullname=TRUE)
-# "test/list"
+# "list/x"
 
 closefn.gds(f)
 }

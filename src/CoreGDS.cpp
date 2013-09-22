@@ -846,7 +846,7 @@ extern "C"
 	{
 		CORETRY
 			TdsAny &D = Node->Attribute()[Index];
-			string n = D.getStr8();
+			string n = D.GetStr8();
 			if (OutStr)
 				strncpy(OutStr, n.c_str(), OutBufLen);
 			return n.length();
@@ -857,7 +857,7 @@ extern "C"
 	{
 		CORETRY
 			TdsAny &D = Node->Attribute()[Index];
-			if (D.getStr8() != Str)
+			if (D.GetStr8() != Str)
 			{
 				D.Assign(Str);
 				Node->Attribute().Changed();

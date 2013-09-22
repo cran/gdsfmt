@@ -2,8 +2,8 @@
 \alias{apply.gdsn}
 \title{Apply functions over margins}
 \description{
-	Returns a vector or list of values obtained by applying a function to margins of a
-matrix or array, in a CoreArray Genomic Data Structure (GDS) file.
+	Return a vector or list of values obtained by applying a function to
+margins of a GDS matrix or array.
 }
 
 \usage{
@@ -11,19 +11,21 @@ apply.gdsn(node, margin, FUN, selection=NULL,
 	as.is = c("list", "integer", "double", "character", "none"), ...)
 }
 \arguments{
-	\item{node}{an object of class \code{\link[gdsfmt]{gdsn.class}}, or a list of objects
-		of class \code{\link[gdsfmt]{gdsn.class}}}
-	\item{margin}{an integer giving the subscripts which the function will be applied
-		over. E.g., for a matrix 1 indicates rows, 2 indicates columns}
+	\item{node}{an object of class \code{\link{gdsn.class}}, or a
+		list of objects of class \code{\link{gdsn.class}}}
+	\item{margin}{an integer giving the subscripts which the function will
+		be applied over. E.g., for a matrix 1 indicates rows, 2 indicates
+		columns}
 	\item{FUN}{the function to be applied}
-	\item{selection}{a list or NULL; if a list, it is a list of logical vectors according
-		to dimensions indicating selection; if NULL, uses all data}
+	\item{selection}{a list or NULL; if a list, it is a list of logical
+		vectors according to dimensions indicating selection; if NULL, uses
+		all data}
 	\item{as.is}{returned value: a list, an integer vector, etc}
 	\item{...}{optional arguments to \code{FUN}}
 }
 \details{
-	The algorithm is optimized by blocking the computations to exploit the high-speed
-memory instead of disk.
+	The algorithm is optimized by blocking the computations to exploit the
+high-speed memory instead of disk.
 }
 \value{
 	A vector or list of values.
@@ -32,13 +34,13 @@ memory instead of disk.
 \references{\url{http://sourceforge.net/projects/corearray/}}
 \author{Xiuwen Zheng}
 \seealso{
-	\code{\link[gdsfmt]{read.gdsn}}, \code{\link[gdsfmt]{readex.gdsn}},
-	\code{\link[gdsfmt]{clusterApply.gdsn}}
+	\code{\link{read.gdsn}}, \code{\link{readex.gdsn}},
+	\code{\link{clusterApply.gdsn}}
 }
 
 \examples{
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 (n <- add.gdsn(f, "matrix", val=matrix(1:(10*6), nrow=10)))
 read.gdsn(index.gdsn(f, "matrix"))
@@ -65,8 +67,8 @@ closefn.gds(f)
 # Multiple variables
 #
 
-# cteate the GDS file "test.gds"
-(f <- createfn.gds("test.gds"))
+# cteate a GDS file
+f <- createfn.gds("test.gds")
 
 X <- matrix(1:50, nrow=10)
 Y <- matrix((1:50)/100, nrow=10)

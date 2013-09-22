@@ -43,6 +43,7 @@
 #include <bitset>
 #include <ctime>
 
+
 namespace CoreArray
 {
 	/// Message code
@@ -415,7 +416,8 @@ namespace CoreArray
 	struct TIterDataExt
 	{
 		void *pBuf;
-		Int32 LastDim, *Index;
+		ssize_t LastDim;
+		Int32 *Index;
 		CdSequenceX *Seq;
 	};
 
@@ -438,6 +440,7 @@ namespace CoreArray
 		virtual int DimCnt() const = 0;
 		virtual void AddDim(Int32 NewDimLen = -1) = 0;
 		virtual void DeleteDim() = 0;
+		virtual void ClearDim() = 0;
 		virtual void GetDimLen(Int32 *Dims) const = 0;
 		virtual void SetDimLen(const Int32 *Lens, size_t LenCnt) = 0;
 		virtual Int32 GetDLen(int DimIndex) const = 0;
@@ -518,7 +521,7 @@ namespace CoreArray
 	{
 		CdVectorX *Seq;
 		char *pBuf;
-		Int32 LastDim;
+		ssize_t LastDim;
 		TdPtr64 p64;
     	bool AppendMode; // true -- call from "Append"
 	};
@@ -554,6 +557,7 @@ namespace CoreArray
 
 		virtual void AddDim(Int32 NewDimLen = -1);
 		virtual void DeleteDim();
+		virtual void ClearDim();
 		virtual void GetDimLen(Int32 *Dims) const;
 		virtual void SetDimLen(const Int32 *Lens, size_t LenCnt);
 
@@ -919,7 +923,7 @@ namespace CoreArray
 		}
 		COREARRAY_INLINE static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
-			for (size_t L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				if (*Sel++)
 				{
@@ -947,7 +951,7 @@ namespace CoreArray
 			Rec.pBuf += Lx;
 		#else
 			char buf[ARRAY_BUF_LEN];
-			Int32 Len = Rec.LastDim;
+			ssize_t Len = Rec.LastDim;
 			TInside *s = (TInside*)Rec.pBuf;
 			while (Len > 0)
 			{
@@ -982,7 +986,7 @@ namespace CoreArray
 		static void rArray(TIterVDataExt &Rec)
 		{
             char buf[ARRAY_BUF_LEN];
-			Int32 Len = Rec.LastDim;
+			ssize_t Len = Rec.LastDim;
 			TOutside *p = (TOutside*)Rec.pBuf;
 
 			while (Len > 0)
@@ -1002,7 +1006,7 @@ namespace CoreArray
 		static void rArrayEx(TIterVDataExt &Rec, const CBOOL *Sel)
 		{
 			char buf[ARRAY_BUF_LEN];
-			Int32 Len = Rec.LastDim;
+			ssize_t Len = Rec.LastDim;
 			TOutside *p = (TOutside*)Rec.pBuf;
 
 			while (Len > 0)
@@ -1041,7 +1045,7 @@ namespace CoreArray
 		static void wArray(TIterVDataExt &Rec)
 		{
 			char buf[ARRAY_BUF_LEN];
-			Int32 Len = Rec.LastDim;
+			ssize_t Len = Rec.LastDim;
 			TOutside *s = (TOutside*)Rec.pBuf;
 			while (Len > 0)
 			{
@@ -1733,13 +1737,15 @@ namespace CoreArray
 			ssize_t Lx = Rec.Seq->ElmSize();
 			typename TdTraits<TInside>::TType buf(Lx, '\x0');
 			const typename TdTraits<TInside>::ElmType Ch = 0;
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				buf.resize(Lx);
 				Rec.Seq->Allocator().Read(Rec.p64, (void*)buf.c_str(), Lx);
 				size_t pos = buf.find(Ch);
 				if (pos != string::npos) buf.resize(pos);
-				*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(buf);
+				*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(
+					typename TdTraits<TInside>::TType(buf.begin(), buf.end()));
 				Rec.p64 += Lx;
 			}
 			Rec.pBuf = (char*)pt;
@@ -1751,7 +1757,7 @@ namespace CoreArray
 			ssize_t Lx = Rec.Seq->ElmSize();
 			typename TdTraits<TInside>::TType buf(Lx, '\x0');
 			const typename TdTraits<TInside>::ElmType Ch = 0;
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				if (*Sel++)
 				{
@@ -1759,7 +1765,8 @@ namespace CoreArray
 					Rec.Seq->Allocator().Read(Rec.p64, (void*)buf.c_str(), Lx);
 					size_t pos = buf.find(Ch);
 					if (pos != string::npos) buf.resize(pos);
-					*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(buf);
+					*pt++ = ValCvt<TOutside, typename TdTraits<TInside>::TType>(
+						typename TdTraits<TInside>::TType(buf.begin(), buf.end()));
 				}
 				Rec.p64 += Lx;
 			}
@@ -1793,7 +1800,7 @@ namespace CoreArray
 			{
 				ssize_t MaxLen = 0;
 				pt = (TOutside*)Rec.pBuf;
-				for (Int32 L = Rec.LastDim; L > 0; L--)
+				for (ssize_t L = Rec.LastDim; L > 0; L--)
 				{
 					buf = ValCvt<typename TdTraits<TInside>::TType, TOutside>(*pt++);
 					if (MaxLen < (ssize_t)buf.length())
@@ -1806,7 +1813,7 @@ namespace CoreArray
 
 			ssize_t Lx = Rec.Seq->fElmSize;
 			pt = (TOutside*)Rec.pBuf;
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				buf = ValCvt<typename TdTraits<TInside>::TType, TOutside>(*pt++);
 				ssize_t len = buf.length() * TdTraits<TInside>::BitOf / 8;
@@ -2049,7 +2056,7 @@ namespace CoreArray
 			CdVarLenStr<TInside> *IT = (CdVarLenStr<TInside> *)tmp;
 			IT->_Find_Position(Rec.p64);
 			TOutside *pt = (TOutside*)Rec.pBuf;
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				*pt++ = ValCvt<TOutside>(IT->_ReadString());
 				Rec.p64 += sizeof(typename TdTraits<TInside>::ElmType);
@@ -2063,7 +2070,7 @@ namespace CoreArray
 			CdVarLenStr<TInside> *IT = (CdVarLenStr<TInside> *)tmp;
 			IT->_Find_Position(Rec.p64);
 			TOutside *pt = (TOutside*)Rec.pBuf;
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				if (*Sel++)
 					*pt++ = ValCvt<TOutside>(IT->_ReadString());
@@ -2099,7 +2106,7 @@ namespace CoreArray
 
 			if (!Rec.AppendMode)
 				IT->_Find_Position(Rec.p64);
-			for (Int32 L = Rec.LastDim; L > 0; L--)
+			for (ssize_t L = Rec.LastDim; L > 0; L--)
 			{
 				val = ValCvt<typename TInside::TType, TOutside>(*pt++);
 				if (!Rec.AppendMode)
