@@ -44,6 +44,7 @@
 using namespace CoreArray;
 #endif
 
+#define STRICT_R_HEADERS
 #include <R.h>
 #include <Rdefines.h>
 
@@ -69,6 +70,9 @@ extern "C" {
 
 	// ==================================================================
 
+	#define GDSFMT_PACKAGE_VERSION    1.10
+
+
 	// [[ ********
 	#ifndef COREARRAY_GDSFMT_PACKAGE
 
@@ -83,7 +87,7 @@ extern "C" {
 	/// the pointer to a container object
 	typedef void* PdContainer;
 	/// the pointer to a sequence object
-	typedef void* PdSequenceX;
+	typedef void* PdAbstractArray;
 
 	/// the class of mutex object
 	typedef void* PdThreadMutex;
@@ -97,14 +101,15 @@ extern "C" {
 
 
 	/// Iterator for CoreArray array-oriented container
-	/** sizeof(TdIterator) = 32 **/
-	struct TdIterator
+	struct CdIterator
 	{
-		C_UInt8 VByte[32];
+		void *Allocator;
+		C_Int64 Ptr;
+		void *Container;
 	};
 
 	/// The pointer to an iterator
-	typedef struct TdIterator* PdIterator;
+	typedef struct CdIterator* PdIterator;
 
 
 	#endif  // COREARRAY_GDSFMT_PACKAGE
@@ -127,7 +132,7 @@ extern "C" {
 	// ==================================================================
 	// R objects
 
-	/// convert "(CdGDSObj*)  -->  int"
+	/// convert "SEXP  --> (CdGDSObj*)"
 	extern PdGDSObj GDS_R_SEXP2Obj(SEXP Obj);
 	/// convert "(CdGDSObj*)  -->  SEXP"
 	extern SEXP GDS_R_Obj2SEXP(PdGDSObj Obj);
@@ -142,15 +147,19 @@ extern "C" {
 	/// return 1 used in UNPROTECT and set levels in 'val' if Obj is a factor in R; otherwise return 0
 	extern int GDS_R_Set_IfFactor(PdGDSObj Obj, SEXP val);
 	/// return an R data object from a GDS object
-	extern SEXP GDS_R_Array_Read(PdSequenceX Obj, C_Int32 const* Start,
+	extern SEXP GDS_R_Array_Read(PdAbstractArray Obj, C_Int32 const* Start,
 		C_Int32 const* Length, const C_BOOL *const Selection[]);
 	/// apply user-defined function margin by margin
-	extern void GDS_R_Apply(int Num, PdSequenceX ObjList[],
+	extern void GDS_R_Apply(int Num, PdAbstractArray ObjList[],
 		int Margins[], const C_BOOL *const * const Selection[],
 		void (*InitFunc)(SEXP Argument, C_Int32 Count,
 			PdArrayRead ReadObjList[], void *_Param),
 		void (*LoopFunc)(SEXP Argument, C_Int32 Idx, void *_Param),
 		void *Param, C_BOOL IncOrDec);
+	/// is.element
+	extern void GDS_R_Is_Element(PdAbstractArray Obj, SEXP SetEL,
+		C_BOOL Out[], size_t n_bool);
+
 
 	// ==================================================================
 	// functions for file structure
@@ -168,31 +177,34 @@ extern "C" {
 	extern PdGDSObj GDS_Node_Path(PdGDSFolder Node, const char *Path,
 		C_BOOL MustExist);
 
+
 	// ==================================================================
 	// functions for attributes
 
 	extern int GDS_Attr_Count(PdGDSObj Node);
 	extern int GDS_Attr_Name2Index(PdGDSObj Node, const char *Name);
 
-	// ==================================================================
-	// functions for CdSequenceX
 
-	extern int GDS_Seq_DimCnt(PdSequenceX Obj);
-	extern void GDS_Seq_GetDim(PdSequenceX Obj, C_Int32 OutBuffer[],
+	// ==================================================================
+	// functions for CdAbstractArray
+
+	extern int GDS_Array_DimCnt(PdAbstractArray Obj);
+	extern void GDS_Array_GetDim(PdAbstractArray Obj, C_Int32 OutBuffer[],
 		size_t N_Buf);
-	extern C_Int64 GDS_Seq_GetTotalCount(PdSequenceX Obj);
-	extern enum C_SVType GDS_Seq_GetSVType(PdSequenceX Obj);
-	extern unsigned GDS_Seq_GetBitOf(PdSequenceX Obj);
-	extern void GDS_Seq_rData(PdSequenceX Obj, C_Int32 const* Start,
-		C_Int32 const* Length, void *OutBuf, enum C_SVType OutSV);
-	extern void GDS_Seq_rDataEx(PdSequenceX Obj, C_Int32 const* Start,
-		C_Int32 const* Length, const C_BOOL *const Selection[], void *OutBuf,
+	extern C_Int64 GDS_Array_GetTotalCount(PdAbstractArray Obj);
+	extern enum C_SVType GDS_Array_GetSVType(PdAbstractArray Obj);
+	extern unsigned GDS_Array_GetBitOf(PdAbstractArray Obj);
+	extern void GDS_Array_ReadData(PdAbstractArray Obj, const C_Int32 *Start,
+		const C_Int32 *Length, void *OutBuf, enum C_SVType OutSV);
+	extern void GDS_Array_ReadDataEx(PdAbstractArray Obj, const C_Int32 *Start,
+		const C_Int32 *Length, const C_BOOL *const Selection[], void *OutBuf,
 		enum C_SVType OutSV);
-	extern void GDS_Seq_wData(PdSequenceX Obj, C_Int32 const* Start,
-		C_Int32 const* Length, const void *InBuf, enum C_SVType InSV);
-	extern void GDS_Seq_AppendData(PdSequenceX Obj, ssize_t Cnt,
+	extern void GDS_Array_WriteData(PdAbstractArray Obj, const C_Int32 *Start,
+		const C_Int32 *Length, const void *InBuf, enum C_SVType InSV);
+	extern void GDS_Array_AppendData(PdAbstractArray Obj, ssize_t Cnt,
 		const void *InBuf, enum C_SVType InSV);
-	extern void GDS_Seq_AppendString(PdSequenceX Obj, const char *Text);
+	extern void GDS_Array_AppendString(PdAbstractArray Obj, const char *Text);
+
 
 	// ==================================================================
 	// functions for TdIterator
@@ -207,16 +219,18 @@ extern "C" {
 	extern void GDS_Iter_SetInt(PdIterator I, C_Int64 Val);
 	extern void GDS_Iter_SetFloat(PdIterator I, C_Float64 Val);
 	extern void GDS_Iter_SetStr(PdIterator I, const char *Str);
-	extern size_t GDS_Iter_RData(PdIterator I, void *OutBuf, size_t Cnt,
+	extern void GDS_Iter_RData(PdIterator I, void *OutBuf, size_t Cnt,
 		enum C_SVType OutSV);
-	extern size_t GDS_Iter_WData(PdIterator I, const void *InBuf,
+	extern void GDS_Iter_WData(PdIterator I, const void *InBuf,
 		size_t Cnt, enum C_SVType InSV);
+
 
 	// ==================================================================
 	// functions for error
 
 	extern const char *GDS_GetError();
 	extern void GDS_SetError(const char *Msg);
+
 
 	// ==================================================================
 	// functions for parallel computing
@@ -232,20 +246,20 @@ extern "C" {
 	extern void GDS_Parallel_RunThreads(
 		void (*Proc)(PdThread, int, void*), void *Param, int nThread);
 
+
 	// ==================================================================
 	// functions for machine
 
-	/// Return the number of available CPU cores in the system
-	extern int GDS_Mach_GetNumOfCPU();
-	/// Return the size in byte of level-1 cache memory
-	extern size_t GDS_Mach_GetL1CacheMemory();
-	/// Return the size in byte of level-2 cache memory
-    extern size_t GDS_Mach_GetL2CacheMemory();
+	/// Return the number of available (logical) cores in the system
+	extern int GDS_Mach_GetNumOfCores();
+	/// Return the size in byte of level-n cache memory
+	extern C_UInt64 GDS_Mach_GetCPULevelCache(int level);
+
 
 	// ==================================================================
 	// functions for reading block by block
 
-	extern PdArrayRead GDS_ArrayRead_Init(PdSequenceX Obj,
+	extern PdArrayRead GDS_ArrayRead_Init(PdAbstractArray Obj,
 		int Margin, enum C_SVType SVType, const C_BOOL *const Selection[],
 		C_BOOL buf_if_need);
 	extern void GDS_ArrayRead_Free(PdArrayRead Obj);
@@ -264,6 +278,28 @@ extern "C" {
 	extern void Init_GDS_Routines();
 
 	#endif  // COREARRAY_GDSFMT_PACKAGE
+
+
+
+
+	// ==================================================================
+	/// compatible with <= gdsfmt_1.0.5
+	// ==================================================================
+
+	#define PdSequenceX            PdAbstractArray
+	#define TdIterator             CdIterator
+
+	#define GDS_Seq_DimCnt         GDS_Array_DimCnt
+	#define GDS_Seq_GetDim         GDS_Array_GetDim
+	#define GDS_Seq_GetTotalCount  GDS_Array_GetTotalCount
+	#define GDS_Seq_GetSVType      GDS_Array_GetSVType
+	#define GDS_Seq_GetBitOf       GDS_Array_GetBitOf
+	#define GDS_Seq_rData          GDS_Array_ReadData
+	#define GDS_Seq_rDataEx        GDS_Array_ReadDataEx
+	#define GDS_Seq_wData          GDS_Array_WriteData
+	#define GDS_Seq_AppendData     GDS_Array_AppendData
+	#define GDS_Seq_AppendString   GDS_Array_AppendString
+
 
 
 #ifdef __cplusplus

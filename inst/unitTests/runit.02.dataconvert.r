@@ -16,11 +16,18 @@ gds_read_write <- function(class.name, data.kind, zip="")
 		dta <- seq(-499, 299)
 
 	# create a new gds file
-	gfile <- createfn.gds("tmp.gds")
+	gfile <- createfn.gds("tmp.gds", allow.duplicate=TRUE)
 
 	# add a 
 	node <- add.gdsn(gfile, "data", val=dta, storage=class.name,
 		compress=zip, closezip=TRUE)
+	# close the gds file
+	closefn.gds(gfile)
+
+	# open the gds file
+	gfile <- openfn.gds("tmp.gds", allow.duplicate=TRUE)
+	node <- index.gdsn(gfile, "data")
+
 	rv <- read.gdsn(node)
  
 	# close the gds file

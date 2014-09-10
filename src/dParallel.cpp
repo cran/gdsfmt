@@ -176,7 +176,8 @@ CParallelBase::~CParallelBase()
 
 void CParallelBase::InitThread()
 {
-	DisableFPUException();
+	// do nothing ...
+	// DisableFPUException();
 }
 
 void CParallelBase::DoneThread()
@@ -205,7 +206,7 @@ void CParallelBase::SetNumThread(int _nThread)
 
 void CParallelBase::AutoSetnThread()
 {
-	fnThread = Mach::GetNumberOfCPU();
+	fnThread = Mach::GetCPU_NumOfCores();
 	if (fnThread < 1) fnThread = 1;
 }
 

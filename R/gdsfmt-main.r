@@ -34,17 +34,18 @@
 #############################################################
 # Create a new CoreArray Genomic Data Structure (GDS) file
 #
-createfn.gds <- function(filename)
+createfn.gds <- function(filename, allow.duplicate=FALSE)
 {
 	stopifnot(is.character(filename) & is.vector(filename))
 	stopifnot(length(filename) == 1)
+	stopifnot(is.logical(allow.duplicate))
 
 	# 'normalizePath' does not work if the file does not exist
 	tmpf <- file(filename, "wb")
 	close(tmpf)
 
 	filename <- normalizePath(filename, mustWork=FALSE)
-	ans <- .Call("gdsCreateGDS", filename, PACKAGE="gdsfmt")
+	ans <- .Call(gdsCreateGDS, filename, allow.duplicate)
 	names(ans) <- c("filename", "id", "root", "readonly")
 	ans$filename <- filename
 	class(ans$root) <- "gdsn.class"
@@ -63,8 +64,8 @@ openfn.gds <- function(filename, readonly=TRUE, allow.duplicate=FALSE,
 	stopifnot(length(filename) == 1)
 
 	filename <- normalizePath(filename, mustWork=FALSE)
-	ans <- .Call("gdsOpenGDS", filename, readonly, allow.duplicate,
-		allow.fork, PACKAGE="gdsfmt")
+	ans <- .Call(gdsOpenGDS, filename, readonly, allow.duplicate,
+		allow.fork)
 	names(ans) <- c("filename", "id", "root", "readonly")
 	ans$filename <- filename
 	class(ans$root) <- "gdsn.class"
@@ -79,7 +80,7 @@ openfn.gds <- function(filename, readonly=TRUE, allow.duplicate=FALSE,
 closefn.gds <- function(gdsfile)
 {
 	stopifnot(inherits(gdsfile, "gds.class"))
-	.Call("gdsCloseGDS", gdsfile$id, PACKAGE="gdsfmt")
+	.Call(gdsCloseGDS, gdsfile$id)
 	invisible()
 }
 
@@ -90,7 +91,7 @@ closefn.gds <- function(gdsfile)
 sync.gds <- function(gdsfile)
 {
 	stopifnot(inherits(gdsfile, "gds.class"))
-	.Call("gdsSyncGDS", gdsfile$id, PACKAGE="gdsfmt")
+	.Call(gdsSyncGDS, gdsfile$id)
 	invisible()
 }
 
@@ -103,7 +104,7 @@ cleanup.gds <- function(filename, verbose=TRUE)
 	stopifnot(is.character(filename) & is.vector(filename))
 	stopifnot(length(filename) == 1)
 
-	.Call("gdsTidyUp", filename, verbose, PACKAGE="gdsfmt")
+	.Call(gdsTidyUp, filename, verbose)
 	invisible()
 }
 
@@ -111,9 +112,10 @@ cleanup.gds <- function(filename, verbose=TRUE)
 #############################################################
 # enumerate all opened GDS files
 #
-showfile.gds <- function(verbose=TRUE)
+showfile.gds <- function(closeall=FALSE, verbose=TRUE)
 {
-	rv <- .Call("gdsGetConnection", verbose, PACKAGE="gdsfmt")
+	stopifnot(is.logical(closeall))
+	rv <- .Call(gdsGetConnection, verbose)
 
 	if (length(rv) > 0)
 	{
@@ -126,10 +128,26 @@ showfile.gds <- function(verbose=TRUE)
 			nm <- c(nm, rv[[i]]$filename)
 			rd <- c(rd, rv[[i]]$readonly)
 		}
-		if (verbose)
-			print(data.frame(FileName=nm, ReadOnly=rd))
+		if (verbose & !closeall)
+		{
+			print(data.frame(FileName=nm, ReadOnly=rd,
+				State=rep("open", length(rd))))
+		}
 	} else
 		rv <- NULL
+
+	# close all opened GDS files
+	if (closeall & !is.null(rv))
+	{
+		if (verbose)
+		{
+			print(data.frame(FileName=nm, ReadOnly=rd,
+				State=rep("closed", length(rd))))
+		}
+		for (i in 1:length(rv))
+			closefn.gds(rv[[i]])
+		rv <- NULL
+	}
 
 	invisible(rv)
 }
@@ -143,7 +161,7 @@ diagnosis.gds <- function(gdsfile)
 	stopifnot(inherits(gdsfile, "gds.class"))
 
 	# call C function
-	rv <- .Call("gdsDiagInfo", gdsfile$id, PACKAGE="gdsfmt")
+	rv <- .Call(gdsDiagInfo, gdsfile$id)
 	names(rv) <- "stream_list"
 	names(rv[[1]]) <- c(
 		sprintf("stream_%02d", seq_len(length(rv[[1]])-1)),
@@ -165,7 +183,7 @@ diagnosis.gds <- function(gdsfile)
 cnt.gdsn <- function(node)
 {
 	stopifnot(inherits(node, "gdsn.class"))
-	.Call("gdsNodeChildCnt", node, PACKAGE="gdsfmt")
+	.Call(gdsNodeChildCnt, node)
 }
 
 
@@ -175,8 +193,7 @@ cnt.gdsn <- function(node)
 name.gdsn <- function(node, fullname=FALSE)
 {
 	stopifnot(inherits(node, "gdsn.class"))
-
-	.Call("gdsNodeName", node, fullname, PACKAGE="gdsfmt")
+	.Call(gdsNodeName, node, fullname)
 }
 
 
@@ -189,7 +206,7 @@ rename.gdsn <- function(node, newname)
 	stopifnot(is.character(newname) & is.vector(newname))
 	stopifnot(length(newname) == 1)
 
-	.Call("gdsRenameNode", node, newname, PACKAGE="gdsfmt")
+	.Call(gdsRenameNode, node, newname)
 	invisible()
 }
 
@@ -203,7 +220,7 @@ ls.gdsn <- function(node)
 		node <- node$root
 	stopifnot(inherits(node, "gdsn.class"))
 
-	.Call("gdsNodeEnumName", node, PACKAGE="gdsfmt")
+	.Call(gdsNodeEnumName, node)
 }
 
 
@@ -219,7 +236,7 @@ index.gdsn <- function(node, path=NULL, index=NULL, silent=FALSE)
 	stopifnot(is.logical(silent) & is.vector(silent))
 	stopifnot(length(silent) == 1)
 
-	ans <- .Call("gdsNodeIndex", node, path, index, silent, PACKAGE="gdsfmt")
+	ans <- .Call(gdsNodeIndex, node, path, index, silent)
 	if (!is.null(ans))
 		class(ans) <- "gdsn.class"
 	ans
@@ -233,7 +250,7 @@ objdesp.gdsn <- function(node)
 {
 	stopifnot(inherits(node, "gdsn.class"))
 
-	ans <- .Call("gdsNodeObjDesp", node, PACKAGE="gdsfmt")
+	ans <- .Call(gdsNodeObjDesp, node)
 	names(ans) <- c("name", "fullname", "storage", "type", "is.array",
 		"dim", "compress", "cpratio", "size", "good", "message")
 	attr(ans$type, "levels") <- c("Label", "Folder", "VFolder", "Raw",
@@ -275,8 +292,8 @@ add.gdsn <- function(node, name, val=NULL, storage=storage.mode(val),
 	stopifnot(is.logical(replace) & is.vector(replace))
 	stopifnot(length(replace) == 1)
 
-	ans <- .Call("gdsAddNode", node, name, val, storage, valdim, compress,
-		closezip, check, replace, PACKAGE="gdsfmt")
+	ans <- .Call(gdsAddNode, node, name, val, storage, valdim, compress,
+		closezip, check, replace)
 	class(ans) <- "gdsn.class"
 
 	if (storage == "list")
@@ -333,8 +350,7 @@ addfolder.gdsn <- function(node, name, type=c("directory", "virtual"),
 	stopifnot(length(replace) == 1)
 
 	# call C function
-	ans <- .Call("gdsAddFolder", node, name, type, gds.fn, replace,
-		PACKAGE="gdsfmt")
+	ans <- .Call(gdsAddFolder, node, name, type, gds.fn, replace)
 	class(ans) <- "gdsn.class"
 	ans
 }
@@ -367,8 +383,7 @@ addfile.gdsn <- function(node, name, filename,
 	stopifnot(length(replace) == 1)
 
 	# call C function
-	ans <- .Call("gdsAddFile", node, name, filename, compress,
-		replace, PACKAGE="gdsfmt")
+	ans <- .Call(gdsAddFile, node, name, filename, compress, replace)
 	class(ans) <- "gdsn.class"
 	ans
 }
@@ -383,7 +398,7 @@ getfile.gdsn <- function(node, out.filename)
 	stopifnot(is.character(out.filename) & is.vector(out.filename))
 	stopifnot(length(out.filename) == 1)
 
-	.Call("gdsGetFile", node, out.filename, PACKAGE="gdsfmt")
+	.Call(gdsGetFile, node, out.filename)
 	invisible()
 }
 
@@ -397,7 +412,7 @@ delete.gdsn <- function(node, force=FALSE)
 	stopifnot(is.logical(force) & is.vector(force))
 	stopifnot(length(force) == 1)
 
-	.Call("gdsDeleteNode", node, force, PACKAGE="gdsfmt")
+	.Call(gdsDeleteNode, node, force)
 	invisible()
 }
 
@@ -417,7 +432,7 @@ put.attr.gdsn <- function(node, name, val=NULL)
 	stopifnot(is.character(name) & is.vector(name))
 	stopifnot(length(name) == 1)
 
-	.Call("gdsPutAttr", node, name, val, PACKAGE="gdsfmt")
+	.Call(gdsPutAttr, node, name, val)
 	invisible()
 }
 
@@ -428,7 +443,7 @@ put.attr.gdsn <- function(node, name, val=NULL)
 get.attr.gdsn <- function(node)
 {
 	stopifnot(inherits(node, "gdsn.class"))
-	.Call("gdsGetAttr", node, PACKAGE="gdsfmt")
+	.Call(gdsGetAttr, node)
 }
 
 
@@ -441,7 +456,7 @@ delete.attr.gdsn <- function(node, name)
 	stopifnot(is.character(name) & is.vector(name))
 	stopifnot(length(name) == 1)
 
-	.Call("gdsDeleteAttr", node, name, PACKAGE="gdsfmt")
+	.Call(gdsDeleteAttr, node, name)
 	invisible()
 }
 
@@ -464,7 +479,7 @@ compression.gdsn <- function(node,
 	stopifnot(length(compress) > 0)
 	compress <- compress[1L]
 
-	.Call("gdsObjCompress", node, compress, PACKAGE="gdsfmt")
+	.Call(gdsObjCompress, node, compress)
 	return(node)
 }
 
@@ -475,7 +490,7 @@ compression.gdsn <- function(node,
 readmode.gdsn <- function(node)
 {
 	stopifnot(inherits(node, "gdsn.class"))
-	.Call("gdsObjCompressClose", node, PACKAGE="gdsfmt")
+	.Call(gdsObjCompressClose, node)
 	return(node)
 }
 
@@ -488,7 +503,7 @@ setdim.gdsn <- function(node, valdim)
 	stopifnot(inherits(node, "gdsn.class"))
 	stopifnot(is.numeric(valdim) & is.vector(valdim))
 
-	.Call("gdsObjSetDim", node, valdim, PACKAGE="gdsfmt")
+	.Call(gdsObjSetDim, node, valdim)
 	return(node)
 }
 
@@ -500,7 +515,7 @@ append.gdsn <- function(node, val, check=TRUE)
 {
 	stopifnot(inherits(node, "gdsn.class"))
 
-	.Call("gdsObjAppend", node, val, check, PACKAGE="gdsfmt")
+	.Call(gdsObjAppend, node, val, check)
 	invisible()
 }
 
@@ -548,7 +563,7 @@ read.gdsn <- function(node, start=NULL, count=NULL,
 		}
 	}
 
-	.Call("gdsObjReadData", node, start, count, simplify, PACKAGE="gdsfmt")
+	.Call(gdsObjReadData, node, start, count, simplify)
 }
 
 
@@ -565,7 +580,7 @@ readex.gdsn <- function(node, sel=NULL, simplify=c("auto", "none", "force"))
 		stopifnot(is.logical(sel) | is.list(sel))
 		if (is.logical(sel)) sel <- list(d1=sel)
 		# read
-		.Call("gdsObjReadExData", node, sel, simplify, PACKAGE="gdsfmt")
+		.Call(gdsObjReadExData, node, sel, simplify)
 	} else {
 		# output
 		read.gdsn(node)
@@ -613,10 +628,10 @@ apply.gdsn <- function(node, margin, FUN, selection=NULL,
 	var.index <- match(var.index, c("none", "relative", "absolute"))
 
 	# call C function -- set starting index
-	.Call("gds_apply_set_start", 1L, PACKAGE="gdsfmt")
+	.Call(gdsApplySetStart, 1L)
 	# call C function -- apply calling
-	ans <- .Call("gds_apply_call", node, as.integer(margin), FUN,
-		selection, as.is, var.index, new.env(), PACKAGE="gdsfmt")
+	ans <- .Call(gdsApplyCall, node, as.integer(margin), FUN,
+		selection, as.is, var.index, new.env())
 
 	if (is.null(ans))
 		invisible()
@@ -637,7 +652,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin,
 	# library
 	#
 	if (!require(parallel))
-		stop("the 'parallel' package should be installed.")
+		stop("The 'parallel' package should be installed.")
 
 
 	#########################################################
@@ -681,7 +696,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin,
 		}
 	}
 
-	new.selection <- .Call("gds_apply_create_selection", nd_nodes,
+	new.selection <- .Call(gdsApplyCreateSelection, nd_nodes,
 		margin, selection)
 
 	# the count of elements
@@ -700,7 +715,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin,
 		closefn.gds(gfile)
 		on.exit()
 
-		clseq <- splitIndices(MarginCount, length(cl))
+		clseq <- parallel::splitIndices(MarginCount, length(cl))
 		sel.list <- vector("list", length(cl))
 		start <- 1L
 
@@ -731,7 +746,7 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin,
 		}
 
 		# enumerate
-		ans <- clusterApply(cl, sel.list, fun =
+		ans <- parallel::clusterApply(cl, sel.list, fun =
 				function(item, gds.fn, node.name, margin, FUN,
 					as.is, var.index, ...)
 			{
@@ -750,11 +765,11 @@ clusterApply.gdsn <- function(cl, gds.fn, node.name, margin,
 					nd_nodes[[i]] <- index.gdsn(gfile, path=node.name[i])
 
 				# call C function -- set starting index
-				.Call("gds_apply_set_start", item$start, PACKAGE="gdsfmt")
+				.Call(gdsApplySetStart, item$start)
 				# call C function -- apply calling
-				.Call("gds_apply_call", nd_nodes, margin, FUN, item$sel, as.is,
+				.Call(gdsApplyCall, nd_nodes, margin, FUN, item$sel, as.is,
 					match(var.index, c("none", "relative", "absolute")),
-					new.env(), PACKAGE="gdsfmt")
+					new.env())
 
 			}, gds.fn=gds.fn, node.name=node.name, margin=margin,
 				FUN=FUN, as.is=as.is, var.index=var.index, ...
@@ -780,10 +795,9 @@ write.gdsn <- function(node, val, start=NULL, count=NULL, check=TRUE)
 
 	if (is.null(start) & is.null(count))
 	{
-		.Call("gdsObjWriteAll", node, val, check, PACKAGE="gdsfmt")
+		.Call(gdsObjWriteAll, node, val, check)
 	} else {
-		.Call("gdsObjWriteData", node, val, start, count, check,
-			PACKAGE="gdsfmt")
+		.Call(gdsObjWriteData, node, val, start, count, check)
 	}
 	
 	invisible()
@@ -793,7 +807,7 @@ write.gdsn <- function(node, val, start=NULL, count=NULL, check=TRUE)
 #############################################################
 # Assign a GDS variable from another variable
 #
-assign.gdsn <- function(dest.obj, src.obj, append)
+assign.gdsn <- function(dest.obj, src.obj, append=TRUE)
 {
 	stopifnot(inherits(dest.obj, "gdsn.class"))
 	stopifnot(inherits(src.obj, "gdsn.class"))
@@ -801,7 +815,7 @@ assign.gdsn <- function(dest.obj, src.obj, append)
 	stopifnot(length(append) == 1)
 
 	# call C function
-	.Call("gdsAssign", dest.obj, src.obj, append, PACKAGE="gdsfmt")
+	.Call(gdsAssign, dest.obj, src.obj, append)
 
 	invisible()
 }
@@ -815,8 +829,7 @@ cache.gdsn <- function(node)
 	stopifnot(inherits(node, "gdsn.class"))
 
 	# call C function
-	.Call("gdsCache", node, PACKAGE="gdsfmt")
-
+	.Call(gdsCache, node)
 	invisible()
 }
 
@@ -833,7 +846,7 @@ moveto.gdsn <- function(node, loc.node,
 	relpos <- match(relpos, c("after", "before", "replace"))
 
 	# call C function
-	.Call("gdsMoveTo", node, loc.node, relpos, PACKAGE="gdsfmt")
+	.Call(gdsMoveTo, node, loc.node, relpos)
 	if (relpos == 3L)
 	{
 		nm <- name.gdsn(loc.node)
@@ -844,6 +857,19 @@ moveto.gdsn <- function(node, loc.node,
 	invisible()
 }
 
+
+#############################################################
+# whether elements in node
+#
+is.element.gdsn <- function(node, set)
+{
+	stopifnot(inherits(node, "gdsn.class"))
+	stopifnot(is.vector(set))
+	stopifnot(is.numeric(set) | is.character(set))
+
+	# call C function
+	.Call(gdsIsElement, node, set)
+}
 
 
 
@@ -856,7 +882,7 @@ moveto.gdsn <- function(node, loc.node,
 #
 lasterr.gds <- function()
 {
-	.Call("gdsLastErrGDS", PACKAGE="gdsfmt")
+	.Call(gdsLastErrGDS)
 }
 
 
@@ -874,9 +900,9 @@ print.gds.class <- function(x, all=FALSE, ...)
 	stopifnot(is.logical(all) & is.vector(all))
 	stopifnot(length(all) == 1)
 
-	.Call("gdsFileValid", x$id, PACKAGE="gdsfmt")
+	.Call(gdsFileValid, x$id)
 	cat("File: ", x$filename, "\n", sep="");
-	print(x$root)
+	print(x$root, all=all, ...)
 }
 
 print.gdsn.class <- function(x, expand=TRUE, all=FALSE, ...)
@@ -973,7 +999,7 @@ print.gdsn.class <- function(x, expand=TRUE, all=FALSE, ...)
 	stopifnot(is.logical(expand) & is.vector(expand))
 	stopifnot(length(expand) == 1)
 
-	.Call("gdsNodeValid", x, PACKAGE="gdsfmt")
+	.Call(gdsNodeValid, x)
 	enum(x, "", 1, expand, TRUE)
 
 	invisible()
@@ -997,15 +1023,31 @@ gdsUnitTest <- function()
 		stop("Please install RUnit package!")
 
 	# define a test suite
-	myTestSuite <- defineTestSuite("gdsfmt examples",
+	myTestSuite <- RUnit::defineTestSuite("gdsfmt examples",
 		system.file("unitTests", package = "gdsfmt"))
 
 	# run the test suite
-	testResult <- runTestSuite(myTestSuite)
+	testResult <- RUnit::runTestSuite(myTestSuite)
 
 	# print detailed text protocol to standard out:
-	printTextProtocol(testResult)
+	RUnit::printTextProtocol(testResult)
 
 	# return
 	invisible()
 }
+
+
+
+
+###############################################################################
+# initialize
+###############################################################################
+
+# .gds.machine <<- list()
+
+.onAttach <- function(lib, pkg)
+{
+#	.gds.machine <<- .Call(gdsInitVariable)
+	TRUE
+}
+

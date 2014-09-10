@@ -42,7 +42,6 @@
 #include <dType.h>
 #include <dTrait.h>
 #include <dBit.h>
-#include <dString.h>
 #include <dPlatform.h>
 #include <dParallel.h>
 #include <dStream.h>
@@ -56,7 +55,7 @@
 namespace CoreArray
 {
 	/// Register CoreArray classes
-	void RegisterClass();
+	COREARRAY_DLL_DEFAULT void RegisterClass();
 }
 
 #endif /* _HEADER_COREARRAY_ */

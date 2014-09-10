@@ -38,7 +38,6 @@
 #ifndef _HEADER_COREARRAY_TRAIT_
 #define _HEADER_COREARRAY_TRAIT_
 
-#include <CoreDEF.h>
 #include <dType.h>
 
 #include <cfloat>
@@ -48,115 +47,7 @@
 
 namespace CoreArray
 {
-	// ******************************************************************** //
-	// ******************************************************************** //
-
-	// define little-endian atomic type
-
-	/// little-endian int8_t
-	#define COREARRAY_LE_INT8_TRAIT_ID            0
-	/// little-endian uint8_t
-	#define COREARRAY_LE_UINT8_TRAIT_ID           1
-	/// little-endian int16_t
-	#define COREARRAY_LE_INT16_TRAIT_ID           2
-	/// little-endian uint16_t
-	#define COREARRAY_LE_UINT16_TRAIT_ID          3
-	/// little-endian int32_t
-	#define COREARRAY_LE_INT32_TRAIT_ID           4
-	/// little-endian uint32_t
-	#define COREARRAY_LE_UINT32_TRAIT_ID          5
-	/// little-endian int64_t
-	#define COREARRAY_LE_INT64_TRAIT_ID           6
-	/// little-endian uint64_t
-	#define COREARRAY_LE_UINT64_TRAIT_ID          7
-
-	/// IEEE 32-bit floating point
-	#define COREARRAY_IEEE_LE_FLOAT32_TRAIT_ID    10
-	/// IEEE 64-bit floating point
-	#define COREARRAY_IEEE_LE_FLOAT64_TRAIT_ID    11
-
-
-	// define big-endian atomic type
-
-	/// big-endian int8_t
-	#define COREARRAY_BE_INT8_TRAIT_ID            20
-	/// big-endian uint8_t
-	#define COREARRAY_BE_UINT8_TRAIT_ID           21
-	/// big-endian int16_t
-	#define COREARRAY_BE_INT16_TRAIT_ID           22
-	/// big-endian uint16_t
-	#define COREARRAY_BE_UINT16_TRAIT_ID          23
-	/// big-endian int32_t
-	#define COREARRAY_BE_INT32_TRAIT_ID           24
-	/// big-endian uint32_t
-	#define COREARRAY_BE_UINT32_TRAIT_ID          25
-	/// big-endian int64_t
-	#define COREARRAY_BE_INT64_TRAIT_ID           26
-	/// big-endian uint64_t
-	#define COREARRAY_BE_UINT64_TRAIT_ID          27
-
-	/// IEEE 32-bit floating point
-	#define COREARRAY_IEEE_BE_FLOAT32_TRAIT_ID    30
-	/// IEEE 64-bit floating point
-	#define COREARRAY_IEEE_BE_FLOAT64_TRAIT_ID    31
-
-
-
-	// define native atomic type
-
-	#if defined(COREARRAY_LITTLE_ENDIAN)
-
-		/// native int8_t
-		#define COREARRAY_NATIVE_INT8_TRAIT_ID      COREARRAY_LE_INT8_TRAIT_ID
-		/// native uint8_t
-		#define COREARRAY_NATIVE_UINT8_TRAIT_ID     COREARRAY_LE_UINT8_TRAIT_ID
-		/// native int16_t
-		#define COREARRAY_NATIVE_INT16_TRAIT_ID     COREARRAY_LE_INT16_TRAIT_ID
-		/// native uint16_t
-		#define COREARRAY_NATIVE_UINT16_TRAIT_ID    COREARRAY_LE_UINT16_TRAIT_ID
-		/// native int32_t
-		#define COREARRAY_NATIVE_INT32_TRAIT_ID     COREARRAY_LE_INT32_TRAIT_ID
-		/// native uint32_t
-		#define COREARRAY_NATIVE_UINT32_TRAIT_ID    COREARRAY_LE_UINT32_TRAIT_ID
-		/// native int64_t
-		#define COREARRAY_NATIVE_INT64_TRAIT_ID     COREARRAY_LE_INT64_TRAIT_ID
-		/// native uint64_t
-		#define COREARRAY_NATIVE_UINT64_TRAIT_ID    COREARRAY_LE_UINT64_TRAIT_ID
-
-		/// native 32-bit floating point
-		#define COREARRAY_IEEE_NATIVE_FLOAT32_TRAIT_ID    COREARRAY_IEEE_LE_FLOAT32_TRAIT_ID
-		/// native 64-bit floating point
-		#define COREARRAY_IEEE_NATIVE_FLOAT64_TRAIT_ID    COREARRAY_IEEE_LE_FLOAT64_TRAIT_ID
-
-	#elif defined(COREARRAY_BIG_ENDIAN)
-
-		/// native int8_t
-		#define COREARRAY_NATIVE_INT8_TRAIT_ID      COREARRAY_BE_INT8_TRAIT_ID
-		/// native uint8_t
-		#define COREARRAY_NATIVE_UINT8_TRAIT_ID     COREARRAY_BE_UINT8_TRAIT_ID
-		/// native int16_t
-		#define COREARRAY_NATIVE_INT16_TRAIT_ID     COREARRAY_BE_INT16_TRAIT_ID
-		/// native uint16_t
-		#define COREARRAY_NATIVE_UINT16_TRAIT_ID    COREARRAY_BE_UINT16_TRAIT_ID
-		/// native int32_t
-		#define COREARRAY_NATIVE_INT32_TRAIT_ID     COREARRAY_BE_INT32_TRAIT_ID
-		/// native uint32_t
-		#define COREARRAY_NATIVE_UINT32_TRAIT_ID    COREARRAY_BE_UINT32_TRAIT_ID
-		/// native int64_t
-		#define COREARRAY_NATIVE_INT64_TRAIT_ID     COREARRAY_BE_INT64_TRAIT_ID
-		/// native uint64_t
-		#define COREARRAY_NATIVE_UINT64_TRAIT_ID    COREARRAY_BE_UINT64_TRAIT_ID
-
-		/// native 32-bit floating point
-		#define COREARRAY_IEEE_NATIVE_FLOAT32_TRAIT_ID    COREARRAY_IEEE_BE_FLOAT32_TRAIT_ID
-		/// native 64-bit floating point
-		#define COREARRAY_IEEE_NATIVE_FLOAT64_TRAIT_ID    COREARRAY_IEEE_BE_FLOAT64_TRAIT_ID
-
-	#else
-	#  error "Unknown endianness"
-    #endif
-
-
+	// =======================================================================
 
 	#define COREARRAY_TR_UNKNOWN                  -1
 	#define COREARRAY_TR_CUSTOM                    0
@@ -172,19 +63,27 @@ namespace CoreArray
 
 
 
-	// Integer Traits
+	// =======================================================================
+	// Traits of integer
+	// =======================================================================
 
-	template<typename T> struct TdTraits
+	/// Trait information
+	/** The structure provides 'TType', 'ElmType' and others.
+	 *  \tparam TYPE    fundamental  or user-defined type
+	**/
+	template<typename TYPE> struct COREARRAY_DLL_DEFAULT TdTraits
 	{
-    	typedef T TType;
-		typedef T ElmType;
+    	typedef TYPE TType;
+		typedef TYPE ElmType;
 		static const int trVal = COREARRAY_TR_UNKNOWN;
-		static const unsigned BitOf = sizeof(T)*8u;
+		static const unsigned BitOf = sizeof(TYPE)*8u;
 		static const bool isClass = false;
 		static const C_SVType SVType = svCustom;
 	};
 
-	template<> struct TdTraits<C_Int8>
+
+	/// Trait information for C_Int8
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Int8>
 	{
 		typedef C_Int8 TType;
 		typedef C_Int8 ElmType;
@@ -200,7 +99,9 @@ namespace CoreArray
 		COREARRAY_INLINE static short Max() { return INT8_MAX; }
 	};
 
-	template<> struct TdTraits<C_UInt8>
+
+	/// Trait information for C_UInt8
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_UInt8>
 	{
 		typedef C_UInt8 TType;
 		typedef C_UInt8 ElmType;
@@ -218,7 +119,9 @@ namespace CoreArray
 		COREARRAY_INLINE static unsigned short Max() { return UINT8_MAX; }
 	};
 
-	template<> struct TdTraits<C_Int16>
+
+	/// Trait information for C_Int16
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Int16>
 	{
 		typedef C_Int16 TType;
 		typedef C_Int16 ElmType;
@@ -234,7 +137,9 @@ namespace CoreArray
 		COREARRAY_INLINE static C_Int16 Max() { return INT16_MAX; }
 	};
 
-	template<> struct TdTraits<C_UInt16>
+
+	/// Trait information for C_UInt16
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_UInt16>
 	{
 		typedef C_UInt16 TType;
 		typedef C_UInt16 ElmType;
@@ -250,7 +155,9 @@ namespace CoreArray
 		COREARRAY_INLINE static C_UInt16 Max() { return UINT16_MAX; }
 	};
 
-	template<> struct TdTraits<C_Int32>
+
+	/// Trait information for C_Int32
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Int32>
 	{
 		typedef C_Int32 TType;
 		typedef C_Int32 ElmType;
@@ -266,7 +173,9 @@ namespace CoreArray
 		COREARRAY_INLINE static C_Int32 Max() { return INT32_MAX; }
 	};
 
-	template<> struct TdTraits<C_UInt32>
+
+	/// Trait information for C_UInt32
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_UInt32>
 	{
 		typedef C_UInt32 TType;
 		typedef C_UInt32 ElmType;
@@ -282,7 +191,9 @@ namespace CoreArray
 		COREARRAY_INLINE static C_UInt32 Max() { return UINT32_MAX; }
 	};
 
-	template<> struct TdTraits<C_Int64>
+
+	/// Trait information for C_Int64
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Int64>
 	{
 		typedef C_Int64 TType;
 		typedef C_Int64 ElmType;
@@ -298,7 +209,9 @@ namespace CoreArray
 		COREARRAY_INLINE static C_Int64 Max() { return std::numeric_limits<C_Int64>::max(); }
 	};
 
-	template<> struct TdTraits<C_UInt64>
+
+	/// Trait information for C_UInt64
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_UInt64>
 	{
 		typedef C_UInt64 TType;
 		typedef C_UInt64 ElmType;
@@ -316,9 +229,12 @@ namespace CoreArray
 
 
 
-  	// Float Traits
+	// =======================================================================
+  	// Traits of floating point number
+	// =======================================================================
 
-	template<> struct TdTraits<C_Float32>
+	/// Trait information for C_Float32
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Float32>
 	{
 		typedef C_Float32 TType;
 		typedef C_Float32 ElmType;
@@ -336,7 +252,9 @@ namespace CoreArray
 		COREARRAY_INLINE static int Digits() { return FLT_MANT_DIG; }
 	};
 
-	template<> struct TdTraits<C_Float64>
+
+	/// Trait information for C_Float64
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<C_Float64>
 	{
 		typedef C_Float64 TType;
 		typedef C_Float64 ElmType;
@@ -354,6 +272,8 @@ namespace CoreArray
 		COREARRAY_INLINE static int Digits() { return DBL_MANT_DIG; }
 	};
 
+
+	/// Trait information for C_LongFloat
 	template<> struct TdTraits<C_LongFloat>
 	{
 		typedef C_LongFloat TType;
@@ -363,16 +283,7 @@ namespace CoreArray
 		static const bool isClass = false;
 		static const C_SVType SVType = svCustomFloat;
 
-		static const char * StreamName()
-		{
-		#if defined(COREARRAY_HAVE_FLOAT128)
-			return "dFloat128";
-		#elif defined(COREARRAY_LONGFLOAT_IS_DOUBLE)
-			return "dFloat64";
-		#else
-        	return "dFloat80";
-		#endif
-		}
+		static const char * StreamName() { return "dLongFloat"; }
 		static const char * TraitName() { return StreamName()+1; }
 
 		COREARRAY_INLINE static C_LongFloat Min() { return LDBL_MIN; }
@@ -383,48 +294,48 @@ namespace CoreArray
 
 
 
-	/// Customized integer type
-	/** \tparam TYPE  any data type, e.g integer or float number
-	 *  \tparam SIZE  to specify the structure size, can be != sizeof(TYPE)
-	**/
-	template<typename TYPE, ssize_t SIZE> struct TdNumber
+	// =======================================================================
+  	// Traits of string
+	// =======================================================================
+
+	/// Trait information for UTF8String
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<UTF8String>
 	{
-	public:
-		/// The size of this type
-		static const ssize_t size = SIZE;
+		typedef UTF8String TType;
+		typedef C_UTF8 ElmType;
+		static const int trVal = COREARRAY_TR_STRING;
+		static const unsigned BitOf = 8u;
+		static const bool isClass = true;
+		static const C_SVType SVType = svStrUTF8;
 
-		TdNumber() {}
-		TdNumber(TYPE val) { fVal = val; }
+		static const char * TraitName() { return "UTF8String"; }
+	};
 
-		TdNumber<TYPE, SIZE> & operator+= (TYPE val)
-			{ fVal += val; return *this; }
-		TdNumber<TYPE, SIZE> & operator-= (TYPE val)
-			{ fVal -= val; return *this; }
-		TdNumber<TYPE, SIZE> & operator++ ()
-			{ fVal++; return *this; }
-		TdNumber<TYPE, SIZE> & operator-- ()
-			{ fVal--; return *this; }
-		/// Assignment
-		TdNumber<TYPE, SIZE> & operator= (TYPE val)
-			{ fVal = val; return *this; }
+	/// Trait information for UTF16String
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<UTF16String>
+	{
+		typedef UTF16String TType;
+		typedef C_UTF16 ElmType;
+		static const int trVal = COREARRAY_TR_STRING;
+		static const unsigned BitOf = 16u;
+		static const bool isClass = true;
+		static const C_SVType SVType = svStrUTF16;
 
-		bool operator== (const TdNumber<TYPE, SIZE> &val) const
-			{ return fVal == val.fVal; }
-		bool operator!= (const TdNumber<TYPE, SIZE> &val) const
-			{ return fVal != val.fVal; }
+		static const char * TraitName() { return "UTF16String"; }
+	};
 
-		operator TYPE() const { return fVal; }
-		TYPE &get() { return fVal; }
-		const TYPE &get() const { return fVal; }
+	/// Trait information for UTF32String
+	template<> struct COREARRAY_DLL_DEFAULT TdTraits<UTF32String>
+	{
+		typedef UTF32String TType;
+		typedef C_UTF32 ElmType;
+		static const int trVal = COREARRAY_TR_STRING;
+		static const unsigned BitOf = 32u;
+		static const bool isClass = true;
+		static const C_SVType SVType = svCustomStr;
 
-		/// Return minimum value of the type
-		static const TYPE min() { return TdTraits<TYPE>::Min(); }
-		/// Return maximum value of the type
-		static const TYPE max() { return TdTraits<TYPE>::Max(); }
-
-	private:
-		TYPE fVal;
-    };
+		static const char * TraitName() { return "UTF32String"; }
+	};
 }
 
 #endif /* _HEADER_COREARRAY_TRAIT_ */

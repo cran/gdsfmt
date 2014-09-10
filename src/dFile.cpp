@@ -30,6 +30,448 @@
 #include <cstdio>
 
 
+using namespace CoreArray;
+
+/// GDS file version
+#define COREARRAY_FILE_VERSION   COREARRAY_VERSION
+
+/// GDS file prefix
+#define COREARRAY_FILE_PREFIX    "COREARRAYx0A"
+
+
+
+// =====================================================================
+// CdGDSObj
+// =====================================================================
+
+// CdObjAttr
+
+static const char *VAR_ATTRCNT  = "ATTRCNT";
+static const char *VAR_ATTRLIST = "ATTRLIST";
+
+static const char *rsAttrName = "No Attribute Name ('%s').";
+static const char *rsAttrNameExist = "Attribute '%s' has existed.";
+
+CdObjAttr::CdObjAttr(CdGDSObj &vOwner): CdObject(), fOwner(vOwner)
+{ }
+
+CdObjAttr::~CdObjAttr()
+{
+	vector<TdPair*>::iterator it;
+	for (it = fList.begin(); it != fList.end(); it++)
+	{
+		TdPair *p = *it;
+		*it = NULL;
+		delete p;
+	}
+}
+
+void CdObjAttr::Assign(CdObjAttr &Source)
+{
+	/// \todo Assign procedure
+	Clear();
+	for (int i=0; i < (int)Source.Count(); i++)
+		Add(Source.Names(i)) = Source[i];
+    Changed();
+}
+
+CdAny &CdObjAttr::Add(const UTF16String &Name)
+{
+	xValidateName(Name);
+	vector<TdPair*>::iterator it = Find(Name);
+	if (it == fList.end())
+	{
+		TdPair *I = new TdPair;
+		I->name = Name;
+		fList.push_back(I);
+		Changed();
+		return I->val;
+	} else
+		throw ErrGDSObj(rsAttrNameExist, UTF16ToUTF8(Name).c_str());
+}
+
+int CdObjAttr::IndexName(const UTF16String &Name)
+{
+	vector<TdPair*>::iterator it = Find(Name);
+	if (it != fList.end())
+    	return it - fList.begin();
+	else
+		return -1;
+}
+
+void CdObjAttr::Delete(const UTF16String &Name)
+{
+	vector<TdPair*>::iterator it = Find(Name);
+	if (it == fList.end())
+		throw ErrGDSObj(rsAttrName, UTF16ToUTF8(Name).c_str());
+	TdPair *p = *it;
+	*it = NULL;
+	fList.erase(it);
+	delete p;
+	Changed();
+}
+
+void CdObjAttr::Delete(int Index)
+{
+	fList.at(Index); // check range
+	TdPair *p = fList[Index];
+	fList[Index] = NULL;
+    fList.erase(fList.begin() + Index);
+	delete p;
+	Changed();
+}
+
+void CdObjAttr::Clear()
+{
+	if (!fList.empty())
+	{
+		vector<TdPair*>::iterator it;
+		for (it = fList.begin(); it != fList.end(); it++)
+		{
+			TdPair *p = *it;
+			*it = NULL;
+			delete p;
+		}
+		fList.clear();
+		Changed();
+	}
+}
+
+void CdObjAttr::Changed()
+{
+	this->fOwner.fChanged = true;
+}
+
+CdAny & CdObjAttr::operator[](const UTF16String &Name)
+{
+	vector<TdPair*>::iterator it = Find(Name);
+	if (it == fList.end())
+		throw ErrGDSObj(rsAttrName, UTF16ToUTF8(Name).c_str());
+	return (*it)->val;
+}
+
+CdAny & CdObjAttr::operator[](int Index)
+{
+	return fList.at(Index)->val;
+}
+
+void CdObjAttr::Loading(CdReader &Reader, TdVersion Version)
+{
+	C_Int32 Cnt;
+	Reader[VAR_ATTRCNT] >> Cnt;
+	if (!fList.empty())
+	{
+		vector<TdPair*>::iterator it;
+		for (it = fList.begin(); it != fList.end(); it++)
+		{
+			TdPair *p = *it;
+			*it = NULL;
+			delete p;
+		}
+		fList.clear();
+	}
+
+	if (Cnt > 0)
+	{
+		Reader[VAR_ATTRLIST].BeginStruct();
+		for (int i=0; i < Cnt; i++)
+		{
+			TdPair *I = new TdPair;
+			try {
+				I->name = Reader.Storage().RpUTF16();
+				Reader >> I->val;
+			} catch (...) {
+				delete I;
+				break;
+			}
+			fList.push_back(I);
+		}
+		Reader.EndStruct();
+	}
+}
+
+void CdObjAttr::Saving(CdWriter &Writer)
+{
+	C_Int32 Cnt = fList.size();
+	Writer[VAR_ATTRCNT] << Cnt;
+	if (Cnt > 0)
+	{
+		Writer[VAR_ATTRLIST].NewStruct();
+		vector<TdPair*>::iterator it;
+		for (it=fList.begin(); it != fList.end(); it++)
+		{
+			Writer.Storage().WpUTF16((*it)->name);
+			Writer << (*it)->val;
+		}
+		Writer.EndStruct();
+	}
+}
+
+vector<CdObjAttr::TdPair*>::iterator CdObjAttr::Find(const UTF16String &Name)
+{
+	vector<TdPair*>::iterator it;
+	for (it = fList.begin(); it != fList.end(); it++)
+	{
+		if ((*it)->name == Name)
+			break;
+	}
+	return it;
+}
+
+void CdObjAttr::SetName(const UTF16String &OldName, const UTF16String &NewName)
+{
+	xValidateName(NewName);
+	vector<TdPair*>::iterator it = Find(OldName);
+	if (it == fList.end())
+		throw ErrGDSObj(rsAttrName, UTF16ToUTF8(OldName).c_str());
+	if (OldName != NewName)
+	{
+		if (HasName(NewName) >= 0)
+			throw ErrGDSObj(rsAttrNameExist, UTF16ToUTF8(NewName).c_str());
+		(*it)->name = NewName;
+		Changed();
+	}
+}
+
+void CdObjAttr::SetName(int Index, const UTF16String &NewName)
+{
+	TdPair &p = *fList.at(Index); // check range
+	xValidateName(NewName);
+	if (p.name != NewName)
+	{
+		if (HasName(NewName) >= 0)
+			throw ErrGDSObj(rsAttrNameExist, UTF16ToUTF8(NewName).c_str());
+		p.name = NewName;
+		Changed();
+	}
+}
+
+void CdObjAttr::xValidateName(const UTF16String &name)
+{
+	if (name.empty())
+        throw ErrGDSObj("Invalid name: ZERO length.");
+}
+
+
+// CdGDSObj
+
+static const char *ERR_NO_NAME = "No name exists!";
+static const char *ERR_DUP_NAME = "Duplicate name!";
+static const char *ERR_MOVE_TO_ADD = "Please call 'AddObj' to add an object.";
+static const char *ERR_NOT_SHARE_FILE = "'MoveTo' should be within the same GDS file.";
+static const char *ERR_MOVE_TO_CHILD = "Cannot move to its sub folder.";
+
+CdGDSObj::CdGDSObj(): CdObjMsg(), fAttr(*this)
+{
+	fFolder = NULL;
+	fGDSStream = NULL;
+	fChanged = false;
+}
+
+CdGDSObj::~CdGDSObj()
+{
+	if (fGDSStream)
+		fGDSStream->Release();
+}
+
+CdGDSObj *CdGDSObj::NewOne(void *Param)
+{
+	return new CdGDSObj;
+}
+
+void CdGDSObj::AssignOne(CdGDSObj &Source, void *Param)
+{
+    fAttr.Assign(Source.Attribute());
+}
+
+UTF16String CdGDSObj::Name() const
+{
+	if (fFolder)
+	{
+		vector<CdGDSFolder::TNode>::const_iterator it;
+		for (it = fFolder->fList.begin(); it != fFolder->fList.end(); it++)
+		{
+			if (it->Obj == this)
+				return it->Name;
+		}
+	}
+	throw ErrGDSObj(ERR_NO_NAME);
+}
+
+UTF16String CdGDSObj::FullName(const UTF16String &Delimiter) const
+{
+	UTF16String rv = Name();
+	CdGDSFolder *p = fFolder;
+	if (p != NULL)
+	{
+		while (p->fFolder)
+		{
+			rv = p->Name() + Delimiter + rv;
+			p = p->fFolder;
+		}
+	}
+	return rv;
+}
+
+UTF16String CdGDSObj::FullName(const char *Delimiter) const
+{
+	return FullName(UTF16Text(Delimiter));
+}
+
+void CdGDSObj::SetName(const UTF16String &NewName)
+{
+	if (fFolder)
+	{
+		vector<CdGDSFolder::TNode>::iterator it;
+		for (it = fFolder->fList.begin(); it != fFolder->fList.end(); it++)
+		{
+			if (it->Obj == this)
+			{
+				if (it->Name != NewName)
+				{
+					if (fFolder->_HasName(NewName))
+						throw ErrGDSObj(ERR_DUP_NAME);
+					it->Name = NewName;
+					fFolder->fChanged = true;
+				}
+				return;
+			}
+		}
+	}
+	throw ErrGDSObj(ERR_NO_NAME);
+}
+
+void CdGDSObj::MoveTo(CdGDSFolder &folder)
+{
+	if (fGDSStream && folder.GDSStream() && fFolder)
+	{
+		CdBlockCollection *n1 = &fGDSStream->Collection();
+		CdBlockCollection *n2 = &folder.GDSStream()->Collection();
+		if (n1 == n2)
+		{
+			if (dynamic_cast<CdGDSFolder*>(this))
+			{
+				if (static_cast<CdGDSFolder*>(this)->HasChild(&folder))
+					throw ErrGDSObj(ERR_MOVE_TO_CHILD);
+			}
+			if ((fFolder!=&folder) && (this!=&folder))
+			{
+				vector<CdGDSFolder::TNode>::iterator it;
+				it = fFolder->_FindObj(this);
+				if (folder._HasName(it->Name))
+					throw ErrGDSObj(ERR_DUP_NAME);
+				folder.fList.push_back(*it);
+				fFolder->fList.erase(it);
+				fFolder->fChanged = folder.fChanged = true;
+				fFolder = &folder;
+			}
+		} else
+			throw ErrGDSObj(ERR_NOT_SHARE_FILE);
+	} else
+		throw ErrGDSObj(ERR_MOVE_TO_ADD);
+}
+
+void CdGDSObj::Synchronize()
+{
+	if (fChanged)
+		SaveToBlockStream();
+}
+
+void CdGDSObj::GetOwnBlockStream(vector<const CdBlockStream*> &Out)
+{
+	Out.clear();
+}
+
+CdGDSFile *CdGDSObj::GDSFile()
+{
+	if (fGDSStream)
+	{
+		CdBlockCollection *collect = &fGDSStream->Collection();
+		// static_cast, not dynamic_cast
+		// because 'cannot cast protected base class'
+		CdGDSFile *rv = (CdGDSFile*)(collect);
+		return rv;
+	} else
+		return NULL;
+}
+
+void CdGDSObj::LoadStruct(CdReader &Reader, TdVersion Version)
+{
+	// call load function ::Loading
+	CdObjMsg::LoadStruct(Reader, Version);
+
+	// load attribute
+	COREARRAY_READER_CALL_SILENT(
+		fAttr.Loading(Reader, Version)
+	);
+}
+
+void CdGDSObj::SaveStruct(CdWriter &Writer, bool IncludeName)
+{
+	// beginning ...
+	Writer.BeginNameSpace();
+	if (IncludeName)
+	{
+		TdVersion Version = SaveVersion();
+		Writer.Storage() << C_UInt16(Version);
+		Writer.WriteClassName(dName());
+	}
+
+	// call save function ::Saving
+	this->Saving(Writer);
+
+	// save attribute
+	fAttr.Saving(Writer);
+
+	// ending ...
+	Writer.EndStruct();
+	fChanged = false;
+}
+
+void CdGDSObj::SaveToBlockStream()
+{
+	#ifdef COREARRAY_CODE_DEBUG
+	_CheckGDSStream();
+	#endif
+
+	if (fGDSStream)
+	{
+		CdWriter Writer(fGDSStream, &GDSFile()->Log());
+		SaveStruct(Writer, IsWithClassName());
+	}
+}
+
+void CdGDSObj::_CheckGDSStream()
+{
+	if (!fGDSStream)
+		throw ErrGDSObj("GDSStream should not be NULL.");
+}
+
+void CdGDSObj::_RaiseInvalidAssign(const string &msg)
+{
+	if (msg.empty())
+		throw ErrGDSObj("Invalid Assign operation.");
+	else
+		throw ErrGDSObj("Invalid Assign operation (%s).", msg.c_str());
+}
+
+void CdGDSObj::_GDSObjInitProc(CdObjClassMgr &Sender, CdObject *dObj,
+	void *Data)
+{
+	if (dynamic_cast<CdGDSObj*>(dObj))
+	{
+		static_cast<CdGDSObj*>(dObj)->fGDSStream =
+			(CdBlockStream*)Data;
+	}
+}
+
+
+
+
+
+
+
+
 namespace CoreArray
 {
 	// CdStreamPipeMgr
@@ -41,15 +483,10 @@ namespace CoreArray
 		CdZIPReadPipe(): CdStreamPipe() {}
 
 	protected:
-		virtual CdStream* InitPipe(CBufdStream *Filter)
+		virtual CdStream* InitPipe(CdBufStream *Filter)
 		{
 			fStream = Filter->Stream();
-			if (dynamic_cast<CdSerial*>(Filter))
-			{
-				fPStream = new CdZIPInflate(dynamic_cast<CdSerial*>(Filter)->
-					BlockStream());
-			} else
-				fPStream = new CdZIPInflate(Filter->Stream());
+			fPStream = new CdZIPInflate(Filter->Stream());
 			return fPStream;
 		}
 		virtual CdStream* FreePipe()
@@ -79,7 +516,7 @@ namespace CoreArray
 		COREARRAY_INLINE CdStream* StreamZIP() const { return fPStream; };
 
 	protected:
-		virtual CdStream* InitPipe(CBufdStream *Filter)
+		virtual CdStream* InitPipe(CdBufStream *Filter)
 		{
 			fStream = Filter->Stream();
 			fPStream = new CdZIPDeflate(fStream, fLevel);
@@ -107,8 +544,17 @@ namespace CoreArray
 		{ CdZIPDeflate::zcDefault, CdZIPDeflate::zcFastest,
 		  CdZIPDeflate::zcDefault, CdZIPDeflate::zcMax };
 
+
+	static const char* VAR_PIPE_SIZE  = "PIPE_SIZE";
+	static const char* VAR_PIPE_LEVEL = "PIPE_LEVEL";
+
+
 	class COREARRAY_DLL_DEFAULT CdPipeZIP: public CdPipeMgrItem
 	{
+	private:
+		CdZIPDeflate::TZLevel vLevel;
+		SIZE64 fSizeInfo_Ptr;
+
 	public:
 		CdPipeZIP(CdZIPDeflate::TZLevel level = CdZIPDeflate::zcDefault):
 			CdPipeMgrItem()
@@ -122,30 +568,21 @@ namespace CoreArray
 			{ return "Version: " ZLIB_VERSION; }
 		virtual bool Equal(const char *Mode) const
 			{ return Which(Mode, ZIPStrings, 4) >= 0; }
-		virtual void PushReadPipe(CBufdStream &buf)
+		virtual void PushReadPipe(CdBufStream &buf)
 			{ buf.PushPipe(new CdZIPReadPipe); }
-		virtual void PushWritePipe(CBufdStream &buf)
+		virtual void PushWritePipe(CdBufStream &buf)
 			{ buf.PushPipe(new CdZIPWritePipe(vLevel, fRemainder)); }
-		virtual void PopPipe(CBufdStream &buf)
+		virtual void PopPipe(CdBufStream &buf)
 			{ buf.PopPipe(); }
-		virtual bool WriteMode(CBufdStream &buf) const
+		virtual bool WriteMode(CdBufStream &buf) const
 			{ return dynamic_cast<CdZIPDeflate*>(buf.Stream())!=NULL; }
-		virtual void ClosePipe(CBufdStream &buf)
+		virtual void ClosePipe(CdBufStream &buf)
 		{
 			if (dynamic_cast<CdZIPDeflate*>(buf.Stream()))
             	static_cast<CdZIPDeflate*>(buf.Stream())->Close();
         }
 
-	protected:
-		virtual CdPipeMgrItem *Match(const char *Mode)
-		{
-			int i = Which(Mode, ZIPStrings, 4);
-			if (i >= 0)
-				return new CdPipeZIP(ZIPLevels[i]);
-			else
-				return NULL;
-		}
-		virtual bool GetStreamInfo(CBufdStream *buf)
+		virtual bool GetStreamInfo(CdBufStream *buf)
 		{
 			SIZE64 in, out;
 
@@ -167,46 +604,56 @@ namespace CoreArray
 			} else
 				return false;
 		}
+	protected:
+
+		virtual CdPipeMgrItem *Match(const char *Mode)
+		{
+			int i = Which(Mode, ZIPStrings, 4);
+			if (i >= 0)
+				return new CdPipeZIP(ZIPLevels[i]);
+			else
+				return NULL;
+		}
 		virtual void UpdateStreamInfo(CdStream &Stream)
 		{
 			if (fSizeInfo_Ptr >= 0)
 			{
-				C_Int64 Ary[2] = { fStreamTotalIn, fStreamTotalOut };
-				Stream.SetPosition(fSizeInfo_Ptr);
-                Stream.WriteBuffer((void*)Ary, sizeof(Ary));
+				BYTE_LE<CdStream> S(Stream);
+				S.SetPosition(fSizeInfo_Ptr);
+				S << fStreamTotalIn << fStreamTotalOut;
             }
 		}
-		virtual void LoadStream(CdSerial &Reader, TdVersion Version)
+		virtual void LoadStream(CdReader &Reader, TdVersion Version)
 		{
-			C_Int64 Ary[2];
-			if (Reader["PIPE_SIZE"].rShortBuf(Ary, 2))
+			if (Reader.HaveProperty(VAR_PIPE_SIZE))
 			{
-				fSizeInfo_Ptr = Reader.Position();
+				fSizeInfo_Ptr = Reader.PropPosition(VAR_PIPE_SIZE);
+				C_Int64 Ary[2];
+				Reader[VAR_PIPE_SIZE].GetShortRec(Ary, 2);
 				fStreamTotalIn = Ary[0];
 				fStreamTotalOut = Ary[1];
 			} else {
 				fSizeInfo_Ptr = -1;
 				fStreamTotalIn = fStreamTotalOut = -1;
 			}
-			C_UInt8 I = 0;
-			Reader["PIPE_LEVEL"] >> I;
-			if (I > 3)
-                throw ErrGDSObj("Invalid 'PIPE_LEVEL %d'", I);
-			vLevel = (CdZIPDeflate::TZLevel)I;
+			if (Reader.HaveProperty(VAR_PIPE_LEVEL))
+			{
+				C_UInt8 I = 0;
+				Reader[VAR_PIPE_LEVEL] >> I;
+				if (I > 3)
+            	    throw ErrGDSObj("Invalid 'PIPE_LEVEL %d'", I);
+				vLevel = (CdZIPDeflate::TZLevel)I;
+			} else
+				vLevel = (CdZIPDeflate::TZLevel)0;
 		}
-		virtual void SaveStream(CdSerial &Writer)
+		virtual void SaveStream(CdWriter &Writer)
 		{
         	UpdateStreamSize();
 			C_Int64 Ary[2] = { fStreamTotalIn, fStreamTotalOut };
-			Writer["PIPE_SIZE"].wShortBuf(Ary, 2);
-			fSizeInfo_Ptr = Writer.Position() - sizeof(Ary);
-			C_UInt8 I = vLevel;
-			Writer["PIPE_LEVEL"] << I;
+			Writer[VAR_PIPE_SIZE].NewShortRec(Ary, 2);
+			fSizeInfo_Ptr = Writer.PropPosition(VAR_PIPE_SIZE);
+			Writer[VAR_PIPE_LEVEL] << C_UInt8(vLevel);
 		}
-
-	private:
-		CdZIPDeflate::TZLevel vLevel;
-		SIZE64 fSizeInfo_Ptr;
 	};
 
 
@@ -233,9 +680,9 @@ void CdPipeMgrItem::UpdateStreamSize()
 		fOwner->GetPipeInfo();
 }
 
-void CdPipeMgrItem::LoadStream(CdSerial &Reader, TdVersion Version) {}
+void CdPipeMgrItem::LoadStream(CdReader &Reader, TdVersion Version) {}
 
-void CdPipeMgrItem::SaveStream(CdSerial &Writer) {}
+void CdPipeMgrItem::SaveStream(CdWriter &Writer) {}
 
 int CdPipeMgrItem::Which(const char *txt, const char **Strs, int nStrs)
 {
@@ -276,7 +723,7 @@ void CdStreamPipeMgr::Register(CdPipeMgrItem *vNewPipe)
 }
 
 
-CdPipeMgrItem *CdStreamPipeMgr::Match(CdGDSObj &Obj, const char *Mode)
+CdPipeMgrItem *CdStreamPipeMgr::Match(CdGDSObjPipe &Obj, const char *Mode)
 {
 	vector<CdPipeMgrItem*>::iterator it;
 	for (it = fRegList.begin(); it != fRegList.end(); it++)
@@ -292,426 +739,62 @@ CdPipeMgrItem *CdStreamPipeMgr::Match(CdGDSObj &Obj, const char *Mode)
 }
 
 
-// CdObjAttr
+// =====================================================================
+// CdGDSObjPipe
+// =====================================================================
 
-static const char *rsAttrName = "No Attribute Name ('%s').";
-static const char *rsAttrNameExist = "Attribute '%s' has existed.";
+static const char *VAR_PIPE = "PIPE";
+static const char *ERR_PIPE_CODER = "Invalid pipe coder: %s";
 
-CdObjAttr::CdObjAttr(CdGDSObj &vOwner): CdObject(), fOwner(vOwner)
-{ }
-
-CdObjAttr::~CdObjAttr()
+CdGDSObjPipe::CdGDSObjPipe(): CdGDSObj()
 {
-	vector<TdPair*>::iterator it;
-	for (it = fList.begin(); it != fList.end(); it++)
-	{
-		TdPair *p = *it;
-		*it = NULL;
-		delete p;
-	}
-}
-
-void CdObjAttr::Assign(CdObjAttr &Source)
-{
-	/// \todo Assign procedure
-	Clear();
-	for (int i=0; i < (int)Source.Count(); i++)
-		Add(Source.Names(i)) = Source[i];
-    Changed();
-}
-
-TdsAny &CdObjAttr::Add(const UTF16String &Name)
-{
-	xValidateName(Name);
-	vector<TdPair*>::iterator it = Find(Name);
-	if (it == fList.end())
-	{
-		TdPair *I = new TdPair;
-		I->name = Name;
-		fList.push_back(I);
-		Changed();
-		return I->val;
-	} else
-		throw ErrGDSObj(rsAttrNameExist, UTF16toUTF8(Name).c_str());
-}
-
-int CdObjAttr::IndexName(const UTF16String &Name)
-{
-	vector<TdPair*>::iterator it = Find(Name);
-	if (it != fList.end())
-    	return it - fList.begin();
-	else
-		return -1;
-}
-
-void CdObjAttr::Delete(const UTF16String &Name)
-{
-	vector<TdPair*>::iterator it = Find(Name);
-	if (it == fList.end())
-		throw ErrGDSObj(rsAttrName, UTF16toUTF8(Name).c_str());
-	TdPair *p = *it;
-	*it = NULL;
-	fList.erase(it);
-	delete p;
-	Changed();
-}
-
-void CdObjAttr::Delete(int Index)
-{
-	fList.at(Index); // check range
-	TdPair *p = fList[Index];
-	fList[Index] = NULL;
-    fList.erase(fList.begin() + Index);
-	delete p;
-	Changed();
-}
-
-void CdObjAttr::Clear()
-{
-	if (!fList.empty())
-	{
-		vector<TdPair*>::iterator it;
-		for (it = fList.begin(); it != fList.end(); it++)
-		{
-			TdPair *p = *it;
-			*it = NULL;
-			delete p;
-		}
-		fList.clear();
-		Changed();
-	}
-}
-
-void CdObjAttr::Changed()
-{
-	this->fOwner.fChanged = true;
-}
-
-TdsAny & CdObjAttr::operator[](const UTF16String &Name)
-{
-	vector<TdPair*>::iterator it = Find(Name);
-	if (it == fList.end())
-		throw ErrGDSObj(rsAttrName, UTF16toUTF8(Name).c_str());
-	return (*it)->val;
-}
-
-TdsAny & CdObjAttr::operator[](int Index)
-{
-	return fList.at(Index)->val;
-}
-
-void CdObjAttr::LoadAfter(CdSerial &Reader, const TdVersion Version)
-{
-	C_Int32 Cnt;
-	if (Reader["ATTRCNT"] >> Cnt)
-	{
-		fList.clear();
-		if (Cnt > 0)
-		{
-			if (Reader["ATTRLIST"].rBuffer())
-			{
-				for (int i=0; i < Cnt; i++)
-				{
-					TdPair *I = new TdPair;
-					try {
-						Reader >> I->name;
-						Reader >> I->val;
-					} catch (...) {
-						delete I;
-						break;
-					}
-					fList.push_back(I);
-				}
-				Reader.rEndStruct();
-			} else
-				throw ErrGDSObj("CdObjAttr Load Error!");
-		}
-	} else
-		fList.clear();
-}
-
-void CdObjAttr::SaveAfter(CdSerial &Writer)
-{
-	C_Int32 Cnt = fList.size();
-	Writer["ATTRCNT"] << Cnt;
-	if (Cnt > 0)
-	{
-		Writer["ATTRLIST"].wBuffer();
-		vector<TdPair*>::iterator it;
-		for (it=fList.begin(); it != fList.end(); it++)
-		{
-			Writer << (*it)->name;
-			Writer << (*it)->val;
-		}
-		Writer.wEndStruct();
-	}
-}
-
-vector<CdObjAttr::TdPair*>::iterator CdObjAttr::Find(const UTF16String &Name)
-{
-	vector<TdPair*>::iterator it;
-	for (it = fList.begin(); it != fList.end(); it++)
-	{
-		if ((*it)->name == Name)
-			break;
-	}
-	return it;
-}
-
-void CdObjAttr::SetName(const UTF16String &OldName, const UTF16String &NewName)
-{
-	xValidateName(NewName);
-	vector<TdPair*>::iterator it = Find(OldName);
-	if (it == fList.end())
-		throw ErrGDSObj(rsAttrName, UTF16toUTF8(OldName).c_str());
-	if (OldName != NewName)
-	{
-		if (HasName(NewName) >= 0)
-			throw ErrGDSObj(rsAttrNameExist, UTF16toUTF8(NewName).c_str());
-		(*it)->name = NewName;
-		Changed();
-	}
-}
-
-void CdObjAttr::SetName(int Index, const UTF16String &NewName)
-{
-	TdPair &p = *fList.at(Index); // check range
-	xValidateName(NewName);
-	if (p.name != NewName)
-	{
-		if (HasName(NewName) >= 0)
-			throw ErrGDSObj(rsAttrNameExist, UTF16toUTF8(NewName).c_str());
-		p.name = NewName;
-		Changed();
-	}
-}
-
-void CdObjAttr::xValidateName(const UTF16String &name)
-{
-	if (name.empty())
-        throw ErrGDSObj("Invalid name: ZERO length.");
-}
-
-
-// CdGDSObj
-
-static const char *erNoNameExist = "No name exists!";
-static const char *erDupName = "Duplicate name!";
-static const char *erMoveToAdd = "Please call 'AddObj' to add an object.";
-static const char *erNotShareCollection = "'MoveTo' should be within the same GDS file.";
-static const char *erMoveToChild = "Cannot move to its sub folder.";
-static const char *erLoseVariable = "The variable (%s) loses.";
-
-CdGDSObj::CdGDSObj(): CdObjMsg(), fAttr(*this)
-{
-	fFolder = NULL;
-	fGDSStream = NULL;
 	fPipeInfo = NULL;
-	fChanged = false;
 }
 
-CdGDSObj::~CdGDSObj()
+CdGDSObjPipe::~CdGDSObjPipe()
 {
 	if (fPipeInfo)
 		delete fPipeInfo;
-	if (fGDSStream)
-		fGDSStream->Release();
 }
 
-CdGDSObj *CdGDSObj::NewOne(void *Param)
+void CdGDSObjPipe::AssignOne(CdGDSObj &Source, void *Param)
 {
-	return new CdGDSObj;
-}
-
-void CdGDSObj::AssignOne(CdGDSObj &Source, void *Param)
-{
+	// TODO:
     fAttr.Assign(Source.Attribute());
 }
 
-UTF16String CdGDSObj::Name() const
+void CdGDSObjPipe::Loading(CdReader &Reader, TdVersion Version)
 {
-	if (fFolder)
-	{
-		vector<CdGDSFolder::TNode>::const_iterator it;
-		for (it = fFolder->fList.begin(); it != fFolder->fList.end(); it++)
-		{
-			if (it->Obj == this)
-				return it->Name;
-		}
-	}
-	throw ErrGDSObj(erNoNameExist);
-}
-
-UTF16String CdGDSObj::FullName(const UTF16String &Delimiter) const
-{
-	UTF16String rv = Name();
-	CdGDSFolder *p = fFolder;
-	if (p != NULL)
-	{
-		while (p->fFolder)
-		{
-			rv = p->Name() + Delimiter + rv;
-			p = p->fFolder;
-		}
-	}
-	return rv;
-}
-
-void CdGDSObj::SetName(const UTF16String &NewName)
-{
-	if (fFolder)
-	{
-		vector<CdGDSFolder::TNode>::iterator it;
-		for (it = fFolder->fList.begin(); it != fFolder->fList.end(); it++)
-		{
-			if (it->Obj == this)
-			{
-				if (it->Name != NewName)
-				{
-					if (fFolder->_HasName(NewName))
-						throw ErrGDSObj(erDupName);
-					it->Name = NewName;
-					fFolder->fChanged = true;
-				}
-				return;
-			}
-		}
-	}
-	throw ErrGDSObj(erNoNameExist);
-}
-
-void CdGDSObj::MoveTo(CdGDSFolder &folder)
-{
-	if (fGDSStream && folder.GDSStream() && fFolder)
-	{
-		CdBlockCollection *n1 = &fGDSStream->Collection();
-		CdBlockCollection *n2 = &folder.GDSStream()->Collection();
-		if (n1 == n2)
-		{
-			if (dynamic_cast<CdGDSFolder*>(this))
-			{
-				if (static_cast<CdGDSFolder*>(this)->HasChild(&folder))
-					throw ErrGDSObj(erMoveToChild);
-			}
-			if ((fFolder!=&folder) && (this!=&folder))
-			{
-				vector<CdGDSFolder::TNode>::iterator it;
-				it = fFolder->_FindObj(this);
-				if (folder._HasName(it->Name))
-					throw ErrGDSObj(erDupName);
-				folder.fList.push_back(*it);
-				fFolder->fList.erase(it);
-				fFolder->fChanged = folder.fChanged = true;
-				fFolder = &folder;
-			}
-		} else
-			throw ErrGDSObj(erNotShareCollection);
-	} else
-		throw ErrGDSObj(erMoveToAdd);
-}
-
-void CdGDSObj::Synchronize()
-{
-	if (fChanged)
-		SaveToBlockStream();
-}
-
-void CdGDSObj::GetOwnBlockStream(vector<const CdBlockStream*> &Out)
-{
-	Out.clear();
-}
-
-CdGDSFile *CdGDSObj::GDSFile()
-{
-	if (fGDSStream)
-	{
-		CdBlockCollection *collect = &fGDSStream->Collection();
-		// static_cast, not dynamic_cast
-		// because 'cannot cast protected base class'
-		CdGDSFile *rv = (CdGDSFile*)(collect);
-		return rv;
-	} else
-		return NULL;
-}
-
-void CdGDSObj::LoadBefore(CdSerial &Reader, TdVersion Version)
-{
-	// PipeInfo
+	// clear Pipe
 	if (fPipeInfo) delete fPipeInfo;
 	fPipeInfo = NULL;
 
-	UTF8String coder;
-	if (Reader["PIPE"] >> coder)
+	// load Pipe object
+	if (Reader.HaveProperty(VAR_PIPE))
 	{
-		fPipeInfo = dStreamPipeMgr.Match(*this, coder.c_str());
-		if (fPipeInfo==NULL)
-        	throw ErrGDSObj("Invalid pipe coder: %s", coder.c_str());
-		fPipeInfo->LoadStream(Reader, Version);
+		UTF8String Coder;
+		Reader[VAR_PIPE] >> Coder;
+		{
+			fPipeInfo = dStreamPipeMgr.Match(*this, RawText(Coder).c_str());
+			if (fPipeInfo==NULL)
+    	    	throw ErrGDSObj(ERR_PIPE_CODER, RawText(Coder).c_str());
+			fPipeInfo->LoadStream(Reader, Version);
+		}
 	}
 }
 
-void CdGDSObj::LoadAfter(CdSerial &Reader, TdVersion Version)
+void CdGDSObjPipe::Saving(CdWriter &Writer)
 {
-	CdObjMsg::LoadAfter(Reader, Version);
-	fAttr.LoadAfter(Reader, Version);
-}
-
-void CdGDSObj::SaveBefore(CdSerial &Writer)
-{
+	CdGDSObj::Saving(Writer);
 	if (fPipeInfo)
 	{
-		Writer["PIPE"] << fPipeInfo->Coder();
+		Writer[VAR_PIPE] << UTF8Text(fPipeInfo->Coder());
 		fPipeInfo->SaveStream(Writer);
 	}
 }
 
-void CdGDSObj::SaveAfter(CdSerial &Writer)
-{
-	CdObjMsg::SaveAfter(Writer);
-	fAttr.SaveAfter(Writer);
-}
+void CdGDSObjPipe::GetPipeInfo() {}
 
-void CdGDSObj::SaveStruct(CdSerial &Writer, bool IncludeName)
-{
-	CdObjMsg::SaveStruct(Writer, IncludeName);
-	Writer.Truncate();
-	fChanged = false;
-}
-
-void CdGDSObj::SaveToBlockStream()
-{
-	#ifdef COREARRAY_DEBUG_CODE
-	_CheckGDSStream();
-	#endif
-
-	if (fGDSStream)
-	{
-		TdAutoRef<CdSerial> Writer(new CdSerial(fGDSStream));
-		SaveStruct(*Writer, IsWithClassName());
-	}
-}
-
-void CdGDSObj::GetPipeInfo() {}
-
-void CdGDSObj::_CheckGDSStream()
-{
-	if (!fGDSStream)
-		throw ErrGDSObj("GDSStream should not be NULL.");
-}
-
-void CdGDSObj::_RaiseInvalidAssign(const string &msg)
-{
-	if (msg.empty())
-		throw ErrGDSObj("Invalid Assign operation.");
-	else
-		throw ErrGDSObj("Invalid Assign operation (%s).", msg.c_str());
-}
-
-void CdGDSObj::_GDSObjInitProc(CdObjClassMgr &Sender, CdObject *dObj, void *Data)
-{
-	if (dynamic_cast<CdGDSObj*>(dObj))
-		static_cast<CdGDSObj*>(dObj)->fGDSStream = (CdBlockStream*)Data;
-}
 
 
 // CdGDSLabel
@@ -755,7 +838,7 @@ void CdGDSFolder::TNode::SetFlagType(C_UInt32 val)
 
 CdGDSFolder::~CdGDSFolder()
 {
-    _Clear();
+    _ClearFolder();
 }
 
 CdGDSObj *CdGDSFolder::NewOne(void *Param)
@@ -785,7 +868,7 @@ CdGDSObj *CdGDSFolder::AddFolder(const UTF16String &Name)
 	_CheckGDSStream();
 
 	if (_HasName(Name))
-		throw ErrGDSObj(erNameExist, UTF16toUTF8(Name).c_str());
+		throw ErrGDSObj(erNameExist, UTF16ToUTF8(Name).c_str());
 
 	CdGDSFolder *rv = new CdGDSFolder;
 	rv->fFolder = this;
@@ -818,7 +901,7 @@ CdGDSObj *CdGDSFolder::InsertObj(int index, const UTF16String &Name,
 	_CheckGDSStream();
 
 	if (_HasName(Name))
-		throw ErrGDSObj(erNameExist, UTF16toUTF8(Name).c_str());
+		throw ErrGDSObj(erNameExist, UTF16ToUTF8(Name).c_str());
 
 	TNode I;
 	if (val == NULL)
@@ -846,8 +929,8 @@ CdGDSObj *CdGDSFolder::InsertObj(int index, const UTF16String &Name,
 		val->fGDSStream = fGDSStream->Collection().NewBlockStream();
 		val->fGDSStream->AddRef();
 		I.StreamID = val->fGDSStream->ID();
-		val->SaveToBlockStream();
 		val->AddRef();
+		val->SaveToBlockStream();
 	} else
 		throw ErrGDSObj(erInvalidCombine);
 
@@ -909,7 +992,7 @@ void CdGDSFolder::DeleteObj(int Index, bool force)
 			folder->ClearObj(force);
 		}
 
-	#ifdef COREARRAY_DEBUG_CODE
+	#ifdef COREARRAY_CODE_DEBUG
 		if (it->Obj->Release() != 0)
 		{
 			throw ErrGDSObj(
@@ -972,7 +1055,7 @@ CdGDSFolder & CdGDSFolder::DirItem(int Index)
 	if (dynamic_cast<CdGDSFolder*>(I.Obj))
 		return *static_cast<CdGDSFolder*>(I.Obj);
 	else
-    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str());
+    	throw ErrGDSObj(erNoFolderName, UTF16ToUTF8(I.Name).c_str());
 }
 
 CdGDSFolder & CdGDSFolder::DirItem(const UTF16String &Name)
@@ -982,7 +1065,7 @@ CdGDSFolder & CdGDSFolder::DirItem(const UTF16String &Name)
 	if (dynamic_cast<CdGDSFolder*>(I.Obj))
 		return *static_cast<CdGDSFolder*>(I.Obj);
 	else
-    	throw ErrGDSObj(erNoFolderName, UTF16toUTF8(I.Name).c_str());
+    	throw ErrGDSObj(erNoFolderName, UTF16ToUTF8(I.Name).c_str());
 }
 
 CdGDSObj * CdGDSFolder::ObjItem(int Index)
@@ -1028,14 +1111,14 @@ CdGDSObj * CdGDSFolder::Path(const UTF16String &FullName)
 {
 	CdGDSObj *rv = PathEx(FullName);
 	if (!rv)
-		throw ErrGDSObj(erInvalidPath, UTF16toUTF8(FullName).c_str());
+		throw ErrGDSObj(erInvalidPath, UTF16ToUTF8(FullName).c_str());
 	return rv;
 }
 
 CdGDSObj * CdGDSFolder::PathEx(const UTF16String &FullName)
 {
-	static const UTF16 delimit = '/';
-	const UTF16 *p = FullName.c_str();
+	static const C_UTF16 delimit = '/';
+	const C_UTF16 *p = FullName.c_str();
 
 	CdGDSObj *rv = this;
 	while ((*p) && (rv))
@@ -1044,7 +1127,7 @@ CdGDSObj * CdGDSFolder::PathEx(const UTF16String &FullName)
 			return NULL;
 		if (*p == delimit) p ++;
 
-		const UTF16 *s = p;
+		const C_UTF16 *s = p;
 		while ((*p != delimit) && (*p != 0))
 			p ++;
 		if (s == p)
@@ -1058,7 +1141,7 @@ CdGDSObj * CdGDSFolder::PathEx(const UTF16String &FullName)
 void CdGDSFolder::SplitPath(const UTF16String &FullName, UTF16String &Path,
 	UTF16String &Name)
 {
-	static const UTF16 delimit = '/';
+	static const C_UTF16 delimit = '/';
 	size_t pos = FullName.find(delimit);
 	if (pos == UTF16String::npos)
 	{
@@ -1103,71 +1186,77 @@ int CdGDSFolder::NodeCount()
 	return fList.size();
 }
 
-void CdGDSFolder::LoadAfter(CdSerial &Reader, TdVersion Version)
-{
-	fList.clear();
+static const char *VAR_DIRCNT = "DIRCNT";
+static const char *VAR_DIRLIST = "DIRLIST";
+static const char *VAR_DIR_ID = "ID";
+static const char *VAR_DIR_FLAG = "FLAG";
+static const char *VAR_DIR_NAME = "NAME";
 
+void CdGDSFolder::Loading(CdReader &Reader, TdVersion Version)
+{
+	// Load directory inforamtion
+	fList.clear();
 	C_Int32 L = 0;
-	Reader["DIRCNT"] >> L;
+	Reader[VAR_DIRCNT] >> L;
 
 	if (L > 0)
 	{
-		if (!Reader["DIRLIST"].rBuffer())
-        	throw ErrGDSObj(erLoseVariable, "DIRLIST");
+		Reader[VAR_DIRLIST].BeginStruct();
 		for (C_Int32 k = 0; k < L; k++)
 		{
 			TNode I;
-			Reader.rBeginNameSpace();
+			Reader.BeginNameSpace();
 			{
-				Reader.rInitNameSpace();
-				Reader["ID"] >> I.StreamID;
-				Reader["FLAG"] >> I.Flag;
-				Reader["NAME"] >> I.Name;
+				Reader[VAR_DIR_ID]   >> I.StreamID;
+				Reader[VAR_DIR_FLAG] >> I.Flag;
+				Reader[VAR_DIR_NAME] >> I.Name;
 			}
-			Reader.rEndStruct();
+			Reader.EndStruct();
 
 			fList.push_back(I);
 		}
-		Reader.rEndStruct();
+		Reader.EndStruct();
 	}
 
-	fAttr.LoadAfter(Reader, Version);
+	// Load the attribute
+	CdGDSAbsFolder::Loading(Reader, Version);
 }
 
-void CdGDSFolder::SaveAfter(CdSerial &Writer)
+void CdGDSFolder::Saving(CdWriter &Writer)
 {
 	C_Int32 L = fList.size();
-	Writer["DIRCNT"] << L;
+	Writer[VAR_DIRCNT] << L;
 
 	if (L > 0)
 	{
-		Writer["DIRLIST"].wBuffer();
+		Writer[VAR_DIRLIST].NewStruct();
 		{
 			vector<TNode>::iterator it;
 			for (it = fList.begin(); it != fList.end(); it++)
 			{
-				Writer.wBeginNameSpace();
-				Writer["ID"] << it->StreamID;
-				it->_pos = Writer.Position() - TdBlockID::size;
-				Writer["FLAG"] << it->Flag;
-				Writer["NAME"] << it->Name;
-				Writer.wEndStruct();
+				Writer.BeginNameSpace();
+				Writer[VAR_DIR_ID] << it->StreamID;
+				it->_pos = Writer.PropPosition(VAR_DIR_ID);
+				Writer[VAR_DIR_FLAG] << it->Flag;
+				Writer[VAR_DIR_NAME] << it->Name;
+				Writer.EndStruct();
 			}
 		}
-		Writer.wEndStruct();
+		Writer.EndStruct();
 	}
 
-	fAttr.SaveAfter(Writer);
+	// Save the attribute
+	CdGDSAbsFolder::Saving(Writer);
 }
 
-void CdGDSFolder::_Clear()
+void CdGDSFolder::_ClearFolder()
 {
 	vector<CdGDSFolder::TNode>::iterator it;
 	for (it = fList.begin(); it != fList.end(); it++)
 	{
 		if (it->Obj)
 		{
-		#ifdef COREARRAY_DEBUG_CODE
+		#ifdef COREARRAY_CODE_DEBUG
 			if (it->Obj->Release() != 0)
 				throw ErrGDSObj("Object Release() should return ZERO.");
 		#else
@@ -1193,19 +1282,19 @@ CdGDSFolder::TNode &CdGDSFolder::_NameItem(const UTF16String &Name)
 	for (it = fList.begin(); it != fList.end(); it++)
 		if (it->Name == Name)
 			return *it;
-	throw ErrGDSObj(erFolderName, UTF16toUTF8(Name).c_str());
+	throw ErrGDSObj(erFolderName, UTF16ToUTF8(Name).c_str());
 }
 
 void CdGDSFolder::_LoadItem(TNode &I)
 {
 	if (I.Obj == NULL)
 	{
-		#ifdef COREARRAY_DEBUG_CODE
+		#ifdef COREARRAY_CODE_DEBUG
 		_CheckGDSStream();
 		#endif
 
-		TdAutoRef<CdSerial> Reader(new CdSerial(
-			fGDSStream->Collection()[I.StreamID]));
+		CdReader Reader(fGDSStream->Collection()[I.StreamID],
+			&GDSFile()->Log());
 
 		if (I.IsFlagType(CdGDSFolder::TNode::FLAG_TYPE_LABEL))
 		{
@@ -1214,11 +1303,11 @@ void CdGDSFolder::_LoadItem(TNode &I)
 			vObj->fFolder = this;
 			I.Obj = vObj;
 
-			Reader->rBeginNameSpace();
-			_INTERNAL::CdObject_LoadStruct(*vObj, *Reader, 0x100);
-			Reader->rEndStruct();
+			Reader.BeginNameSpace();
+			_INTERNAL::CdObject_LoadStruct(*vObj, Reader, 0x100);
+			Reader.EndStruct();
 
-			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
+			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(&Reader.Stream());
 			/// todo: check
 			vObj->fGDSStream->AddRef();
 
@@ -1229,11 +1318,11 @@ void CdGDSFolder::_LoadItem(TNode &I)
 			vObj->fFolder = this;
 			I.Obj = vObj;
 
-			Reader->rBeginNameSpace();
-			vObj->LoadStruct(*Reader, 0x100);
-			Reader->rEndStruct();
+			Reader.BeginNameSpace();
+			vObj->LoadStruct(Reader, 0x100);
+			Reader.EndStruct();
 
-			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
+			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(&Reader.Stream());
 			/// todo: check
 			vObj->fGDSStream->AddRef();
 
@@ -1244,11 +1333,11 @@ void CdGDSFolder::_LoadItem(TNode &I)
 			vObj->fFolder = this;
 			I.Obj = vObj;
 
-			Reader->rBeginNameSpace();
-			vObj->LoadStruct(*Reader, 0x100);
-			Reader->rEndStruct();
+			Reader.BeginNameSpace();
+			vObj->LoadStruct(Reader, 0x100);
+			Reader.EndStruct();
 
-			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
+			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(&Reader.Stream());
 			/// todo: check
 			vObj->fGDSStream->AddRef();
 
@@ -1259,22 +1348,23 @@ void CdGDSFolder::_LoadItem(TNode &I)
 			vObj->fFolder = this;
 			I.Obj = vObj;
 
-			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
+			vObj->fGDSStream = dynamic_cast<CdBlockStream*>(&Reader.Stream());
 			/// todo: check
 			vObj->fGDSStream->AddRef();
 
-			Reader->rBeginNameSpace();
-			vObj->LoadStruct(*Reader, 0x100);
-			Reader->rEndStruct();
+			Reader.BeginNameSpace();
+			vObj->LoadStruct(Reader, 0x100);
+			Reader.EndStruct();
 
 		} else {
+
 			// it is a class object
 			CdObjRef *obj = NULL;
 
 			try{
 				obj =
 					fGDSStream->Collection().ClassMgr()->
-					ToObj(*Reader, _GDSObjInitProc, fGDSStream, false);
+					ToObj(Reader, _GDSObjInitProc, fGDSStream, false);
 			}
 			catch (exception &E)
 			{
@@ -1288,7 +1378,8 @@ void CdGDSFolder::_LoadItem(TNode &I)
 			{
 				I.Obj = static_cast<CdGDSObj*>(obj);
 				I.Obj->fFolder = this;
-				I.Obj->fGDSStream = dynamic_cast<CdBlockStream*>(Reader->Stream());
+				I.Obj->fGDSStream = dynamic_cast<CdBlockStream*>(
+					&Reader.Stream());
 				I.Obj->fGDSStream->AddRef();
 			} else {
 				if (obj) delete obj;
@@ -1354,7 +1445,7 @@ bool CdGDSVirtualFolder::IsLoaded(bool Silent)
 		fHasTried = true;
 
 		CdGDSFile *file = GDSFile();
-		UTF8String fn = UTF16toUTF8(file->FileName());
+		UTF8String fn = file->FileName();
 
 		// remove the file name from 'fn'
 		int i = (int)fn.size() - 1;
@@ -1508,20 +1599,22 @@ int CdGDSVirtualFolder::NodeCount()
 	return fLinkFile->Root().NodeCount();
 }
 
-void CdGDSVirtualFolder::LoadAfter(CdSerial &Reader, const TdVersion Version)
+static const char *VAR_FILENAME = "FILENAME";
+
+void CdGDSVirtualFolder::Loading(CdReader &Reader, TdVersion Version)
 {
 	UTF8String fn;
-	Reader["FILENAME"] >> fn;
-	CdGDSAbsFolder::LoadAfter(Reader, Version);
+	Reader[VAR_FILENAME] >> fn;
+	CdGDSAbsFolder::Loading(Reader, Version);
 
 	SetLinkFile(fn);
 	fChanged = false;
 }
 
-void CdGDSVirtualFolder::SaveAfter(CdSerial &Writer)
+void CdGDSVirtualFolder::Saving(CdWriter &Writer)
 {
-	Writer["FILENAME"] << fLinkFileName;
-	CdGDSAbsFolder::SaveAfter(Writer);
+	Writer[VAR_FILENAME] << fLinkFileName;
+	CdGDSAbsFolder::Saving(Writer);
 }
 
 void CdGDSVirtualFolder::Synchronize()
@@ -1534,11 +1627,13 @@ void CdGDSVirtualFolder::Synchronize()
 
 // CdGDSStreamContainer
 
-CdGDSStreamContainer::CdGDSStreamContainer(): CdGDSObjNoCName()
+static const char *VAR_DATA = "DATA";
+
+CdGDSStreamContainer::CdGDSStreamContainer(): CdGDSObjPipe()
 {
-	fBufStream = new CBufdStream(new CdMemoryStream);
+	fBufStream = new CdBufStream(new CdMemoryStream);
 	fBufStream->AddRef();
-	vAlloc_Stream = NULL;
+	vAllocStream = NULL;
 	fNeedUpdate = false;
 	vAllocID = 0;
 	vAlloc_Ptr = 0;
@@ -1551,12 +1646,12 @@ CdGDSStreamContainer::~CdGDSStreamContainer()
 		fBufStream->Release();
 }
 
-char const* CdGDSStreamContainer::dName()
+const char *CdGDSStreamContainer::dName()
 {
 	return "dStream";
 }
 
-char const* CdGDSStreamContainer::dTraitName()
+const char *CdGDSStreamContainer::dTraitName()
 {
 	return "Stream";
 }
@@ -1581,76 +1676,52 @@ void CdGDSStreamContainer::AssignOne(CdGDSObj &Source, void *Param)
 	}
 }
 
-void CdGDSStreamContainer::LoadAfter(CdSerial &Reader, TdVersion Version)
+void CdGDSStreamContainer::Loading(CdReader &Reader, TdVersion Version)
 {
+	CdGDSObjPipe::Loading(Reader, Version);
+
 	if (fGDSStream != NULL)
 	{
 		vAllocID = 0;
-		Reader["DATA"] >> vAllocID;
-		vAlloc_Ptr = Reader.NamePosition("DATA");
+		Reader[VAR_DATA] >> vAllocID;
+		vAlloc_Ptr = Reader.PropPosition(VAR_DATA);
 
 		if (fBufStream)
 			fBufStream->Release();
-		fBufStream = new CBufdStream(fGDSStream->Collection()[vAllocID]);
+		fBufStream = new CdBufStream(fGDSStream->Collection()[vAllocID]);
 		fBufStream->AddRef();
 
 		if (fPipeInfo)
         	fPipeInfo->PushReadPipe(*fBufStream);
+	} else {
+		throw ErrGDSStreamContainer(
+		"'CdGDSStreamContainer' object should be combined with a GDS file!");
 	}
-	#ifdef COREARRAY_DEBUG_CODE
-	else
-		throw ErrGDSStreamContainer("This object should be combined with a GDS file!");
-	#endif
-
-	CdGDSObj::LoadAfter(Reader, Version);
 }
 
-void CdGDSStreamContainer::SaveAfter(CdSerial &Writer)
+void CdGDSStreamContainer::Saving(CdWriter &Writer)
 {
+	CdGDSObjPipe::Saving(Writer);
+
 	if (fGDSStream != NULL)
 	{
-		TdBlockID Entry = 0;
-		if (vAlloc_Stream)
-			Entry = vAlloc_Stream->ID();
-		Writer["DATA"] << Entry;
-		vAlloc_Ptr = Writer.Position() - TdBlockID::size;
-	}
-	#ifdef COREARRAY_DEBUG_CODE
-	else
-		throw ErrGDSStreamContainer("This object should be combined with a GDS file!");
-	#endif
-
-	CdGDSObj::SaveAfter(Writer);
-}
-
-void CdGDSStreamContainer::SaveStruct(CdSerial &Writer, bool IncludeName)
-{
-	CdGDSObj::SaveStruct(Writer, IncludeName);
-
-	if ((vAlloc_Stream==NULL) && (fGDSStream!=NULL))
-	{
-		#ifdef COREARRAY_DEBUG_CODE
-		_CheckGDSStream();
-		if (vAlloc_Ptr <= 0)
-			throw ErrGDSStreamContainer("Invalid vAlloc_Ptr.");
-		#endif
+		if (vAllocStream == NULL)
 		{
-			// Modify TdBlockID
-			vAlloc_Stream = fGDSStream->Collection().NewBlockStream();
-			Writer.SetPosition(vAlloc_Ptr);
-			Writer << TdBlockID(vAlloc_Stream->ID());
-			Writer.FlushWrite();
+			_CheckGDSStream();
+			vAllocStream = fGDSStream->Collection().NewBlockStream();
 
-			TdAutoRef<CBufdStream> M(new CBufdStream(vAlloc_Stream));
-			if (fPipeInfo)
-				fPipeInfo->PushWritePipe(*M);
-			M->CopyFrom(*fBufStream);
-
-			if (fBufStream)
-				fBufStream->Release();
-			fBufStream = M.get();
+			if (fBufStream) fBufStream->Release();
+			fBufStream = new CdBufStream(vAllocStream);
 			fBufStream->AddRef();
+			if (fPipeInfo)
+				fPipeInfo->PushWritePipe(*fBufStream);
 		}
+		TdGDSBlockID Entry = vAllocStream->ID();
+		Writer[VAR_DATA] << Entry;
+		vAlloc_Ptr = Writer.PropPosition(VAR_DATA);
+	} else {
+		throw ErrGDSStreamContainer(
+		"'CdGDSStreamContainer' object should be combined with a GDS file!");
 	}
 }
 
@@ -1662,52 +1733,67 @@ SIZE64 CdGDSStreamContainer::GetSize()
     	return fBufStream->GetSize();
 }
 
+static const char *ERR_PACKED_MODE = "Invalid packed/compression method '%s'.";
+static const char *ERR_READONLY = "The GDS file is read-only!";
+
 void CdGDSStreamContainer::SetPackedMode(const char *Mode)
 {
-	static const char *erMethod = "Invalid compression method '%s'.";
+	if (fGDSStream && fGDSStream->ReadOnly())
+		throw ErrGDSStreamContainer(ERR_READONLY);
 
 	if (fPipeInfo ? (!fPipeInfo->Equal(Mode)) : true)
 	{
-		if (vAlloc_Stream && fGDSStream)
+		if (vAllocStream && fGDSStream && (vAllocStream->GetSize()>0))
 		{
 			Synchronize();
 
+			// total size
+			SIZE64 TotalSize = GetSize();
+
 			if (fPipeInfo) delete fPipeInfo;
 			fPipeInfo = dStreamPipeMgr.Match(*this, Mode);
-			if ((fPipeInfo==NULL) && (*Mode!=0))
-				throw ErrGDSStreamContainer(erMethod, Mode);
+			if ((fPipeInfo==NULL) && (strcmp(Mode, "")!=0))
+				throw ErrGDSStreamContainer(ERR_PACKED_MODE, Mode);
 
 			{
-				TdAutoRef<CdTempStream> Temp(new CdTempStream(""));
-				{
-					TdAutoRef<CBufdStream> Buf(new CBufdStream(Temp.get()));
-					Buf->CopyFrom(*fBufStream);
-					if (fPipeInfo)
-						_GetStreamPipeInfo(Buf.get(), true);
-				}
-				vAlloc_Stream->SetPosition(0);
-				vAlloc_Stream->SetSizeOnly(0);
-				vAlloc_Stream->CopyFrom(*Temp);
-				vAlloc_Stream->SetPosition(0);
-			}
-			// New Filter
-			{
-				if (fBufStream)
-					fBufStream->Release();
-				fBufStream = new CBufdStream(vAlloc_Stream);
-				fBufStream->AddRef();
+				// automatically release the temporary stream
+				TdAutoRef<CdBufStream> Output(new CdBufStream(new CdTempStream));
+				CopyTo(*Output, TotalSize);
+				Output.get()->FlushWrite();
+
+				// input
+				vAllocStream->SetPosition(0);
+				vAllocStream->SetSizeOnly(0);
+				TdAutoRef<CdBufStream> Input(new CdBufStream(vAllocStream));
 				if (fPipeInfo)
-					fPipeInfo->PushReadPipe(*fBufStream);
-			}
-			// Save self
-			SaveToBlockStream();
+					fPipeInfo->PushWritePipe(*Input);
 
+				// copy
+				Input.get()->CopyFrom(*Output);
+				Input.get()->FlushWrite();
+				if (fPipeInfo)
+				{
+					fPipeInfo->ClosePipe(*Input);
+					fPipeInfo->GetStreamInfo(Input.get());
+				}
+			}
+
+			vAllocStream->SetPosition(0);
+			if (fBufStream)
+				fBufStream->Release();
+			fBufStream = new CdBufStream(vAllocStream);
+			fBufStream->AddRef();
+			if (fPipeInfo)
+				fPipeInfo->PushReadPipe(*fBufStream);
+
+			// save, since PipeInfo has been changed.
+			SaveToBlockStream();
 		} else {
 			if (fPipeInfo)
 				delete fPipeInfo;
 			fPipeInfo = dStreamPipeMgr.Match(*this, Mode);
-			if ((fPipeInfo==NULL) && (*Mode!=0))
-				throw ErrGDSStreamContainer(erMethod, Mode);
+			if ((fPipeInfo==NULL) && (strcmp(Mode, "")!=0))
+				throw ErrGDSStreamContainer(ERR_PACKED_MODE, Mode);
 		}
 	}
 }
@@ -1716,7 +1802,7 @@ void CdGDSStreamContainer::CloseWriter()
 {
 	fBufStream->OnFlush.Clear();
 	fBufStream->FlushWrite();
-	if (fPipeInfo && vAlloc_Stream)
+	if (fPipeInfo && vAllocStream)
 	{
 		if (fPipeInfo->WriteMode(*fBufStream))
 		{
@@ -1726,8 +1812,8 @@ void CdGDSStreamContainer::CloseWriter()
 
 			if (fBufStream)
 				fBufStream->Release();
-			vAlloc_Stream->SetPosition(0);
-			fBufStream = new CBufdStream(vAlloc_Stream);
+			vAllocStream->SetPosition(0);
+			fBufStream = new CdBufStream(vAllocStream);
         	fBufStream->AddRef();
 			if (fPipeInfo)
 				fPipeInfo->PushReadPipe(*fBufStream);
@@ -1735,10 +1821,9 @@ void CdGDSStreamContainer::CloseWriter()
 	}
 }
 
-void CdGDSStreamContainer::CopyFrom(CBufdStream &Source, SIZE64 Count)
+void CdGDSStreamContainer::CopyFrom(CdBufStream &Source, SIZE64 Count)
 {
-	char Buffer[0x10000];
-	ssize_t N;
+	C_UInt8 Buffer[COREARRAY_STREAM_BUFFER];
 
 	if (Count < 0)
 	{
@@ -1747,17 +1832,16 @@ void CdGDSStreamContainer::CopyFrom(CBufdStream &Source, SIZE64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (SIZE64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
-		Source.Read((void*)Buffer, N);
-		fBufStream->Write((void*)Buffer, N);
+		ssize_t N = (Count <= (int)sizeof(Buffer)) ? Count : sizeof(Buffer);
+		Source.ReadData((void*)Buffer, N);
+		fBufStream->WriteData((void*)Buffer, N);
 		Count -= N;
 	}
 }
 
 void CdGDSStreamContainer::CopyFrom(CdStream &Source, SIZE64 Count)
 {
-	char Buffer[0x10000];
-	ssize_t N;
+	C_UInt8 Buffer[COREARRAY_STREAM_BUFFER];
 
 	if (Count < 0)
 	{
@@ -1766,17 +1850,16 @@ void CdGDSStreamContainer::CopyFrom(CdStream &Source, SIZE64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (SIZE64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
-		Source.ReadBuffer((void*)Buffer, N);
-		fBufStream->Write((void*)Buffer, N);
+		ssize_t N = (Count <= (int)sizeof(Buffer)) ? Count : sizeof(Buffer);
+		Source.ReadData((void*)Buffer, N);
+		fBufStream->WriteData((void*)Buffer, N);
 		Count -= N;
 	}
 }
 
-void CdGDSStreamContainer::CopyTo(CBufdStream &Dest, SIZE64 Count)
+void CdGDSStreamContainer::CopyTo(CdBufStream &Dest, SIZE64 Count)
 {
-	char Buffer[0x10000];
-	ssize_t N;
+	C_UInt8 Buffer[COREARRAY_STREAM_BUFFER];
 
 	if (Count < 0)
 	{
@@ -1786,17 +1869,16 @@ void CdGDSStreamContainer::CopyTo(CBufdStream &Dest, SIZE64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (SIZE64)sizeof(Buffer)) ? (ssize_t)sizeof(Buffer) : Count;
-		fBufStream->Read((void*)Buffer, N);
-		Dest.Write((void*)Buffer, N);
+		ssize_t N = (Count <= (int)sizeof(Buffer)) ? Count : sizeof(Buffer);
+		fBufStream->ReadData((void*)Buffer, N);
+		Dest.WriteData((void*)Buffer, N);
 		Count -= N;
 	}
 }
 
 void CdGDSStreamContainer::CopyTo(CdStream &Dest, SIZE64 Count)
 {
-	char Buffer[0x10000];
-	ssize_t N;
+	C_UInt8 Buffer[COREARRAY_STREAM_BUFFER];
 
 	if (Count < 0)
 	{
@@ -1806,9 +1888,9 @@ void CdGDSStreamContainer::CopyTo(CdStream &Dest, SIZE64 Count)
 	}
 	while (Count > 0)
 	{
-		N = (Count >= (SIZE64)sizeof(Buffer))? (ssize_t)sizeof(Buffer) : Count;
-		fBufStream->Read((void*)Buffer, N);
-		Dest.WriteBuffer((void*)Buffer, N);
+		ssize_t N = (Count <= (int)sizeof(Buffer)) ? Count : sizeof(Buffer);
+		fBufStream->ReadData((void*)Buffer, N);
+		Dest.WriteData((void*)Buffer, N);
 		Count -= N;
 	}
 }
@@ -1816,7 +1898,7 @@ void CdGDSStreamContainer::CopyTo(CdStream &Dest, SIZE64 Count)
 void CdGDSStreamContainer::GetOwnBlockStream(vector<const CdBlockStream*> &Out)
 {
 	Out.clear();
-	if (vAlloc_Stream) Out.push_back(vAlloc_Stream);
+	if (vAllocStream) Out.push_back(vAllocStream);
 }
 
 
@@ -1850,6 +1932,21 @@ void CdGDSRoot::SetName(const UTF16String &NewName)
 
 
 
+// =====================================================================
+// CdGDSUnknown
+// =====================================================================
+
+CdGDSUnknown::CdGDSUnknown(): CdGDSObjNoCName()
+{ }
+
+void CdGDSUnknown::SaveStruct(CdWriter &Writer, bool IncludeName)
+{
+	// do nothing!
+}
+
+
+
+
 // CdGDSFile
 
 static const char *erGDSInvalidOpenMode = "Invalid open mode in CdGDSFile.";
@@ -1857,7 +1954,7 @@ static const char *erInvalidPrefix = "Invalid prefix of stream!";
 static const char *erEntryError = "Invalid entry point(%d).";
 static const char *erSaveStream = "Should save it to a GDS file first!";
 
-#ifdef COREARRAY_DEBUG_CODE
+#ifdef COREARRAY_CODE_DEBUG
 static const char *erFStream = "fStream should be NULL.";
 #endif
 
@@ -1871,7 +1968,7 @@ void CdGDSFile::_Init()
 	fVersion = COREARRAY_FILE_VERSION;
 	fRoot.AddRef();
 	fCodeStart = strlen(GDSFilePrefix()) +
-		sizeof(TdVersion) + TdBlockID::size;
+		sizeof(TdVersion) + GDS_BLOCK_ID_SIZE;
 	fReadOnly = false;
 	fLog = new CdLogRecord; fLog->AddRef();
 	fprocess_id = GetCurrentProcessID();
@@ -1879,7 +1976,7 @@ void CdGDSFile::_Init()
 
 CdGDSFile::CdGDSFile(): CdBlockCollection() { _Init(); }
 
-CdGDSFile::CdGDSFile(const UTF16String &fn, TdOpenMode Mode):
+CdGDSFile::CdGDSFile(const UTF8String &fn, TdOpenMode Mode):
 	CdBlockCollection()
 {
 	_Init();
@@ -1918,16 +2015,16 @@ CdGDSFile::~CdGDSFile()
 	CloseFile();
 	if (fLog)
 	{
-	#ifdef COREARRAY_DEBUG_CODE
+	#ifdef COREARRAY_CODE_DEBUG
 		if (fLog->Release() != 0)
-			throw Err_dFilter("Log::Release() should return 0 here.");
+			throw ErrSerial("Log::Release() should return 0 here.");
 	#else
 		fLog->Release();
 	#endif
 	}
 }
 
-void CdGDSFile::LoadStream(CdStream* Stream, bool ReadOnly)
+void CdGDSFile::LoadStream(CdStream *Stream, bool ReadOnly)
 {
 	// Initialize
 	CloseFile();
@@ -1937,17 +2034,17 @@ void CdGDSFile::LoadStream(CdStream* Stream, bool ReadOnly)
 	// Check the prefix
 	const size_t L = strlen(GDSFilePrefix());
 	vector<char> buf(L);
-	Stream->ReadBuffer((void*)&buf[0], L);
+	Stream->ReadData((void*)&buf[0], L);
 	if (memcmp((void*)GDSFilePrefix(), (void*)&buf[0], L) !=0)
 		throw ErrGDSFile(erInvalidPrefix);
 
 	// Load Version
-	fVersion = Stream->rUInt8();
-	fVersion |= Stream->rUInt8() << 8;
+	fVersion = Stream->R8b();
+	fVersion |= Stream->R8b() << 8;
 
 	// The entry of stream ID
-	TdBlockID Entry;
-	*Stream >> Entry;
+	TdGDSBlockID Entry;
+	BYTE_LE<CdStream>(Stream) >> Entry;
 
 	// To identify the block stream
 	CdBlockCollection::LoadStream(Stream, ReadOnly);
@@ -1957,31 +2054,31 @@ void CdGDSFile::LoadStream(CdStream* Stream, bool ReadOnly)
 		fRoot.fGDSStream = (*this)[Entry];
 		fRoot.fGDSStream->AddRef();
 
-		TdAutoRef<CdSerial> Reader(new CdSerial(fRoot.fGDSStream));
-		Reader->rBeginNameSpace();
-		_INTERNAL::CdObject_LoadStruct(fRoot, *Reader, fVersion);
-		Reader->rEndStruct();
+		CdReader Reader(fRoot.fGDSStream, &Log());
+		Reader.BeginNameSpace();
+		_INTERNAL::CdObject_LoadStruct(fRoot, Reader, fVersion);
+		Reader.EndStruct();
 	} else
-		throw ErrGDSFile(erEntryError, Entry.get());
+		throw ErrGDSFile(erEntryError, Entry.Get());
 }
 
 void CdGDSFile::SaveStream(CdStream *Stream)
 {
-	#ifdef COREARRAY_DEBUG_CODE
+	#ifdef COREARRAY_CODE_DEBUG
 	if (fStream != NULL)
 		throw ErrGDSFile(erFStream);
 	#endif
 
 	// Save Prefix
 	const size_t L = strlen(GDSFilePrefix());
-	Stream->WriteBuffer((void*)GDSFilePrefix(), L);
+	Stream->WriteData((void*)GDSFilePrefix(), L);
 
 	// Save Ver
-	Stream->wUInt8(fVersion & 0xFF);
-    Stream->wUInt8(fVersion >> 8);
+	Stream->W8b(fVersion & 0xFF);
+    Stream->W8b(fVersion >> 8);
 
 	SIZE64 _EntryPos = Stream->Position();
-	*Stream << TdBlockID(0);
+	BYTE_LE<CdStream>(Stream) << TdGDSBlockID(0);
 
 	CdBlockCollection::WriteStream(Stream);
 	fRoot.fGDSStream = NewBlockStream();
@@ -1989,16 +2086,15 @@ void CdGDSFile::SaveStream(CdStream *Stream)
 	SIZE64 _NewPos = Stream->Position();
 
 	Stream->SetPosition(_EntryPos);
-	*Stream << fRoot.fGDSStream->ID();
+	BYTE_LE<CdStream>(Stream) << fRoot.fGDSStream->ID();
 	Stream->SetPosition(_NewPos);
 
 	fRoot.SaveToBlockStream();
 }
 
-void CdGDSFile::LoadFile(const UTF16String &fn, bool ReadOnly)
+void CdGDSFile::LoadFile(const UTF8String &fn, bool ReadOnly)
 {
-	TdAutoRef<CdStream> F(new CdFileStream(
-		UTF16toUTF8(fn).c_str(),
+	TdAutoRef<CdStream> F(new CdFileStream(RawText(fn).c_str(),
 		ReadOnly ? CdFileStream::fmOpenRead : CdFileStream::fmOpenReadWrite));
 	LoadStream(F.get(), ReadOnly);
 	fFileName = fn;
@@ -2006,20 +2102,18 @@ void CdGDSFile::LoadFile(const UTF16String &fn, bool ReadOnly)
 
 void CdGDSFile::LoadFile(const char *fn, bool ReadOnly)
 {
-	TdAutoRef<CdStream> F(new CdFileStream(
-		fn,
+	TdAutoRef<CdStream> F(new CdFileStream(fn,
 		ReadOnly ? CdFileStream::fmOpenRead : CdFileStream::fmOpenReadWrite));
 	LoadStream(F.get(), ReadOnly);
-	fFileName = UTF8toUTF16(fn);
+	fFileName = UTF8Text(fn);
 }
 
 void CdGDSFile::LoadFileFork(const char *fn, bool ReadOnly)
 {
-	TdAutoRef<CdStream> F(new CdForkFileStream(
-		fn,
+	TdAutoRef<CdStream> F(new CdForkFileStream(fn,
 		ReadOnly ? CdFileStream::fmOpenRead : CdFileStream::fmOpenReadWrite));
 	LoadStream(F.get(), ReadOnly);
-	fFileName = UTF8toUTF16(fn);
+	fFileName = UTF8Text(fn);
 }
 
 void CdGDSFile::SyncFile()
@@ -2029,9 +2123,9 @@ void CdGDSFile::SyncFile()
 	fRoot._UpdateAll();
 }
 
-void CdGDSFile::SaveAsFile(const UTF16String &fn)
+void CdGDSFile::SaveAsFile(const UTF8String &fn)
 {
-	TdAutoRef<CdStream> F(new CdFileStream(UTF16toUTF8(fn).c_str(),
+	TdAutoRef<CdStream> F(new CdFileStream(RawText(fn).c_str(),
 		CdFileStream::fmCreate));
 	fFileName = fn;
 	SaveStream(F.get());
@@ -2040,11 +2134,11 @@ void CdGDSFile::SaveAsFile(const UTF16String &fn)
 void CdGDSFile::SaveAsFile(const char *fn)
 {
 	TdAutoRef<CdStream> F(new CdFileStream(fn, CdFileStream::fmCreate));
-	fFileName = UTF8toUTF16(fn);
+	fFileName = UTF8Text(fn);
 	SaveStream(F.get());
 }
 
-void CdGDSFile::DuplicateFile(const UTF16String &fn, bool deep)
+void CdGDSFile::DuplicateFile(const UTF8String &fn, bool deep)
 {
 	if (deep)
 	{
@@ -2052,29 +2146,30 @@ void CdGDSFile::DuplicateFile(const UTF16String &fn, bool deep)
 		file.Root().AssignOneEx(Root());
 	} else {
 		// create a new file
-		TdAutoRef<CdStream> F(new CdFileStream(UTF16toUTF8(fn).c_str(),
+		TdAutoRef<CdStream> F(new CdFileStream(RawText(fn).c_str(),
 			CdFileStream::fmCreate));
 
 		// Save Prefix
 		const size_t L = strlen(GDSFilePrefix());
-		F->WriteBuffer((void*)GDSFilePrefix(), L);
+		F->WriteData((void*)GDSFilePrefix(), L);
 
 		// Save Version
-		F->wUInt8(fVersion & 0xFF);
-		F->wUInt8(fVersion >> 8);
+		F->W8b(fVersion & 0xFF);
+		F->W8b(fVersion >> 8);
 
 		// Save Entry ID
-		(*F) << fRoot.fGDSStream->ID();
+		BYTE_LE<CdStream>(*F) << fRoot.fGDSStream->ID();
 
 		// for-loop for all stream blocks
 		for (int i=0; i < (int)fBlockList.size(); i++)
 		{
-			TdPosType bSize = fBlockList[i]->Size();
-			TdPosType sSize = (2*TdPosType::size +
+			TdGDSPos bSize = fBlockList[i]->Size();
+			TdGDSPos sSize = (2*GDS_POS_SIZE +
 				CdBlockStream::TBlockInfo::HeadSize + bSize) |
 				GDS_STREAM_POS_MASK_HEAD_BIT;
-			TdPosType sNext = 0;
-			(*F) << sSize << sNext << fBlockList[i]->ID() << bSize;
+			TdGDSPos sNext = 0;
+			BYTE_LE<CdStream>(*F) <<
+				sSize << sNext << fBlockList[i]->ID() << bSize;
 			F->CopyFrom(*fBlockList[i]);
 		}
 	}
@@ -2082,7 +2177,7 @@ void CdGDSFile::DuplicateFile(const UTF16String &fn, bool deep)
 
 void CdGDSFile::DuplicateFile(const char *fn, bool deep)
 {
-	DuplicateFile(PChartoUTF16(fn), deep);
+	DuplicateFile(UTF8Text(fn), deep);
 }
 
 void CdGDSFile::CloseFile()
@@ -2092,7 +2187,8 @@ void CdGDSFile::CloseFile()
 		SyncFile();
 		fFileName.clear();
 		fLog->List().clear();
-		fRoot._Clear();
+		fRoot.Attribute().Clear();
+		fRoot._ClearFolder();
 		if (fRoot.fGDSStream)
 		{
 			// todo: check
@@ -2105,14 +2201,16 @@ void CdGDSFile::CloseFile()
 
 void CdGDSFile::TidyUp(bool deep)
 {
-	UTF16String fn, f;
+	bool TempReadOnly = fReadOnly;
+	UTF8String fn, f;
 	fn = fFileName;
-	f = fn + UTF8toUTF16(".tmp");
+	f = fn + ASC(".tmp");
 	DuplicateFile(f, deep);
 	CloseFile();
-	remove(UTF16toUTF8(fn).c_str());
-	rename(UTF16toUTF8(f).c_str(), UTF16toUTF8(fn).c_str());
-	LoadFile(fn, fReadOnly);
+
+	remove(RawText(fn).c_str());
+	rename(RawText(f).c_str(), RawText(fn).c_str());
+	LoadFile(fn, TempReadOnly);
 }
 
 bool CdGDSFile::_HaveModify(CdGDSFolder *folder)
