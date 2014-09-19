@@ -1,5 +1,5 @@
 a2af64ae30d88299d462a1e6d817dce3 *COPYING
-1da2e8d3a2a8b411f851228369a28ac6 *DESCRIPTION
+33adc707ec76bd1a1963ea4a656c7a6c *DESCRIPTION
 ed9f1f63715915155d2c5ce459244a8d *NAMESPACE
 f2566cfdbe6b4f6c097ddb6a6b7107d5 *NEWS
 20e26eadefb80e841405f08f6c766cc4 *R/gdsfmt-main.r
@@ -80,7 +80,7 @@ d3ac0975ae86d8efbc97ee2badc6b98b *src/dFile.h
 7296a344df2940098108d683d278f61a *src/dParallel.h
 cd2145206cd163c34fd802bd962b5fe7 *src/dParallel_Ext.c
 82e11a5a7172ec4f2b756ad050cd8488 *src/dPlatform.cpp
-52a073eb28864adbfd24b265b34da8eb *src/dPlatform.h
+2f3e979902b0c06d1ada2a708f5e14ab *src/dPlatform.h
 fda260199af7652e664a1c547c40150b *src/dSerial.cpp
 21a4324713678f97e7aa8908a9918240 *src/dSerial.h
 4f6735095cf69b86b6303bf55352f39a *src/dStrGDS.h

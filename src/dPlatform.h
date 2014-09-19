@@ -48,6 +48,10 @@
 #include <vector>
 #include <queue>
 
+// for Solaris x86
+#undef SS
+
+
 #if defined(COREARRAY_USING_R)
 #   include <R_ext/Arith.h>
 #endif
